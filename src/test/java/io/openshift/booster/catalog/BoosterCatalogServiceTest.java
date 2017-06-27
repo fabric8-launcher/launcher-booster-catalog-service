@@ -16,10 +16,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import io.openshift.booster.catalog.BoosterCatalogService;
-import io.openshift.booster.catalog.Mission;
-import io.openshift.booster.catalog.Runtime;
-
 /**
  *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
@@ -27,14 +23,10 @@ import io.openshift.booster.catalog.Runtime;
 public class BoosterCatalogServiceTest
 {
 
-   /**
-    * Test method for
-    * {@link io.openshift.booster.catalog.BoosterCatalogService#processIndex(java.nio.file.Path, java.util.Map, java.util.Map)}.
-    */
    @Test
-   public void testProcessIndex() throws Exception
+   public void testProcessMetadata() throws Exception
    {
-      BoosterCatalogService service = new BoosterCatalogService();
+      BoosterCatalogService service = new BoosterCatalogService.Builder().build();
       Path metadataFile = Paths.get(getClass().getResource("metadata.json").toURI());
       Map<String, Mission> missions = new HashMap<>();
       Map<String, Runtime> runtimes = new HashMap<>();
@@ -43,4 +35,12 @@ public class BoosterCatalogServiceTest
       assertThat(runtimes).hasSize(3);
    }
 
+   @Test
+   public void testIndex() throws Exception
+   {
+      BoosterCatalogService service = new BoosterCatalogService.Builder().build();
+      assertThat(service.getBoosters()).isEmpty();
+      service.index();
+      assertThat(service.getBoosters()).isNotEmpty();
+   }
 }

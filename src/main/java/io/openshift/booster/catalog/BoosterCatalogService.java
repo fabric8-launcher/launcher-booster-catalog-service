@@ -28,9 +28,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -38,8 +35,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -59,14 +54,6 @@ import io.openshift.booster.CopyFileVisitor;
 public class BoosterCatalogService
 {
    private static final String GITHUB_URL = "https://github.com/";
-   private static final String CATALOG_INDEX_PERIOD_PROPERTY_NAME = "LAUNCHPAD_BACKEND_CATALOG_INDEX_PERIOD";
-   private static final String CATALOG_GIT_REF_PROPERTY_NAME = "LAUNCHPAD_BACKEND_CATALOG_GIT_REF";
-   private static final String CATALOG_GIT_REPOSITORY_PROPERTY_NAME = "LAUNCHPAD_BACKEND_CATALOG_GIT_REPOSITORY";
-
-   private static final String DEFAULT_INDEX_PERIOD = "0";
-   private static final String DEFAULT_GIT_REF = "master";
-   private static final String DEFAULT_GIT_REPOSITORY_URL = "https://github.com/openshiftio/booster-catalog.git";
-
    private static final String CLONED_BOOSTERS_DIR = ".boosters";
    private static final String METADATA_FILE = "metadata.json";
 
@@ -84,20 +71,24 @@ public class BoosterCatalogService
 
    private volatile List<Booster> boosters = Collections.emptyList();
 
-   private ScheduledExecutorService executorService;
+   private String catalogRepositoryURI;
+   private String catalogRef;
+
+   private BoosterCatalogService(String catalogRepositoryURI, String catalogRef)
+   {
+      this.catalogRepositoryURI = catalogRepositoryURI;
+      this.catalogRef = catalogRef;
+   }
 
    /**
     * Clones the catalog git repository and reads the obsidian metadata on each quickstart repository
     */
-   private void index()
+   public void index()
    {
       WriteLock lock = reentrantLock.writeLock();
       try
       {
          lock.lock();
-         String catalogRepositoryURI = getEnvVarOrSysProp(CATALOG_GIT_REPOSITORY_PROPERTY_NAME,
-                  DEFAULT_GIT_REPOSITORY_URL);
-         String catalogRef = getEnvVarOrSysProp(CATALOG_GIT_REF_PROPERTY_NAME, DEFAULT_GIT_REF);
          logger.log(Level.INFO, "Indexing contents from {0} using {1} ref",
                   new Object[] { catalogRepositoryURI, catalogRef });
          Path catalogPath = Files.createTempDirectory("booster-catalog");
@@ -283,36 +274,6 @@ public class BoosterCatalogService
       return Optional.ofNullable(booster);
    }
 
-   @PostConstruct
-   void init()
-   {
-      long indexPeriod = Long.parseLong(getEnvVarOrSysProp(CATALOG_INDEX_PERIOD_PROPERTY_NAME, DEFAULT_INDEX_PERIOD));
-      if (indexPeriod > 0L)
-      {
-         executorService = Executors.newScheduledThreadPool(1);
-         logger.info(() -> "Indexing every " + indexPeriod + " minutes");
-         executorService.scheduleAtFixedRate(this::index, 0, indexPeriod, TimeUnit.MINUTES);
-      }
-      else
-      {
-         index();
-      }
-   }
-
-   @PreDestroy
-   void destroy()
-   {
-      if (executorService != null)
-      {
-         executorService.shutdown();
-      }
-   }
-
-   private static String getEnvVarOrSysProp(String name, String defaultValue)
-   {
-      return System.getProperty(name, System.getenv().getOrDefault(name, defaultValue));
-   }
-
    /**
     * Copies the {@link Booster} contents to the specified {@link Path}
     */
@@ -364,6 +325,34 @@ public class BoosterCatalogService
       finally
       {
          readLock.unlock();
+      }
+   }
+
+   /**
+    * {@link BoosterCatalogService} Builder class
+    *
+    * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
+    */
+   public static class Builder
+   {
+      private String catalogRepositoryURI = "https://github.com/openshiftio/booster-catalog.git";
+      private String catalogRef = "master";
+
+      public Builder catalogRef(String catalogRef)
+      {
+         this.catalogRef = catalogRef;
+         return this;
+      }
+
+      public Builder catalogRepository(String catalogRepositoryURI)
+      {
+         this.catalogRepositoryURI = catalogRepositoryURI;
+         return this;
+      }
+
+      public BoosterCatalogService build()
+      {
+         return new BoosterCatalogService(catalogRepositoryURI, catalogRef);
       }
    }
 }
