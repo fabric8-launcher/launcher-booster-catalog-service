@@ -1,0 +1,3 @@
+== booster-catalog-service
+
+This project contains the service classes for the booster-catalog repository 
