@@ -57,7 +57,7 @@ public class BoosterCatalogService
    private static final String CLONED_BOOSTERS_DIR = ".boosters";
    private static final String METADATA_FILE = "metadata.json";
 
-   private static final Yaml yaml = new Yaml();
+   private static final Yaml yaml = new Yaml(new YamlConstructor());
    /**
     * Files to be excluded from project creation
     */
