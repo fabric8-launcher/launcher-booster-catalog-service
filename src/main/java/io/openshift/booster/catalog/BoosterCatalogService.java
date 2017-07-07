@@ -124,13 +124,14 @@ public class BoosterCatalogService
     * @return
     * @throws IOException
     */
-   private List<Booster> indexBoosters(Path catalogPath) throws IOException
+   private List<Booster> indexBoosters(final Path catalogPath) throws IOException
    {
       Path moduleRoot = catalogPath.resolve(CLONED_BOOSTERS_DIR);
       Path metadataFile = catalogPath.resolve(METADATA_FILE);
       List<Booster> boosters = new ArrayList<>();
       Map<String, Mission> missions = new HashMap<>();
       Map<String, Runtime> runtimes = new HashMap<>();
+      Map<String, Version> versions = new HashMap<>();
       if (Files.exists(metadataFile))
       {
          processMetadata(metadataFile, missions, runtimes);
@@ -151,7 +152,7 @@ public class BoosterCatalogService
             {
                String id = removeFileExtension(fileName);
                Path modulePath = moduleRoot.resolve(id);
-               indexBooster(id, file, modulePath, missions, runtimes).ifPresent(boosters::add);
+               indexBooster(id, catalogPath, file, modulePath, missions, runtimes, versions).ifPresent(boosters::add);
             }
             return FileVisitResult.CONTINUE;
          }
@@ -210,8 +211,8 @@ public class BoosterCatalogService
     * @return an {@link Optional} containing a {@link Booster}
     */
    @SuppressWarnings("unchecked")
-   private Optional<Booster> indexBooster(String id, Path file, Path moduleDir, Map<String, Mission> missions,
-            Map<String, Runtime> runtimes)
+   private Optional<Booster> indexBooster(String id, Path catalogPath, Path file, Path moduleDir, Map<String, Mission> missions,
+            Map<String, Runtime> runtimes, Map<String, Version> versions)
    {
       logger.info(() -> "Indexing " + file + " ...");
 
@@ -232,11 +233,24 @@ public class BoosterCatalogService
             // Booster ID = filename without extension
             booster.setId(id);
 
-            String runtimeId = file.getParent().toFile().getName();
-            String missionId = file.getParent().getParent().toFile().getName();
+            String versionId;
+            String runtimeId;
+            String missionId;
+            if (file.getParent().getParent().getParent().equals(catalogPath)) {
+                versionId = null;
+                runtimeId = file.getParent().toFile().getName();
+                missionId = file.getParent().getParent().toFile().getName();
+            } else {
+                versionId = file.getParent().toFile().getName();
+                runtimeId = file.getParent().getParent().toFile().getName();
+                missionId = file.getParent().getParent().getParent().toFile().getName();
+            }
 
             booster.setMission(missions.computeIfAbsent(missionId, Mission::new));
             booster.setRuntime(runtimes.computeIfAbsent(runtimeId, Runtime::new));
+            if (versionId != null) {
+                booster.setVersion(versions.computeIfAbsent(versionId, Version::new));
+            }
 
             booster.setContentPath(moduleDir);
             // Module does not exist. Clone it
@@ -312,13 +326,33 @@ public class BoosterCatalogService
                .collect(Collectors.toCollection(TreeSet::new));
    }
 
+   public Set<Version> getVersions(Mission mission, Runtime runtime)
+   {
+      if (mission == null || runtime == null)
+      {
+         return Collections.emptySet();
+      }
+      return boosters.stream()
+               .filter(b -> mission.equals(b.getMission()))
+               .filter(b -> runtime.equals(b.getRuntime()))
+               .filter(b -> b.getVersion() != null)
+               .map(Booster::getVersion)
+               .collect(Collectors.toCollection(TreeSet::new));
+   }
+
    public Optional<Booster> getBooster(Mission mission, Runtime runtime)
+   {
+       return getBooster(mission, runtime, null);
+   }
+
+   public Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version)
    {
       Objects.requireNonNull(mission, "Mission should not be null");
       Objects.requireNonNull(runtime, "Runtime should not be null");
       return boosters.stream()
                .filter(b -> mission.equals(b.getMission()))
                .filter(b -> runtime.equals(b.getRuntime()))
+               .filter(b -> version == null || version.equals(b.getVersion()))
                .findFirst();
    }
 

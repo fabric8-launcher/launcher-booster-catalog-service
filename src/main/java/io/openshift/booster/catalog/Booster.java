@@ -27,6 +27,7 @@ public class Booster
    private String boosterDescriptorPath = ".openshiftio/booster.yaml";
    private Mission mission;
    private Runtime runtime;
+   private Version version;
 
    private Path contentPath;
 
@@ -153,6 +154,22 @@ public class Booster
    public void setRuntime(Runtime runtime)
    {
       this.runtime = runtime;
+   }
+
+   /**
+    * @return the version
+    */
+   public Version getVersion()
+   {
+      return version;
+   }
+
+   /**
+    * @param version the version to set
+    */
+   public void setVersion(Version version)
+   {
+      this.version = version;
    }
 
    /**
