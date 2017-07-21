@@ -140,6 +140,10 @@ public class BoosterCatalogService
          @Override
          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
          {
+            if (Thread.interrupted())
+            {
+               return FileVisitResult.TERMINATE;
+            }
             File ioFile = file.toFile();
             String fileName = ioFile.getName().toLowerCase();
             // Skip any file that starts with .
@@ -155,6 +159,10 @@ public class BoosterCatalogService
          @Override
          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
          {
+            if (Thread.interrupted())
+            {
+               return FileVisitResult.TERMINATE;
+            }
             return dir.startsWith(moduleRoot) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
          }
       });
