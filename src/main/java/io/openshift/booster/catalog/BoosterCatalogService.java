@@ -39,11 +39,11 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.yaml.snakeyaml.Yaml;
 
 import io.openshift.booster.CopyFileVisitor;
+import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.GitBoosterCatalogPathProvider;
 
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
@@ -53,7 +53,6 @@ import io.openshift.booster.CopyFileVisitor;
  */
 public class BoosterCatalogService
 {
-   private static final String GITHUB_URL = "https://github.com/";
    private static final String CLONED_BOOSTERS_DIR = ".boosters";
    private static final String METADATA_FILE = "metadata.json";
 
@@ -71,13 +70,11 @@ public class BoosterCatalogService
 
    private volatile List<Booster> boosters = Collections.emptyList();
 
-   private String catalogRepositoryURI;
-   private String catalogRef;
+   private final BoosterCatalogPathProvider provider;
 
-   private BoosterCatalogService(String catalogRepositoryURI, String catalogRef)
+   private BoosterCatalogService(BoosterCatalogPathProvider provider)
    {
-      this.catalogRepositoryURI = catalogRepositoryURI;
-      this.catalogRef = catalogRef;
+      this.provider = provider;
    }
 
    /**
@@ -89,24 +86,8 @@ public class BoosterCatalogService
       try
       {
          lock.lock();
-         logger.log(Level.INFO, "Indexing contents from {0} using {1} ref",
-                  new Object[] { catalogRepositoryURI, catalogRef });
-         Path catalogPath = Files.createTempDirectory("booster-catalog");
-         // Remove this directory on JVM termination
-         catalogPath.toFile().deleteOnExit();
-         logger.info(() -> "Created " + catalogPath);
-         // Clone repository
-         Git.cloneRepository()
-                  .setURI(catalogRepositoryURI)
-                  .setBranch(catalogRef)
-                  .setCloneSubmodules(true)
-                  .setDirectory(catalogPath.toFile())
-                  .call().close();
+         Path catalogPath = provider.getCatalogPath();
          this.boosters = indexBoosters(catalogPath);
-      }
-      catch (GitAPIException e)
-      {
-         logger.log(Level.SEVERE, "Error while performing Git operation", e);
       }
       catch (Exception e)
       {
@@ -211,7 +192,8 @@ public class BoosterCatalogService
     * @return an {@link Optional} containing a {@link Booster}
     */
    @SuppressWarnings("unchecked")
-   private Optional<Booster> indexBooster(String id, Path catalogPath, Path file, Path moduleDir, Map<String, Mission> missions,
+   private Optional<Booster> indexBooster(String id, Path catalogPath, Path file, Path moduleDir,
+            Map<String, Mission> missions,
             Map<String, Runtime> runtimes, Map<String, Version> versions)
    {
       logger.info(() -> "Indexing " + file + " ...");
@@ -236,39 +218,31 @@ public class BoosterCatalogService
             String versionId;
             String runtimeId;
             String missionId;
-            if (file.getParent().getParent().getParent().equals(catalogPath)) {
-                versionId = null;
-                runtimeId = file.getParent().toFile().getName();
-                missionId = file.getParent().getParent().toFile().getName();
-            } else {
-                versionId = file.getParent().toFile().getName();
-                runtimeId = file.getParent().getParent().toFile().getName();
-                missionId = file.getParent().getParent().getParent().toFile().getName();
+            if (file.getParent().getParent().getParent().equals(catalogPath))
+            {
+               versionId = null;
+               runtimeId = file.getParent().toFile().getName();
+               missionId = file.getParent().getParent().toFile().getName();
+            }
+            else
+            {
+               versionId = file.getParent().toFile().getName();
+               runtimeId = file.getParent().getParent().toFile().getName();
+               missionId = file.getParent().getParent().getParent().toFile().getName();
             }
 
             booster.setMission(missions.computeIfAbsent(missionId, Mission::new));
             booster.setRuntime(runtimes.computeIfAbsent(runtimeId, Runtime::new));
-            if (versionId != null) {
-                booster.setVersion(versions.computeIfAbsent(versionId, Version::new));
+            if (versionId != null)
+            {
+               booster.setVersion(versions.computeIfAbsent(versionId, Version::new));
             }
 
             booster.setContentPath(moduleDir);
             // Module does not exist. Clone it
             if (Files.notExists(moduleDir))
             {
-               try (Git git = Git.cloneRepository()
-                        .setDirectory(moduleDir.toFile())
-                        .setURI(GITHUB_URL + booster.getGithubRepo())
-                        .setCloneSubmodules(true)
-                        .setBranch(booster.getGitRef())
-                        .call())
-               {
-                  // Checkout on specified start point
-                  git.checkout()
-                           .setName(booster.getGitRef())
-                           .setStartPoint(booster.getGitRef())
-                           .call();
-               }
+               moduleDir = provider.getBoosterContentPath(booster);
             }
             Path metadataPath = moduleDir.resolve(booster.getBoosterDescriptorPath());
             try (BufferedReader metadataReader = Files.newBufferedReader(metadataPath))
@@ -283,10 +257,6 @@ public class BoosterCatalogService
                byte[] descriptionContent = Files.readAllBytes(descriptionPath);
                booster.setDescription(new String(descriptionContent));
             }
-         }
-         catch (GitAPIException gitException)
-         {
-            logger.log(Level.SEVERE, "Error while reading git repository", gitException);
          }
          catch (Exception e)
          {
@@ -342,7 +312,7 @@ public class BoosterCatalogService
 
    public Optional<Booster> getBooster(Mission mission, Runtime runtime)
    {
-       return getBooster(mission, runtime, null);
+      return getBooster(mission, runtime, null);
    }
 
    public Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version)
@@ -379,6 +349,7 @@ public class BoosterCatalogService
    {
       private String catalogRepositoryURI = "https://github.com/openshiftio/booster-catalog.git";
       private String catalogRef = "master";
+      private BoosterCatalogPathProvider pathProvider;
 
       public Builder catalogRef(String catalogRef)
       {
@@ -392,9 +363,20 @@ public class BoosterCatalogService
          return this;
       }
 
+      public Builder pathProvider(BoosterCatalogPathProvider pathProvider)
+      {
+         this.pathProvider = pathProvider;
+         return this;
+      }
+
       public BoosterCatalogService build()
       {
-         return new BoosterCatalogService(catalogRepositoryURI, catalogRef);
+         BoosterCatalogPathProvider provider = this.pathProvider;
+         if (provider == null)
+         {
+            provider = new GitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef);
+         }
+         return new BoosterCatalogService(provider);
       }
    }
 }
