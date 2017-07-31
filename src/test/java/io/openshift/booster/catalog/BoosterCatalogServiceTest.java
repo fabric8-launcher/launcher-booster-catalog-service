@@ -16,17 +16,32 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import io.openshift.booster.catalog.BoosterCatalogService.Builder;
+
 /**
  *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
 public class BoosterCatalogServiceTest
 {
+    
+   private BoosterCatalogService buildCatalogService() {
+       Builder builder = new BoosterCatalogService.Builder();
+       String repo = System.getenv("LAUNCHPAD_BACKEND_CATALOG_GIT_REPOSITORY");
+       if (repo != null) {
+           builder.catalogRepository(repo);
+       }
+       String ref = System.getenv("LAUNCHPAD_BACKEND_CATALOG_GIT_REF");
+       if (ref != null) {
+           builder.catalogRef(ref);
+       }
+       return builder.build();
+   }
 
    @Test
    public void testProcessMetadata() throws Exception
    {
-      BoosterCatalogService service = new BoosterCatalogService.Builder().build();
+      BoosterCatalogService service = buildCatalogService();
       Path metadataFile = Paths.get(getClass().getResource("metadata.json").toURI());
       Map<String, Mission> missions = new HashMap<>();
       Map<String, Runtime> runtimes = new HashMap<>();
@@ -38,7 +53,7 @@ public class BoosterCatalogServiceTest
    @Test
    public void testIndex() throws Exception
    {
-      BoosterCatalogService service = new BoosterCatalogService.Builder().build();
+      BoosterCatalogService service = buildCatalogService();
       assertThat(service.getBoosters()).isEmpty();
       service.index();
       assertThat(service.getBoosters()).isNotEmpty();
