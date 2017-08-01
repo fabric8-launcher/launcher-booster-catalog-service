@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import io.openshift.booster.catalog.BoosterCatalogService;
+import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 
 /**
  * Indexes a Booster catalog and adds all its contents to a ZIP file
@@ -29,9 +30,7 @@ public class BoosterIndexer
       Path targetZip = Paths.get(args[3]);
 
       BoosterCatalogService build = new BoosterCatalogService.Builder()
-               .catalogRepository(catalogRepository)
-               .catalogRef(catalogRef)
-               .rootDir(targetDir)
+               .pathProvider(new NativeGitBoosterCatalogPathProvider(catalogRepository, catalogRef, targetDir))
                .build();
 
       build.index();
