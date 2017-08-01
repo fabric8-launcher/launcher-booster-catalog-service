@@ -386,12 +386,29 @@ public class BoosterCatalogService
          BoosterCatalogPathProvider provider = this.pathProvider;
          if (provider == null)
          {
-            // Check if we can use a local ZIP
+            provider = discoverCatalogProvider();
+         }
+         assert provider != null : "BoosterCatalogPathProvider implementation is required";
+         logger.info("Using " + provider.getClass().getName());
+         return new BoosterCatalogService(provider);
+      }
+
+      private BoosterCatalogPathProvider discoverCatalogProvider()
+      {
+         final BoosterCatalogPathProvider provider;
+         // Check if we can use a local ZIP
+         boolean ignoreLocalZip = Boolean.getBoolean("BOOSTER_CATALOG_IGNORE_LOCAL")
+                  || Boolean.parseBoolean(System.getenv("BOOSTER_CATALOG_IGNORE_LOCAL"));
+         if (ignoreLocalZip)
+         {
+            provider = new GitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
+         }
+         else
+         {
             URL resource = getClass().getClassLoader()
                      .getResource(String.format("/booster-catalog-%s.zip", catalogRef));
             if (resource != null)
             {
-               logger.info("Using LocalBoosterCatalogPathProvider");
                provider = new LocalBoosterCatalogPathProvider(resource);
             }
             else
@@ -400,9 +417,7 @@ public class BoosterCatalogService
                provider = new GitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
             }
          }
-         assert provider != null : "BoosterCatalogPathProvider implementation is required";
-         logger.info("Using " + provider.getClass().getName());
-         return new BoosterCatalogService(provider);
+         return provider;
       }
    }
 }
