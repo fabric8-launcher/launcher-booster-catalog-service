@@ -30,27 +30,31 @@ public class GitBoosterCatalogPathProvider implements BoosterCatalogPathProvider
 
    private final String catalogRepositoryURI;
    private final String catalogRef;
+   private final Path rootDir;
 
    /**
     * @param catalogRepositoryURI
     * @param catalogRef
     */
-   public GitBoosterCatalogPathProvider(String catalogRepositoryURI, String catalogRef)
+   public GitBoosterCatalogPathProvider(String catalogRepositoryURI, String catalogRef, Path rootDir)
    {
       super();
       this.catalogRepositoryURI = catalogRepositoryURI;
       this.catalogRef = catalogRef;
+      this.rootDir = rootDir;
    }
 
    @Override
-   public Path getCatalogPath() throws IOException
+   public Path createCatalogPath() throws IOException
    {
       logger.log(Level.INFO, "Indexing contents from {0} using {1} ref",
                new Object[] { catalogRepositoryURI, catalogRef });
-      Path catalogPath = Files.createTempDirectory("booster-catalog");
-      // Remove this directory on JVM termination
-      catalogPath.toFile().deleteOnExit();
-      logger.info(() -> "Created " + catalogPath);
+      Path catalogPath = rootDir;
+      if (catalogPath == null)
+      {
+         catalogPath = Files.createTempDirectory("booster-catalog");
+         logger.info("Created " + catalogPath);
+      }
       try
       {
          Git.cloneRepository()
@@ -58,7 +62,8 @@ public class GitBoosterCatalogPathProvider implements BoosterCatalogPathProvider
                   .setBranch(catalogRef)
                   .setCloneSubmodules(true)
                   .setDirectory(catalogPath.toFile())
-                  .call().close();
+                  .call()
+                  .close();
       }
       catch (GitAPIException e)
       {
@@ -68,7 +73,7 @@ public class GitBoosterCatalogPathProvider implements BoosterCatalogPathProvider
    }
 
    @Override
-   public Path getBoosterContentPath(Booster booster) throws IOException
+   public Path createBoosterContentPath(Booster booster) throws IOException
    {
       try (Git git = Git.cloneRepository()
                .setDirectory(booster.getContentPath().toFile())
@@ -87,8 +92,6 @@ public class GitBoosterCatalogPathProvider implements BoosterCatalogPathProvider
       {
          throw new IOException("Error while reading git repository", e);
       }
-
       return booster.getContentPath();
    }
-
 }

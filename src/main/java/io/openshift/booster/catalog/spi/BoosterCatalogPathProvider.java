@@ -23,10 +23,10 @@ public interface BoosterCatalogPathProvider
    /**
     * Returns the path where the booster catalog is (for indexing)
     */
-   Path getCatalogPath() throws IOException;
+   Path createCatalogPath() throws IOException;
 
    /**
-    * Returns the path for a given booster
+    * Creates the content for a given booster and returns the target {@link Path}
     */
-   Path getBoosterContentPath(Booster booster) throws IOException;
+   Path createBoosterContentPath(Booster booster) throws IOException;
 }

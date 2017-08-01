@@ -12,6 +12,7 @@ import static io.openshift.booster.Files.removeFileExtension;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,6 +45,7 @@ import org.yaml.snakeyaml.Yaml;
 import io.openshift.booster.CopyFileVisitor;
 import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
 import io.openshift.booster.catalog.spi.GitBoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
 
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
@@ -60,9 +62,10 @@ public class BoosterCatalogService
    /**
     * Files to be excluded from project creation
     */
-   private static final List<String> EXCLUDED_PROJECT_FILES = Arrays.asList(".git", ".travis", ".travis.yml",
-            ".ds_store",
-            ".obsidian", ".gitmodules");
+   public static final List<String> EXCLUDED_PROJECT_FILES = Collections
+            .unmodifiableList(Arrays.asList(".git", ".travis", ".travis.yml",
+                     ".ds_store",
+                     ".obsidian", ".gitmodules"));
 
    private static final Logger logger = Logger.getLogger(BoosterCatalogService.class.getName());
 
@@ -78,15 +81,16 @@ public class BoosterCatalogService
    }
 
    /**
-    * Clones the catalog git repository and reads the obsidian metadata on each quickstart repository
+    * Indexes the existing YAML files provided by the {@link BoosterCatalogPathProvider} implementation
     */
-   public void index()
+   public Path index()
    {
       WriteLock lock = reentrantLock.writeLock();
+      Path catalogPath = null;
       try
       {
          lock.lock();
-         Path catalogPath = provider.getCatalogPath();
+         catalogPath = provider.createCatalogPath();
          this.boosters = indexBoosters(catalogPath);
       }
       catch (Exception e)
@@ -98,6 +102,7 @@ public class BoosterCatalogService
          logger.info(() -> "Finished content indexing");
          lock.unlock();
       }
+      return catalogPath;
    }
 
    /**
@@ -239,10 +244,9 @@ public class BoosterCatalogService
             }
 
             booster.setContentPath(moduleDir);
-            // Module does not exist. Clone it
             if (Files.notExists(moduleDir))
             {
-               moduleDir = provider.getBoosterContentPath(booster);
+               moduleDir = provider.createBoosterContentPath(booster);
             }
             Path metadataPath = moduleDir.resolve(booster.getBoosterDescriptorPath());
             try (BufferedReader metadataReader = Files.newBufferedReader(metadataPath))
@@ -349,6 +353,7 @@ public class BoosterCatalogService
    {
       private String catalogRepositoryURI = "https://github.com/openshiftio/booster-catalog.git";
       private String catalogRef = "master";
+      private Path rootDir;
       private BoosterCatalogPathProvider pathProvider;
 
       public Builder catalogRef(String catalogRef)
@@ -369,13 +374,34 @@ public class BoosterCatalogService
          return this;
       }
 
+      public Builder rootDir(Path root)
+      {
+         this.rootDir = root;
+         return this;
+      }
+
       public BoosterCatalogService build()
       {
+         assert catalogRef != null : "Catalog Ref is required";
          BoosterCatalogPathProvider provider = this.pathProvider;
          if (provider == null)
          {
-            provider = new GitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef);
+            // Check if we can use a local ZIP
+            URL resource = getClass().getClassLoader()
+                     .getResource(String.format("/booster-catalog-%s.zip", catalogRef));
+            if (resource != null)
+            {
+               logger.info("Using LocalBoosterCatalogPathProvider");
+               provider = new LocalBoosterCatalogPathProvider(resource);
+            }
+            else
+            {
+               // Resource not found, fallback to original Git resolution
+               provider = new GitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
+            }
          }
+         assert provider != null : "BoosterCatalogPathProvider implementation is required";
+         logger.info("Using " + provider.getClass().getName());
          return new BoosterCatalogService(provider);
       }
    }
