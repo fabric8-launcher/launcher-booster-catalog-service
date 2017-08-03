@@ -253,6 +253,18 @@ public class BoosterCatalogService
             {
                Map<String, Object> metadata = yaml.loadAs(metadataReader, Map.class);
                booster.setMetadata(metadata);
+               
+               if (versionId != null) {
+                   List<Map<String, Object>> vlist = (List<Map<String, Object>>)metadata.get("versions");
+                   if (vlist != null) {
+                       final Booster b = booster;
+                       vlist
+                           .stream()
+                           .map(m -> new Version(Objects.toString(m.get("id")), Objects.toString(m.get("name"))))
+                           .filter(v -> b.getVersion().getId().equals(v.getId()))
+                           .forEach(v -> b.setVersion(v));
+                   }
+               }
             }
 
             Path descriptionPath = moduleDir.resolve(booster.getBoosterDescriptionPath());
