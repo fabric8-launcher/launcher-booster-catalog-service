@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.jboss</groupId>
@@ -18,44 +19,6 @@
    </licenses>
    <build>
       <plugins>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>create-openshift-online-free-catalog</id>
-                  <phase>prepare-package</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-                  <configuration>
-                     <mainClass>io.openshift.booster.BoosterIndexer</mainClass>
-                     <arguments>
-                        <argument>${catalog.repository}</argument>
-                        <argument>openshift-online-free</argument>
-                        <argument>${project.build.directory}/booster-catalog-openshift-online-free</argument>
-                        <argument>${project.build.outputDirectory}/booster-catalog-openshift-online-free.zip</argument>
-                     </arguments>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>create-next-catalog</id>
-                  <phase>prepare-package</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-                  <configuration>
-                     <mainClass>io.openshift.booster.BoosterIndexer</mainClass>
-                     <arguments>
-                        <argument>${catalog.repository}</argument>
-                        <argument>next</argument>
-                        <argument>${project.build.directory}/booster-catalog-next</argument>
-                        <argument>${project.build.outputDirectory}/booster-catalog-next.zip</argument>
-                     </arguments>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
          <plugin>
             <artifactId>maven-release-plugin</artifactId>
             <configuration>
@@ -80,8 +43,6 @@
       <snakeyaml.version>1.18</snakeyaml.version>
       <json.version>1.0.4</json.version>
       <jgit.version>4.8.0.201706111038-r</jgit.version>
-      <!-- Indexer properties -->
-      <catalog.repository>https://github.com/openshiftio/booster-catalog</catalog.repository>
    </properties>
    <dependencies>
       <!-- Compile-time dependency -->
