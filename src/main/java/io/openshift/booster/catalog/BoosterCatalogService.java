@@ -44,8 +44,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import io.openshift.booster.CopyFileVisitor;
 import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
-import io.openshift.booster.catalog.spi.GitBoosterCatalogPathProvider;
 import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
@@ -253,17 +253,19 @@ public class BoosterCatalogService
             {
                Map<String, Object> metadata = yaml.loadAs(metadataReader, Map.class);
                booster.setMetadata(metadata);
-               
-               if (versionId != null) {
-                   List<Map<String, Object>> vlist = (List<Map<String, Object>>)metadata.get("versions");
-                   if (vlist != null) {
-                       final Booster b = booster;
-                       vlist
-                           .stream()
-                           .map(m -> new Version(Objects.toString(m.get("id")), Objects.toString(m.get("name"))))
-                           .filter(v -> b.getVersion().getId().equals(v.getId()))
-                           .forEach(v -> b.setVersion(v));
-                   }
+
+               if (versionId != null)
+               {
+                  List<Map<String, Object>> vlist = (List<Map<String, Object>>) metadata.get("versions");
+                  if (vlist != null)
+                  {
+                     final Booster b = booster;
+                     vlist
+                              .stream()
+                              .map(m -> new Version(Objects.toString(m.get("id")), Objects.toString(m.get("name"))))
+                              .filter(v -> b.getVersion().getId().equals(v.getId()))
+                              .forEach(v -> b.setVersion(v));
+                  }
                }
             }
 
@@ -413,7 +415,7 @@ public class BoosterCatalogService
                   || Boolean.parseBoolean(System.getenv("BOOSTER_CATALOG_IGNORE_LOCAL"));
          if (ignoreLocalZip)
          {
-            provider = new GitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
+            provider = new NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
          }
          else
          {
@@ -426,7 +428,7 @@ public class BoosterCatalogService
             else
             {
                // Resource not found, fallback to original Git resolution
-               provider = new GitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
+               provider = new NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
             }
          }
          return provider;
