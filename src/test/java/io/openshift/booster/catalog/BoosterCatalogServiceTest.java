@@ -55,7 +55,7 @@ public class BoosterCatalogServiceTest
    {
       BoosterCatalogService service = buildCatalogService();
       assertThat(service.getBoosters()).isEmpty();
-      service.index();
+      service.index().get();
       assertThat(service.getBoosters()).isNotEmpty();
    }
 }

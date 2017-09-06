@@ -18,8 +18,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -29,9 +29,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -69,52 +70,58 @@ public class BoosterCatalogService
 
    private static final Logger logger = Logger.getLogger(BoosterCatalogService.class.getName());
 
-   private final ReentrantReadWriteLock reentrantLock = new ReentrantReadWriteLock();
-
-   private volatile List<Booster> boosters = Collections.emptyList();
+   private final Set<Booster> boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getName));
 
    private final BoosterCatalogPathProvider provider;
+   
+   private final ExecutorService executor;
+   
+   private final CompletableFuture<Set<Booster>> result = new CompletableFuture<>();
+   private volatile boolean indexingStarted = false;
 
-   private BoosterCatalogService(BoosterCatalogPathProvider provider)
+   private BoosterCatalogService(BoosterCatalogPathProvider provider, ExecutorService executor)
    {
       this.provider = provider;
+      this.executor = executor;
    }
 
    /**
     * Indexes the existing YAML files provided by the {@link BoosterCatalogPathProvider} implementation
     */
-   public Path index()
+   public synchronized CompletableFuture<Set<Booster>> index()
    {
-      WriteLock lock = reentrantLock.writeLock();
-      Path catalogPath = null;
-      try
-      {
-         lock.lock();
-         catalogPath = provider.createCatalogPath();
-         this.boosters = indexBoosters(catalogPath);
+      if (!indexingStarted) {
+          indexingStarted = true;
+          CompletableFuture.runAsync(() -> {
+             try {
+                doIndex();
+                result.complete(boosters);
+             } catch (Exception ex) {
+                result.completeExceptionally(ex);
+             }
+          }, executor);
+       }
+      return result;
+   }
+   
+   private void doIndex() throws Exception
+   {
+      try {
+         Path catalogPath = provider.createCatalogPath();
+         indexBoosters(catalogPath, boosters);
+         logger.info(() -> "Finished content indexing");
       }
       catch (Exception e)
       {
          logger.log(Level.SEVERE, "Error while indexing", e);
+         throw e;
       }
-      finally
-      {
-         logger.info(() -> "Finished content indexing");
-         lock.unlock();
-      }
-      return catalogPath;
    }
 
-   /**
-    * @param moduleRoot
-    * @return
-    * @throws IOException
-    */
-   private List<Booster> indexBoosters(final Path catalogPath) throws IOException
+   private void indexBoosters(final Path catalogPath, final Set<Booster> boosters) throws IOException
    {
       Path moduleRoot = catalogPath.resolve(CLONED_BOOSTERS_DIR);
       Path metadataFile = catalogPath.resolve(METADATA_FILE);
-      List<Booster> boosters = new ArrayList<>();
       Map<String, Mission> missions = new HashMap<>();
       Map<String, Runtime> runtimes = new HashMap<>();
       Map<String, Version> versions = new HashMap<>();
@@ -153,8 +160,6 @@ public class BoosterCatalogService
             return dir.startsWith(moduleRoot) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
          }
       });
-      boosters.sort(Comparator.comparing(Booster::getName));
-      return Collections.unmodifiableList(boosters);
    }
 
    /**
@@ -344,18 +349,9 @@ public class BoosterCatalogService
                .findFirst();
    }
 
-   public List<Booster> getBoosters()
+   public Collection<Booster> getBoosters()
    {
-      Lock readLock = reentrantLock.readLock();
-      try
-      {
-         readLock.lock();
-         return boosters;
-      }
-      finally
-      {
-         readLock.unlock();
-      }
+      return Collections.unmodifiableCollection(boosters);
    }
 
    /**
@@ -369,6 +365,7 @@ public class BoosterCatalogService
       private String catalogRef = "master";
       private Path rootDir;
       private BoosterCatalogPathProvider pathProvider;
+      private ExecutorService executor;
 
       public Builder catalogRef(String catalogRef)
       {
@@ -388,6 +385,12 @@ public class BoosterCatalogService
          return this;
       }
 
+      public Builder executor(ExecutorService executor)
+      {
+         this.executor = executor;
+         return this;
+      }
+
       public Builder rootDir(Path root)
       {
          this.rootDir = root;
@@ -404,7 +407,10 @@ public class BoosterCatalogService
          }
          assert provider != null : "BoosterCatalogPathProvider implementation is required";
          logger.info("Using " + provider.getClass().getName());
-         return new BoosterCatalogService(provider);
+         if (executor == null) {
+            executor = ForkJoinPool.commonPool();
+         }
+         return new BoosterCatalogService(provider, executor);
       }
 
       private BoosterCatalogPathProvider discoverCatalogProvider()

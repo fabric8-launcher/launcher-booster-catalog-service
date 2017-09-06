@@ -33,7 +33,7 @@ public class BoosterIndexer
                .pathProvider(new NativeGitBoosterCatalogPathProvider(catalogRepository, catalogRef, targetDir))
                .build();
 
-      build.index();
+      build.index().get();
       try (OutputStream os = Files.newOutputStream(targetZip))
       {
          io.openshift.booster.Files.zip("", targetDir, os);
