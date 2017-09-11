@@ -54,7 +54,7 @@ import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
  * 
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class BoosterCatalogService
+public class BoosterCatalogService implements BoosterCatalog
 {
    private static final String CLONED_BOOSTERS_DIR = ".boosters";
    private static final String METADATA_FILE = "metadata.json";
@@ -292,6 +292,7 @@ public class BoosterCatalogService
    /**
     * Copies the {@link Booster} contents to the specified {@link Path}
     */
+   @Override
    public Path copy(Booster booster, Path projectRoot) throws IOException
    {
       Path modulePath = booster.getContentPath();
@@ -300,6 +301,7 @@ public class BoosterCatalogService
                         (p) -> !EXCLUDED_PROJECT_FILES.contains(p.toFile().getName().toLowerCase())));
    }
 
+   @Override
    public Set<Mission> getMissions()
    {
       return boosters.stream()
@@ -307,6 +309,7 @@ public class BoosterCatalogService
                .collect(Collectors.toCollection(TreeSet::new));
    }
 
+   @Override
    public Set<Runtime> getRuntimes(Mission mission)
    {
       if (mission == null)
@@ -319,6 +322,7 @@ public class BoosterCatalogService
                .collect(Collectors.toCollection(TreeSet::new));
    }
 
+   @Override
    public Set<Version> getVersions(Mission mission, Runtime runtime)
    {
       if (mission == null || runtime == null)
@@ -333,11 +337,13 @@ public class BoosterCatalogService
                .collect(Collectors.toCollection(TreeSet::new));
    }
 
+   @Override
    public Optional<Booster> getBooster(Mission mission, Runtime runtime)
    {
       return getBooster(mission, runtime, null);
    }
 
+   @Override
    public Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version)
    {
       Objects.requireNonNull(mission, "Mission should not be null");
@@ -349,6 +355,7 @@ public class BoosterCatalogService
                .findFirst();
    }
 
+   @Override
    public Collection<Booster> getBoosters()
    {
       return Collections.unmodifiableCollection(boosters);
