@@ -7,7 +7,7 @@
    </parent>
    <groupId>io.openshift</groupId>
    <artifactId>booster-catalog-service</artifactId>
-   <version>8-SNAPSHOT</version>
+   <version>8</version>
    <licenses>
       <license>
          <name>Apache License, Version 2.0</name>
@@ -72,6 +72,6 @@
       <connection>scm:git:git://github.com/openshiftio/booster-catalog-service.git</connection>
       <developerConnection>scm:git:git@github.com:openshiftio/booster-catalog-service.git</developerConnection>
       <url>http://github.com/openshiftio/booster-catalog-service</url>
-      <tag>HEAD</tag>
+      <tag>v8</tag>
    </scm>
 </project>
