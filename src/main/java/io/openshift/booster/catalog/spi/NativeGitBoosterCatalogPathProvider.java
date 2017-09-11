@@ -24,7 +24,7 @@ import io.openshift.booster.catalog.Booster;
 public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathProvider
 {
    private static final Logger logger = Logger.getLogger(NativeGitBoosterCatalogPathProvider.class.getName());
-   private static final String GITHUB_URL = "https://github.com/";
+   private static final String BOOSTER_CATALOG_GIT_HOST = System.getProperty("BOOSTER_CATALOG_DEFAULT_GIT_HOST", "https://github.com/");
 
    private final String catalogRepositoryURI;
    private final String catalogRef;
@@ -77,7 +77,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
       try
       {
          ProcessBuilder builder = new ProcessBuilder()
-                  .command("git", "clone", GITHUB_URL + booster.getGithubRepo(),
+                  .command("git", "clone", BOOSTER_CATALOG_GIT_HOST + booster.getGithubRepo(),
                            "--branch", booster.getGitRef(),
                            "--recursive",
                            "--depth=1",
