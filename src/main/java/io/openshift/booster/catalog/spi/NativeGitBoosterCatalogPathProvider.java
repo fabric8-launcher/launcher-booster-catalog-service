@@ -24,7 +24,8 @@ import io.openshift.booster.catalog.Booster;
 public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathProvider
 {
    private static final Logger logger = Logger.getLogger(NativeGitBoosterCatalogPathProvider.class.getName());
-   private static final String BOOSTER_CATALOG_GIT_HOST = System.getProperty("BOOSTER_CATALOG_DEFAULT_GIT_HOST", "https://github.com/");
+   private static final String BOOSTER_CATALOG_GIT_HOST = getEnvVarOrSysProp("BOOSTER_CATALOG_DEFAULT_GIT_HOST",
+            "https://github.com/");
 
    private final String catalogRepositoryURI;
    private final String catalogRef;
@@ -100,4 +101,10 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
       }
       return booster.getContentPath();
    }
+
+   private static String getEnvVarOrSysProp(String name, String defaultValue)
+   {
+      return System.getProperty(name, System.getenv().getOrDefault(name, defaultValue));
+   }
+
 }
