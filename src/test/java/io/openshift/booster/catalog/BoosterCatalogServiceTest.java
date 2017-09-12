@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -24,18 +25,21 @@ import io.openshift.booster.catalog.BoosterCatalogService.Builder;
  */
 public class BoosterCatalogServiceTest
 {
-    
-   private BoosterCatalogService buildCatalogService() {
-       Builder builder = new BoosterCatalogService.Builder();
-       String repo = System.getenv("LAUNCHPAD_BACKEND_CATALOG_GIT_REPOSITORY");
-       if (repo != null) {
-           builder.catalogRepository(repo);
-       }
-       String ref = System.getenv("LAUNCHPAD_BACKEND_CATALOG_GIT_REF");
-       if (ref != null) {
-           builder.catalogRef(ref);
-       }
-       return builder.build();
+
+   private BoosterCatalogService buildCatalogService()
+   {
+      Builder builder = new BoosterCatalogService.Builder();
+      String repo = System.getenv("LAUNCHPAD_BACKEND_CATALOG_GIT_REPOSITORY");
+      if (repo != null)
+      {
+         builder.catalogRepository(repo);
+      }
+      String ref = System.getenv("LAUNCHPAD_BACKEND_CATALOG_GIT_REF");
+      if (ref != null)
+      {
+         builder.catalogRef(ref);
+      }
+      return builder.build();
    }
 
    @Test
@@ -57,5 +61,17 @@ public class BoosterCatalogServiceTest
       assertThat(service.getBoosters()).isEmpty();
       service.index().get();
       assertThat(service.getBoosters()).isNotEmpty();
+   }
+
+   @Test
+   public void testVertxVersions() throws Exception
+   {
+      BoosterCatalogService service = new BoosterCatalogService.Builder()
+               .catalogRepository("https://github.com/gastaldi/booster-catalog.git").catalogRef("vertx_two_versions")
+               .build();
+      service.index().get();
+      assertThat(service.getBoosters()).hasSize(2);
+      Set<Version> versions = service.getVersions(new Mission("rest-http"), new Runtime("vert.x"));
+      assertThat(versions).hasSize(2);
    }
 }

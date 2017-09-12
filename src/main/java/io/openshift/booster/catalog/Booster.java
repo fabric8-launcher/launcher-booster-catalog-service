@@ -254,8 +254,9 @@ public class Booster
    @Override
    public String toString()
    {
-      return "Booster [githubRepo=" + githubRepo + ", gitRef=" + gitRef + ", buildProfile=" + buildProfile
-               + ", obsidianDescriptorPath=" + boosterDescriptorPath + ", metadata=" + metadata + ", getName()="
-               + getName() + ", getDescription()=" + getDescription() + "]";
+      return "Booster [id=" + id + ", githubRepo=" + githubRepo + ", gitRef=" + gitRef + ", buildProfile="
+               + buildProfile + ", description=" + description + ", boosterDescriptorPath=" + boosterDescriptorPath
+               + ", mission=" + mission + ", runtime=" + runtime + ", version=" + version + ", contentPath="
+               + contentPath + ", metadata=" + metadata + "]";
    }
 }

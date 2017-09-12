@@ -69,7 +69,7 @@ public class BoosterCatalogService implements BoosterCatalog
 
    private static final Logger logger = Logger.getLogger(BoosterCatalogService.class.getName());
 
-   private final Set<Booster> boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getName));
+   private final Set<Booster> boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
 
    private final BoosterCatalogPathProvider provider;
 
