@@ -227,11 +227,7 @@ public class Booster
    {
       final int prime = 31;
       int result = 1;
-      result = prime * result + ((buildProfile == null) ? 0 : buildProfile.hashCode());
-      result = prime * result + ((gitRef == null) ? 0 : gitRef.hashCode());
-      result = prime * result + ((githubRepo == null) ? 0 : githubRepo.hashCode());
       result = prime * result + ((id == null) ? 0 : id.hashCode());
-      result = prime * result + ((boosterDescriptorPath == null) ? 0 : boosterDescriptorPath.hashCode());
       return result;
    }
 
@@ -245,40 +241,12 @@ public class Booster
       if (getClass() != obj.getClass())
          return false;
       Booster other = (Booster) obj;
-      if (buildProfile == null)
-      {
-         if (other.buildProfile != null)
-            return false;
-      }
-      else if (!buildProfile.equals(other.buildProfile))
-         return false;
-      if (gitRef == null)
-      {
-         if (other.gitRef != null)
-            return false;
-      }
-      else if (!gitRef.equals(other.gitRef))
-         return false;
-      if (githubRepo == null)
-      {
-         if (other.githubRepo != null)
-            return false;
-      }
-      else if (!githubRepo.equals(other.githubRepo))
-         return false;
       if (id == null)
       {
          if (other.id != null)
             return false;
       }
       else if (!id.equals(other.id))
-         return false;
-      if (boosterDescriptorPath == null)
-      {
-         if (other.boosterDescriptorPath != null)
-            return false;
-      }
-      else if (!boosterDescriptorPath.equals(other.boosterDescriptorPath))
          return false;
       return true;
    }
