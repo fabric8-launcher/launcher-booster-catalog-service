@@ -161,7 +161,9 @@ public class BoosterCatalogService implements BoosterCatalog
             {
                return FileVisitResult.TERMINATE;
             }
-            return dir.startsWith(moduleRoot) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+            return dir.startsWith(moduleRoot) || dir.getFileName().startsWith(".git")
+                     ? FileVisitResult.SKIP_SUBTREE
+                     : FileVisitResult.CONTINUE;
          }
       });
    }
