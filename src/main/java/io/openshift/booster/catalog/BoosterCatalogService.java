@@ -59,7 +59,6 @@ public class BoosterCatalogService implements BoosterCatalog
    private static final String CLONED_BOOSTERS_DIR = ".boosters";
    private static final String METADATA_FILE = "metadata.json";
 
-   private static final Yaml yaml = new Yaml(new YamlConstructor());
    /**
     * Files to be excluded from project creation
     */
@@ -73,9 +72,9 @@ public class BoosterCatalogService implements BoosterCatalog
    private final Set<Booster> boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getName));
 
    private final BoosterCatalogPathProvider provider;
-   
+
    private final ExecutorService executor;
-   
+
    private final CompletableFuture<Set<Booster>> result = new CompletableFuture<>();
    private volatile boolean indexingStarted = false;
 
@@ -90,23 +89,28 @@ public class BoosterCatalogService implements BoosterCatalog
     */
    public synchronized CompletableFuture<Set<Booster>> index()
    {
-      if (!indexingStarted) {
-          indexingStarted = true;
-          CompletableFuture.runAsync(() -> {
-             try {
-                doIndex();
-                result.complete(boosters);
-             } catch (Exception ex) {
-                result.completeExceptionally(ex);
-             }
-          }, executor);
-       }
+      if (!indexingStarted)
+      {
+         indexingStarted = true;
+         CompletableFuture.runAsync(() -> {
+            try
+            {
+               doIndex();
+               result.complete(boosters);
+            }
+            catch (Exception ex)
+            {
+               result.completeExceptionally(ex);
+            }
+         }, executor);
+      }
       return result;
    }
-   
+
    private void doIndex() throws Exception
    {
-      try {
+      try
+      {
          Path catalogPath = provider.createCatalogPath();
          indexBoosters(catalogPath, boosters);
          logger.info(() -> "Finished content indexing");
@@ -207,7 +211,7 @@ public class BoosterCatalogService implements BoosterCatalog
             Map<String, Runtime> runtimes, Map<String, Version> versions)
    {
       logger.info(() -> "Indexing " + file + " ...");
-
+      Yaml yaml = new Yaml(new YamlConstructor());
       Booster booster = null;
       try (BufferedReader reader = Files.newBufferedReader(file))
       {
@@ -414,7 +418,8 @@ public class BoosterCatalogService implements BoosterCatalog
          }
          assert provider != null : "BoosterCatalogPathProvider implementation is required";
          logger.info("Using " + provider.getClass().getName());
-         if (executor == null) {
+         if (executor == null)
+         {
             executor = ForkJoinPool.commonPool();
          }
          return new BoosterCatalogService(provider, executor);
