@@ -14,7 +14,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- *
+ * General operations for a set of {@link Booster} objects
+ * 
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
 public interface BoosterCatalog
@@ -24,16 +25,53 @@ public interface BoosterCatalog
     */
    Path copy(Booster booster, Path projectRoot) throws IOException;
 
-   Set<Mission> getMissions(String ...labels);
+   /**
+    * Returns a {@link Collection} of {@link Booster} objects, filtering by a set of labels.
+    * 
+    * @param mission The {@link Mission} belonging to the {@link Booster} objects
+    * @param runtime The {@link Runtime} belonging to the {@link Booster} objects
+    * @param labels The labels belonging to the {@link Runtime} objects
+    * @return an {@link Optional} for the given method parameters
+    */
+   Collection<Booster> getBoosters(String... labels);
 
-   Set<Runtime> getRuntimes(Mission mission, String ...labels);
+   // Query methods
 
-   Set<Version> getVersions(Mission mission, Runtime runtime, String ...labels);
+   /**
+    * @param labels labels for filtering purposes
+    * @return an immutable {@link Set} of {@link Mission} matching the given labels
+    */
+   Set<Mission> getMissions(String... labels);
 
-   Optional<Booster> getBooster(Mission mission, Runtime runtime, String ...labels);
+   /**
+    * @param mission The {@link Mission} belonging to the {@link Runtime} objects
+    * @param labels The labels belonging to the {@link Runtime} objects
+    * @return an immutable {@link Set} of {@link Runtime} matching the given labels
+    */
+   Set<Runtime> getRuntimes(Mission mission, String... labels);
 
-   Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version, String ...labels);
+   /**
+    * @param mission The {@link Mission} belonging to the {@link Version} objects
+    * @param runtime The {@link Runtime} belonging to the {@link Version} objects
+    * @param labels The labels belonging to the {@link Runtime} objects
+    * @return an immutable {@link Set} of {@link Version} matching the given labels
+    */
+   Set<Version> getVersions(Mission mission, Runtime runtime, String... labels);
 
-   Collection<Booster> getBoosters(String ...labels);
+   /**
+    * @param mission The {@link Mission} belonging to the {@link Booster} object
+    * @param runtime The {@link Runtime} belonging to the {@link Booster} object
+    * @param labels The labels belonging to the {@link Runtime} objects
+    * @return an {@link Optional} for the given method parameters
+    */
+   Optional<Booster> getBooster(Mission mission, Runtime runtime, String... labels);
+
+   /**
+    * @param mission The {@link Mission} belonging to the {@link Booster} objects
+    * @param runtime The {@link Runtime} belonging to the {@link Booster} objects
+    * @param labels The labels belonging to the {@link Runtime} objects
+    * @return an {@link Optional} for the given method parameters
+    */
+   Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version, String... labels);
 
 }
