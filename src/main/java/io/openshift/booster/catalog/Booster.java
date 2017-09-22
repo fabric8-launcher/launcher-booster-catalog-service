@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A quickstart representation
@@ -29,6 +30,7 @@ public class Booster
    private Mission mission;
    private Runtime runtime;
    private Version version;
+   private Set<String> labels = Collections.emptySet();
 
    private Path contentPath;
 
@@ -222,6 +224,21 @@ public class Booster
       this.metadata = metadata;
    }
 
+   /**
+    * @return the labels
+    */
+   public Set<String> getLabels() {
+      return labels;
+   }
+
+   /**
+    * @param labels the labels to set
+    */
+   public void setLabels(Set<String> labels) {
+      assert labels !=null;
+      this.labels = labels;
+   }
+
    @Override
    public int hashCode()
    {
@@ -257,6 +274,6 @@ public class Booster
       return "Booster [id=" + id + ", githubRepo=" + githubRepo + ", gitRef=" + gitRef + ", buildProfile="
                + buildProfile + ", description=" + description + ", boosterDescriptorPath=" + boosterDescriptorPath
                + ", mission=" + mission + ", runtime=" + runtime + ", version=" + version + ", contentPath="
-               + contentPath + ", metadata=" + metadata + "]";
+               + contentPath + ", metadata=" + metadata+ ", labels=" + labels + "]";
    }
 }

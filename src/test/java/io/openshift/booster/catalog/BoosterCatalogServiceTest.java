@@ -74,4 +74,19 @@ public class BoosterCatalogServiceTest
       Set<Version> versions = service.getVersions(new Mission("rest-http"), new Runtime("vert.x"));
       assertThat(versions).hasSize(2);
    }
+
+   @Test
+   public void testFilter() throws Exception
+   {
+      BoosterCatalogService service = new BoosterCatalogService.Builder()
+              .catalogRepository("https://github.com/chirino/booster-catalog.git").catalogRef("filter_test")
+              .build();
+      service.index().get();
+      assertThat(service.getBoosters("vert.x")).hasSize(2);
+      assertThat(service.getBoosters("redhat")).hasSize(1);
+      assertThat(service.getBoosters("community")).hasSize(1);
+      assertThat(service.getBoosters("vert.x", "redhat")).hasSize(1);
+      assertThat(service.getBoosters("community", "redhat")).hasSize(0);
+   }
+
 }

@@ -24,16 +24,16 @@ public interface BoosterCatalog
     */
    Path copy(Booster booster, Path projectRoot) throws IOException;
 
-   Set<Mission> getMissions();
+   Set<Mission> getMissions(String ...labels);
 
-   Set<Runtime> getRuntimes(Mission mission);
+   Set<Runtime> getRuntimes(Mission mission, String ...labels);
 
-   Set<Version> getVersions(Mission mission, Runtime runtime);
+   Set<Version> getVersions(Mission mission, Runtime runtime, String ...labels);
 
-   Optional<Booster> getBooster(Mission mission, Runtime runtime);
+   Optional<Booster> getBooster(Mission mission, Runtime runtime, String ...labels);
 
-   Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version);
+   Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version, String ...labels);
 
-   Collection<Booster> getBoosters();
+   Collection<Booster> getBoosters(String ...labels);
 
 }

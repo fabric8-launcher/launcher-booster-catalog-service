@@ -7,8 +7,15 @@
 
 package io.openshift.booster.catalog;
 
-import static io.openshift.booster.Files.removeFileExtension;
+import io.openshift.booster.CopyFileVisitor;
+import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
+import org.yaml.snakeyaml.Yaml;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,17 +44,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-
-import org.yaml.snakeyaml.Yaml;
-
-import io.openshift.booster.CopyFileVisitor;
-import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
-import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
-import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
+import static io.openshift.booster.Files.removeFileExtension;
 
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
@@ -308,34 +308,47 @@ public class BoosterCatalogService implements BoosterCatalog
    }
 
    @Override
-   public Set<Mission> getMissions()
+   public Set<Mission> getMissions(String ...labels)
    {
-      return boosters.stream()
+      return filtered(boosters.stream(), labels)
                .map(Booster::getMission)
                .collect(Collectors.toCollection(TreeSet::new));
    }
 
+   private Stream<Booster> filtered(Stream<Booster> stream, final String[] labels) {
+      if( labels == null || labels.length==0 )
+         return stream;
+      return stream.filter(x -> {
+         for (String label : labels) {
+            if( !x.getLabels().contains(label) ) {
+               return false;
+            }
+         }
+         return true;
+      });
+   }
+
    @Override
-   public Set<Runtime> getRuntimes(Mission mission)
+   public Set<Runtime> getRuntimes(Mission mission, String ...labels)
    {
       if (mission == null)
       {
          return Collections.emptySet();
       }
-      return boosters.stream()
+      return filtered(boosters.stream(), labels)
                .filter(b -> mission.equals(b.getMission()))
                .map(Booster::getRuntime)
                .collect(Collectors.toCollection(TreeSet::new));
    }
 
    @Override
-   public Set<Version> getVersions(Mission mission, Runtime runtime)
+   public Set<Version> getVersions(Mission mission, Runtime runtime, String ...labels)
    {
       if (mission == null || runtime == null)
       {
          return Collections.emptySet();
       }
-      return boosters.stream()
+      return filtered(boosters.stream(), labels)
                .filter(b -> mission.equals(b.getMission()))
                .filter(b -> runtime.equals(b.getRuntime()))
                .filter(b -> b.getVersion() != null)
@@ -344,17 +357,17 @@ public class BoosterCatalogService implements BoosterCatalog
    }
 
    @Override
-   public Optional<Booster> getBooster(Mission mission, Runtime runtime)
+   public Optional<Booster> getBooster(Mission mission, Runtime runtime, String ...labels)
    {
-      return getBooster(mission, runtime, null);
+      return getBooster(mission, runtime, null, labels);
    }
 
    @Override
-   public Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version)
+   public Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version, String ...labels)
    {
       Objects.requireNonNull(mission, "Mission should not be null");
       Objects.requireNonNull(runtime, "Runtime should not be null");
-      return boosters.stream()
+      return filtered(boosters.stream(), labels)
                .filter(b -> mission.equals(b.getMission()))
                .filter(b -> runtime.equals(b.getRuntime()))
                .filter(b -> version == null || version.equals(b.getVersion()))
@@ -362,9 +375,9 @@ public class BoosterCatalogService implements BoosterCatalog
    }
 
    @Override
-   public Collection<Booster> getBoosters()
+   public Collection<Booster> getBoosters(String ...labels)
    {
-      return Collections.unmodifiableCollection(boosters);
+      return filtered(boosters.stream(), labels).collect(Collectors.toCollection(HashSet::new));
    }
 
    /**
