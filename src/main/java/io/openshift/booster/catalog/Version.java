@@ -18,12 +18,13 @@ public class Version implements Comparable<Version>
 
    public Version(String id)
    {
-      this.id = id;
-      this.name = id;
+      this(id, id);
    }
 
    public Version(String id, String name)
    {
+      assert id != null : "Version Id cannot be null";
+      assert name != null : "Version Name cannot be null";
       this.id = id;
       this.name = name;
    }

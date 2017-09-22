@@ -18,12 +18,13 @@ public class Mission implements Comparable<Mission>
 
    public Mission(String id)
    {
-      this.id = id;
-      this.name = id;
+      this(id, id);
    }
 
    public Mission(String id, String name)
    {
+      assert id != null : "Mission Id cannot be null";
+      assert name != null : "Mission Name cannot be null";
       this.id = id;
       this.name = name;
    }

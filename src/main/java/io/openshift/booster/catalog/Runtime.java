@@ -18,12 +18,13 @@ public class Runtime implements Comparable<Runtime>
 
    public Runtime(String id)
    {
-      this.id = id;
-      this.name = id;
+      this(id, id);
    }
 
    public Runtime(String id, String name)
    {
+      assert id != null : "Runtime Id cannot be null";
+      assert name != null : "Runtime Name cannot be null";
       this.id = id;
       this.name = name;
    }
