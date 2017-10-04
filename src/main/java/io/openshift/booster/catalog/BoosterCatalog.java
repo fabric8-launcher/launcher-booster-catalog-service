@@ -31,17 +31,37 @@ public interface BoosterCatalog
     * @param mission The {@link Mission} belonging to the {@link Booster} objects
     * @param runtime The {@link Runtime} belonging to the {@link Booster} objects
     * @param labels The labels belonging to the {@link Runtime} objects
-    * @return an {@link Optional} for the given method parameters
+    * @return a {@link Collection} of {@link Booster} objects
     */
    Collection<Booster> getBoosters(String... labels);
 
    // Query methods
 
    /**
+    * 
+    * @param runtime The {@link Runtime} belonging to the {@link Version} objects
+    * @param labels labels for filtering purposes
+    * @return a {@link Collection} of {@link Booster} objects
+    */
+   Collection<Booster> getBoosters(Runtime runtime, String... labels);
+
+   /**
     * @param labels labels for filtering purposes
     * @return an immutable {@link Set} of {@link Mission} matching the given labels
     */
    Set<Mission> getMissions(String... labels);
+
+   /**
+    * @param labels labels for filtering purposes
+    * @return an immutable {@link Set} of {@link Mission} matching the given {@link Runtime} and labels
+    */
+   Set<Mission> getMissions(Runtime runtime, String... labels);
+
+   /**
+    * @param labels The labels belonging to the {@link Runtime} objects
+    * @return an immutable {@link Set} of {@link Runtime} matching the given labels
+    */
+   Set<Runtime> getRuntimes(String... labels);
 
    /**
     * @param mission The {@link Mission} belonging to the {@link Runtime} objects

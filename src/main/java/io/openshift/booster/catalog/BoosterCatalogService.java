@@ -334,6 +334,24 @@ public class BoosterCatalogService implements BoosterCatalog
    }
 
    @Override
+   public Set<Mission> getMissions(Runtime runtime, String... labels)
+   {
+      Objects.requireNonNull(runtime, "Runtime should not be null");
+      return filtered(boosters.stream(), labels)
+               .filter(b -> runtime.equals(b.getRuntime()))
+               .map(Booster::getMission)
+               .collect(Collectors.toCollection(TreeSet::new));
+   }
+
+   @Override
+   public Set<Runtime> getRuntimes(String... labels)
+   {
+      return filtered(boosters.stream(), labels)
+               .map(Booster::getRuntime)
+               .collect(Collectors.toCollection(TreeSet::new));
+   }
+
+   @Override
    public Set<Runtime> getRuntimes(Mission mission, String... labels)
    {
       if (mission == null)
@@ -377,6 +395,15 @@ public class BoosterCatalogService implements BoosterCatalog
                .filter(b -> runtime.equals(b.getRuntime()))
                .filter(b -> version == null || version.equals(b.getVersion()))
                .findFirst();
+   }
+
+   @Override
+   public Collection<Booster> getBoosters(Runtime runtime, String... labels)
+   {
+      Objects.requireNonNull(runtime, "Runtime should not be null");
+      return filtered(boosters.stream(), labels)
+               .filter(b -> runtime.equals(b.getRuntime()))
+               .collect(Collectors.toSet());
    }
 
    @Override
