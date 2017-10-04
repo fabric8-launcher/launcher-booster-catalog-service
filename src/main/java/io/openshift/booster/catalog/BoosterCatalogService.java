@@ -419,7 +419,7 @@ public class BoosterCatalogService implements BoosterCatalog
     */
    public static class Builder
    {
-      private String catalogRepositoryURI = "https://github.com/openshiftio/booster-catalog.git";
+      private String catalogRepositoryURI = "https://github.com/fabric8-launch/booster-catalog.git";
       private String catalogRef = "master";
       private Path rootDir;
       private BoosterCatalogPathProvider pathProvider;
