@@ -34,6 +34,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -74,15 +75,17 @@ public class BoosterCatalogService implements BoosterCatalog
    private final Set<Booster> boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
 
    private final BoosterCatalogPathProvider provider;
-
+   private final Predicate<Booster> filter;
    private final ExecutorService executor;
 
    private final CompletableFuture<Set<Booster>> result = new CompletableFuture<>();
    private volatile boolean indexingStarted = false;
 
-   private BoosterCatalogService(BoosterCatalogPathProvider provider, ExecutorService executor)
+   private BoosterCatalogService(BoosterCatalogPathProvider provider, Predicate<Booster> filter,
+            ExecutorService executor)
    {
       this.provider = provider;
+      this.filter = filter;
       this.executor = executor;
    }
 
@@ -255,7 +258,10 @@ public class BoosterCatalogService implements BoosterCatalog
             {
                booster.setVersion(versions.computeIfAbsent(versionId, Version::new));
             }
-
+            if (filter != null && !filter.test(booster))
+            {
+               return Optional.empty();
+            }
             booster.setContentPath(moduleDir);
             if (Files.notExists(moduleDir))
             {
@@ -423,6 +429,7 @@ public class BoosterCatalogService implements BoosterCatalog
       private String catalogRef = "master";
       private Path rootDir;
       private BoosterCatalogPathProvider pathProvider;
+      private Predicate<Booster> filter;
       private ExecutorService executor;
 
       public Builder catalogRef(String catalogRef)
@@ -440,6 +447,12 @@ public class BoosterCatalogService implements BoosterCatalog
       public Builder pathProvider(BoosterCatalogPathProvider pathProvider)
       {
          this.pathProvider = pathProvider;
+         return this;
+      }
+
+      public Builder filter(Predicate<Booster> filter)
+      {
+         this.filter = filter;
          return this;
       }
 
@@ -469,7 +482,7 @@ public class BoosterCatalogService implements BoosterCatalog
          {
             executor = ForkJoinPool.commonPool();
          }
-         return new BoosterCatalogService(provider, executor);
+         return new BoosterCatalogService(provider, filter, executor);
       }
 
       private BoosterCatalogPathProvider discoverCatalogProvider()

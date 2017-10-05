@@ -82,7 +82,7 @@ public class BoosterCatalogServiceTest
    }
 
    @Test
-   public void testFilter() throws Exception
+   public void testLabels() throws Exception
    {
       BoosterCatalogService service = new BoosterCatalogService.Builder()
                .catalogRepository("https://github.com/chirino/booster-catalog.git").catalogRef("filter_test")
@@ -122,6 +122,15 @@ public class BoosterCatalogServiceTest
       service.index().get();
       assertThat(service.getRuntimes()).contains(new Runtime("spring-boot"), new Runtime("vert.x"),
                new Runtime("wildfly-swarm"));
+   }
+
+   @Test
+   public void testFilter() throws Exception
+   {
+      BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef("openshift-online-free")
+               .filter(b -> b.getRuntime().getId().equals("spring-boot")).build();
+      service.index().get();
+      assertThat(service.getRuntimes()).containsOnly(new Runtime("spring-boot"));
    }
 
 }
