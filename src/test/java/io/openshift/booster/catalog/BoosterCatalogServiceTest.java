@@ -11,14 +11,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
 
 import io.openshift.booster.catalog.BoosterCatalogService.Builder;
+import io.openshift.booster.catalog.spi.BoosterCatalogListener;
 
 /**
  *
@@ -133,4 +136,20 @@ public class BoosterCatalogServiceTest
       assertThat(service.getRuntimes()).containsOnly(new Runtime("spring-boot"));
    }
 
+   @Test
+   public void testListener() throws Exception
+   {
+      List<Booster> boosters = new ArrayList<>();
+      BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef("openshift-online-free")
+               .listener(new BoosterCatalogListener()
+               {
+                  @Override
+                  public void boosterAdded(Booster booster)
+                  {
+                     boosters.add(booster);
+                  }
+               }).filter(b -> boosters.size() == 1).build();
+      service.index().get();
+      assertThat(boosters).containsAll(service.getBoosters());
+   }
 }

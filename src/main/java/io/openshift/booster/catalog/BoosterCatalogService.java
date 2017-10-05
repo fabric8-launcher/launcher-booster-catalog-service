@@ -47,6 +47,7 @@ import javax.json.JsonReader;
 import org.yaml.snakeyaml.Yaml;
 
 import io.openshift.booster.CopyFileVisitor;
+import io.openshift.booster.catalog.spi.BoosterCatalogListener;
 import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
 import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
 import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
@@ -76,16 +77,21 @@ public class BoosterCatalogService implements BoosterCatalog
 
    private final BoosterCatalogPathProvider provider;
    private final Predicate<Booster> filter;
+   private final BoosterCatalogListener listener;
    private final ExecutorService executor;
 
    private final CompletableFuture<Set<Booster>> result = new CompletableFuture<>();
    private volatile boolean indexingStarted = false;
 
    private BoosterCatalogService(BoosterCatalogPathProvider provider, Predicate<Booster> filter,
+            BoosterCatalogListener listener,
             ExecutorService executor)
    {
+      Objects.requireNonNull(provider, () -> "Booster catalog path provider is required");
+      Objects.requireNonNull(executor, () -> "Executor is required");
       this.provider = provider;
       this.filter = filter;
+      this.listener = listener;
       this.executor = executor;
    }
 
@@ -154,7 +160,13 @@ public class BoosterCatalogService implements BoosterCatalog
             {
                String id = removeFileExtension(fileName);
                Path modulePath = moduleRoot.resolve(id);
-               indexBooster(id, catalogPath, file, modulePath, missions, runtimes, versions).ifPresent(boosters::add);
+               indexBooster(id, catalogPath, file, modulePath, missions, runtimes, versions).ifPresent(b -> {
+                  if (listener != null)
+                  {
+                     listener.boosterAdded(b);
+                  }
+                  boosters.add(b);
+               });
             }
             return FileVisitResult.CONTINUE;
          }
@@ -430,6 +442,7 @@ public class BoosterCatalogService implements BoosterCatalog
       private Path rootDir;
       private BoosterCatalogPathProvider pathProvider;
       private Predicate<Booster> filter;
+      private BoosterCatalogListener listener;
       private ExecutorService executor;
 
       public Builder catalogRef(String catalogRef)
@@ -453,6 +466,12 @@ public class BoosterCatalogService implements BoosterCatalog
       public Builder filter(Predicate<Booster> filter)
       {
          this.filter = filter;
+         return this;
+      }
+
+      public Builder listener(BoosterCatalogListener listener)
+      {
+         this.listener = listener;
          return this;
       }
 
@@ -482,7 +501,7 @@ public class BoosterCatalogService implements BoosterCatalog
          {
             executor = ForkJoinPool.commonPool();
          }
-         return new BoosterCatalogService(provider, filter, executor);
+         return new BoosterCatalogService(provider, filter, listener, executor);
       }
 
       private BoosterCatalogPathProvider discoverCatalogProvider()
