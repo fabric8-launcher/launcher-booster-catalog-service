@@ -17,6 +17,7 @@ import java.util.Set;
  * General operations for a set of {@link Booster} objects
  * 
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
+ * @author <a href="mailto:tschotan@redhat.com">Tako Schotanus</a>
  */
 public interface BoosterCatalog
 {
@@ -94,4 +95,76 @@ public interface BoosterCatalog
     */
    Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version, String... labels);
 
+   /**
+    * Creates a new <code>Selector</code>
+    * @return A selector
+    */
+   Selector selector();
+
+   /**
+    * Performs filtering on a set of {@link Booster} objects and returns
+    * the set of {@link Runtime}s, {@link Mission}s, {@link Version}s or
+    * {@link Booster}s that satisfy the filters
+    */
+   public interface Selector
+   {
+      /**
+       * Apply a {@link Runtime} filter to all the boosters
+       * @param runtime The runtime to filter on
+       * @return The selector itself for chaining calls
+       */
+      Selector runtime(Runtime runtime);
+      
+      /**
+       * Apply a <code>Misson</code> filter to all the boosters
+       * @param mission The mission to filter on
+       * @return The selector itself for chaining calls
+       */
+      Selector mission(Mission mission);
+      
+      /**
+       * Apply a {@link Version} filter to all the boosters
+       * @param version The version to filter on
+       * @return The selector itself for chaining calls
+       */
+      Selector version(Version version);
+      
+      /**
+       * Filter out any boosters that don't have all the given labels
+       * @param labels The labels to filter on
+       * @return The selector itself for chaining calls
+       */
+      Selector labels(String[] labels);
+      
+      /**
+       * Returns all the {@link Runtime}s that satisfy the applied filters
+       * @return A set of runtimes
+       */
+      Set<Runtime> getRuntimes();
+      
+      /**
+       * Returns all the {@link Mission}s that satisfy the applied filters
+       * @return A set of missions
+       */
+      Set<Mission> getMissions();
+      
+      /**
+       * Returns all the {@link Version}s that satisfy the applied filters
+       * @return A set of versions
+       */
+      Set<Version> getVersions();
+      
+      /**
+       * Returns all the {@link Booster}s that satisfy the applied filters
+       * @return A collection of boosters
+       */
+      Collection<Booster> getBoosters();
+      
+      /**
+       * Returns the {@link Booster} that satisfies the applied filters.
+       * (In the case that several boosters are found one will be selected)
+       * @return An optional booster value
+       */
+      Optional<Booster> getBooster();
+   }
 }

@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -330,43 +329,20 @@ public class BoosterCatalogService implements BoosterCatalog
    @Override
    public Set<Mission> getMissions(String... labels)
    {
-      return filtered(boosters.stream(), labels)
-               .map(Booster::getMission)
-               .collect(Collectors.toCollection(TreeSet::new));
-   }
-
-   private Stream<Booster> filtered(Stream<Booster> stream, final String[] labels)
-   {
-      if (labels == null || labels.length == 0)
-         return stream;
-      return stream.filter(x -> {
-         for (String label : labels)
-         {
-            if (!x.getLabels().contains(label))
-            {
-               return false;
-            }
-         }
-         return true;
-      });
+      return selector().labels(labels).getMissions();
    }
 
    @Override
    public Set<Mission> getMissions(Runtime runtime, String... labels)
    {
       Objects.requireNonNull(runtime, "Runtime should not be null");
-      return filtered(boosters.stream(), labels)
-               .filter(b -> runtime.equals(b.getRuntime()))
-               .map(Booster::getMission)
-               .collect(Collectors.toCollection(TreeSet::new));
+      return selector().runtime(runtime).labels(labels).getMissions();
    }
 
    @Override
    public Set<Runtime> getRuntimes(String... labels)
    {
-      return filtered(boosters.stream(), labels)
-               .map(Booster::getRuntime)
-               .collect(Collectors.toCollection(TreeSet::new));
+      return selector().labels(labels).getRuntimes();
    }
 
    @Override
@@ -376,10 +352,7 @@ public class BoosterCatalogService implements BoosterCatalog
       {
          return Collections.emptySet();
       }
-      return filtered(boosters.stream(), labels)
-               .filter(b -> mission.equals(b.getMission()))
-               .map(Booster::getRuntime)
-               .collect(Collectors.toCollection(TreeSet::new));
+      return selector().mission(mission).labels(labels).getRuntimes();
    }
 
    @Override
@@ -389,12 +362,7 @@ public class BoosterCatalogService implements BoosterCatalog
       {
          return Collections.emptySet();
       }
-      return filtered(boosters.stream(), labels)
-               .filter(b -> mission.equals(b.getMission()))
-               .filter(b -> runtime.equals(b.getRuntime()))
-               .filter(b -> b.getVersion() != null)
-               .map(Booster::getVersion)
-               .collect(Collectors.toCollection(TreeSet::new));
+      return selector().runtime(runtime).mission(mission).labels(labels).getVersions();
    }
 
    @Override
@@ -408,28 +376,141 @@ public class BoosterCatalogService implements BoosterCatalog
    {
       Objects.requireNonNull(mission, "Mission should not be null");
       Objects.requireNonNull(runtime, "Runtime should not be null");
-      return filtered(boosters.stream(), labels)
-               .filter(b -> mission.equals(b.getMission()))
-               .filter(b -> runtime.equals(b.getRuntime()))
-               .filter(b -> version == null || version.equals(b.getVersion()))
-               .findFirst();
+      return selector().runtime(runtime).mission(mission).version(version).labels(labels).getBooster();
    }
 
    @Override
    public Collection<Booster> getBoosters(Runtime runtime, String... labels)
    {
       Objects.requireNonNull(runtime, "Runtime should not be null");
-      return filtered(boosters.stream(), labels)
-               .filter(b -> runtime.equals(b.getRuntime()))
-               .collect(Collectors.toSet());
+      return selector().runtime(runtime).labels(labels).getBoosters();
    }
 
    @Override
    public Collection<Booster> getBoosters(String... labels)
    {
-      return filtered(boosters.stream(), labels).collect(Collectors.toCollection(HashSet::new));
+      return selector().labels(labels).getBoosters();
    }
 
+   /**
+    * {@link BoosterCatalogService} Selector class
+    *
+    * @author <a href="mailto:tschotan@redhat.com">Tako Schotanus</a>
+    */
+   public class SelectorImpl implements Selector
+   {
+      private Runtime runtime;
+      private Mission mission;
+      private Version version;
+      private String[] labels;
+      
+      @Override
+      public Selector runtime(Runtime runtime)
+      {
+          this.runtime = runtime;
+          return this;
+      }
+      
+      @Override
+      public Selector mission(Mission mission)
+      {
+          this.mission = mission;
+          return this;
+      }
+      
+      @Override
+      public Selector version(Version version)
+      {
+          this.version = version;
+          return this;
+      }
+      
+      @Override
+      public Selector labels(String[] labels)
+      {
+          this.labels = labels;
+          return this;
+      }
+      
+      @Override
+      public Set<Runtime> getRuntimes()
+      {
+         return filtered(boosters.stream())
+                  .map(Booster::getRuntime)
+                  .collect(Collectors.toCollection(TreeSet::new));
+      }
+      
+      @Override
+      public Set<Mission> getMissions()
+      {
+         return filtered(boosters.stream())
+                  .map(Booster::getMission)
+                  .collect(Collectors.toCollection(TreeSet::new));
+      }
+      
+      @Override
+      public Set<Version> getVersions()
+      {
+         return filtered(boosters.stream())
+                  .filter(b -> b.getVersion() != null)
+                  .map(Booster::getVersion)
+                  .collect(Collectors.toCollection(TreeSet::new));
+      }
+      
+      @Override
+      public Collection<Booster> getBoosters()
+      {
+         return filtered(boosters.stream())
+                  .collect(Collectors.toSet());
+      }
+      
+      @Override
+      public Optional<Booster> getBooster()
+      {
+         return filtered(boosters.stream())
+                  .findAny();
+      }
+
+      private Stream<Booster> filtered(Stream<Booster> stream)
+      {
+         if (runtime != null)
+         {
+             stream = stream.filter(b -> runtime.equals(b.getRuntime()));
+         }
+         
+         if (mission != null)
+         {
+             stream = stream.filter(b -> mission.equals(b.getMission()));
+         }
+         
+         if (version != null)
+         {
+             stream = stream.filter(b -> version.equals(b.getVersion()));
+         }
+         
+         if (labels != null || labels.length > 0)
+         {
+            stream = stream.filter(x -> {
+               for (String label : labels)
+               {
+                  if (!x.getLabels().contains(label))
+                  {
+                     return false;
+                  }
+               }
+               return true;
+            });
+         }
+         
+         return stream;
+      }
+   }
+   
+   @Override
+   public Selector selector() {
+       return new SelectorImpl();
+   }
+   
    /**
     * {@link BoosterCatalogService} Builder class
     *

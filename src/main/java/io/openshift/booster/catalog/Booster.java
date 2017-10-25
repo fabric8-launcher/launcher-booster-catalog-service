@@ -27,6 +27,7 @@ public class Booster
    private String buildProfile;
    private String description = "No description available";
    private String boosterDescriptorPath = ".openshiftio/booster.yaml";
+   private String supportedDeploymentTypes = "";
    private Mission mission;
    private Runtime runtime;
    private Version version;
@@ -141,6 +142,20 @@ public class Booster
    public void setDescription(String description)
    {
       this.description = description;
+   }
+   
+   public String getSupportedDeploymentTypes()
+   {
+      return supportedDeploymentTypes;
+   }
+    
+   /**
+    * @param supportedDeploymentTypes the deployment types that are supported by this booster.
+    * Leaving it unset or empty means any and all deployment types
+    */
+   public void setSupportedDeploymentTypes(String supportedDeploymentTypes)
+   {
+      this.supportedDeploymentTypes = supportedDeploymentTypes;
    }
 
    /**
