@@ -236,7 +236,7 @@ public class BoosterCatalogService implements BoosterCatalog
          // Read YAML entry
          booster = yaml.loadAs(reader, Booster.class);
       }
-      catch (IOException e)
+      catch (Exception e)
       {
          logger.log(Level.SEVERE, "Error while reading " + file, e);
       }
