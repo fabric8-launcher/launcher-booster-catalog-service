@@ -399,10 +399,18 @@ public class BoosterCatalogService implements BoosterCatalog
     */
    public class SelectorImpl implements Selector
    {
+      private DeploymentType deploymentType;
       private Runtime runtime;
       private Mission mission;
       private Version version;
       private String[] labels;
+      
+      @Override
+      public Selector deploymentType(DeploymentType deploymentType)
+      {
+          this.deploymentType = deploymentType;
+          return this;
+      }
       
       @Override
       public Selector runtime(Runtime runtime)
@@ -473,6 +481,11 @@ public class BoosterCatalogService implements BoosterCatalog
 
       private Stream<Booster> filtered(Stream<Booster> stream)
       {
+         if (deploymentType != null)
+         {
+             stream = stream.filter(b -> isSupported(b.getSupportedDeploymentTypes()));
+         }
+         
          if (runtime != null)
          {
              stream = stream.filter(b -> runtime.equals(b.getRuntime()));
@@ -488,26 +501,48 @@ public class BoosterCatalogService implements BoosterCatalog
              stream = stream.filter(b -> version.equals(b.getVersion()));
          }
          
-         if (labels != null || labels.length > 0)
+         if (labels != null && labels.length > 0)
          {
-            stream = stream.filter(x -> {
-               for (String label : labels)
-               {
-                  if (!x.getLabels().contains(label))
-                  {
-                     return false;
-                  }
-               }
-               return true;
-            });
+            stream = stream.filter(x -> isMatchingLabels(x.getLabels()));
          }
          
          return stream;
       }
+
+      private boolean isSupported(String supportedDeploymentTypes)
+      {
+         if (supportedDeploymentTypes != null && !supportedDeploymentTypes.isEmpty())
+         {
+             String[] types = supportedDeploymentTypes.split(",");
+             for (String t : types)
+             {
+                 if (t.equalsIgnoreCase(deploymentType.name()))
+                 {
+                     return true;
+                 }
+             }
+             return false;
+         } else {
+             return true;
+         }
+      }
+      
+      private boolean isMatchingLabels(Set<String> boosterLabels)
+      {
+         for (String label : labels)
+         {
+            if (!boosterLabels.contains(label))
+            {
+               return false;
+            }
+         }
+         return true;
+      }
    }
    
    @Override
-   public Selector selector() {
+   public Selector selector()
+   {
        return new SelectorImpl();
    }
    

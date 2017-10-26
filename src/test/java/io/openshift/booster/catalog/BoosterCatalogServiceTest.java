@@ -119,6 +119,15 @@ public class BoosterCatalogServiceTest
    }
 
    @Test
+   public void testGetMissionByDeploymentType() throws Exception
+   {
+      BoosterCatalogService service = buildDefaultCatalogService();
+      service.index().get();
+      Set<Mission> missions = service.selector().deploymentType(DeploymentType.ZIP).getMissions();
+      assertThat(missions.size()).isGreaterThan(1);
+   }
+
+   @Test
    public void testGetRuntimes() throws Exception
    {
       BoosterCatalogService service = buildDefaultCatalogService();

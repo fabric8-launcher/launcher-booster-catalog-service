@@ -109,6 +109,13 @@ public interface BoosterCatalog
    public interface Selector
    {
       /**
+       * Apply a {@link DeploymentType} filter to all the boosters
+       * @param deploymentType The deployment type to filter on
+       * @return The selector itself for chaining calls
+       */
+      Selector deploymentType(DeploymentType deploymentType);
+      
+      /**
        * Apply a {@link Runtime} filter to all the boosters
        * @param runtime The runtime to filter on
        * @return The selector itself for chaining calls
