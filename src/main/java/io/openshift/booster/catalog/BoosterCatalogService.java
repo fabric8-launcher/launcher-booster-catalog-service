@@ -44,6 +44,7 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
 
 import io.openshift.booster.CopyFileVisitor;
 import io.openshift.booster.catalog.spi.BoosterCatalogListener;
@@ -229,7 +230,9 @@ public class BoosterCatalogService implements BoosterCatalog
             Map<String, Runtime> runtimes, Map<String, Version> versions)
    {
       logger.info(() -> "Indexing " + file + " ...");
-      Yaml yaml = new Yaml(new YamlConstructor());
+      Representer rep = new Representer();
+      rep.getPropertyUtils().setSkipMissingProperties(true);
+      Yaml yaml = new Yaml(new YamlConstructor(), rep);
       Booster booster = null;
       try (BufferedReader reader = Files.newBufferedReader(file))
       {
