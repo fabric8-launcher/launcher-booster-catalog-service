@@ -7,7 +7,7 @@
    </parent>
    <groupId>io.openshift</groupId>
    <artifactId>booster-catalog-service</artifactId>
-   <version>15</version>
+   <version>15-SNAPSHOT</version>
    <licenses>
       <license>
          <name>Apache License, Version 2.0</name>
