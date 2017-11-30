@@ -73,6 +73,5 @@
     <connection>scm:git:git://github.com/fabric8-launch/booster-catalog-service.git</connection>
     <developerConnection>scm:git:git@github.com:fabric8-launch/booster-catalog-service.git</developerConnection>
     <url>http://github.com/fabric8-launch/booster-catalog-service</url>
-    <tag>v15</tag>
   </scm>
 </project>
