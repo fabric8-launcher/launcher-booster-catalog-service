@@ -16,279 +16,257 @@ import java.util.Set;
 
 /**
  * A quickstart representation
- * 
+ *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class Booster
-{
-   private String id;
-   private String githubRepo;
-   private String gitRef;
-   private String buildProfile;
-   private String description = "No description available";
-   private String boosterDescriptorPath = ".openshiftio/booster.yaml";
-   private String supportedDeploymentTypes = "";
-   private Mission mission;
-   private Runtime runtime;
-   private Version version;
-   private Set<String> labels = Collections.emptySet();
+public class Booster {
+    private String id;
 
-   private Path contentPath;
+    private String githubRepo;
 
-   private Map<String, Object> metadata = Collections.emptyMap();
+    private String gitRef;
 
-   public String getName()
-   {
-      return Objects.toString(getMetadata().get("name"), getId());
-   }
+    private String buildProfile;
 
-   public String getDescription()
-   {
-      return Objects.toString(getMetadata().get("description"), description);
-   }
+    private String description = "No description available";
 
-   /**
-    * @return the boosterDescriptionPath
-    */
-   public String getBoosterDescriptionPath()
-   {
-      return Objects.toString(getMetadata().get("descriptionPath"), ".openshiftio/description.adoc");
-   }
+    private String boosterDescriptorPath = ".openshiftio/booster.yaml";
 
-   /**
-    * @return the id
-    */
-   public String getId()
-   {
-      return id;
-   }
+    private String supportedDeploymentTypes = "";
 
-   /**
-    * @return the githubRepo
-    */
-   public String getGithubRepo()
-   {
-      return githubRepo;
-   }
+    private Mission mission;
 
-   /**
-    * @return the gitRef
-    */
-   public String getGitRef()
-   {
-      return gitRef;
-   }
+    private Runtime runtime;
 
-   /**
-    * @return the buildProfile
-    */
-   public String getBuildProfile()
-   {
-      return buildProfile;
-   }
+    private Version version;
 
-   /**
-    * @return the boosterDescriptorPath
-    */
-   @Transient
-   public String getBoosterDescriptorPath()
-   {
-      return boosterDescriptorPath;
-   }
+    private Set<String> labels = Collections.emptySet();
 
-   /**
-    * @param id the id to set
-    */
-   public void setId(String id)
-   {
-      this.id = id;
-   }
+    private Path contentPath;
 
-   /**
-    * @param githubRepo the githubRepo to set
-    */
-   public void setGithubRepo(String githubRepo)
-   {
-      this.githubRepo = githubRepo;
-   }
+    private Map<String, Object> metadata = Collections.emptyMap();
 
-   /**
-    * @param gitRef the gitRef to set
-    */
-   public void setGitRef(String gitRef)
-   {
-      this.gitRef = gitRef;
-   }
+    public String getName() {
+        return Objects.toString(getMetadata().get("name"), getId());
+    }
 
-   /**
-    * @param buildProfile the buildProfile to set
-    */
-   public void setBuildProfile(String buildProfile)
-   {
-      this.buildProfile = buildProfile;
-   }
+    public String getDescription() {
+        return Objects.toString(getMetadata().get("description"), description);
+    }
 
-   /**
-    * @param boosterDescriptorPath the obsidianDescriptorPath to set
-    */
-   public void setBoosterDescriptorPath(String boosterDescriptorPath)
-   {
-      this.boosterDescriptorPath = boosterDescriptorPath;
-   }
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-   /**
-    * @param description the description to set
-    */
-   public void setDescription(String description)
-   {
-      this.description = description;
-   }
-   
-   public String getSupportedDeploymentTypes()
-   {
-      return supportedDeploymentTypes;
-   }
-    
-   /**
-    * @param supportedDeploymentTypes the deployment types that are supported by this booster.
-    * Leaving it unset or empty means any and all deployment types
-    */
-   public void setSupportedDeploymentTypes(String supportedDeploymentTypes)
-   {
-      this.supportedDeploymentTypes = supportedDeploymentTypes;
-   }
+    /**
+     * @return the boosterDescriptionPath
+     */
+    public String getBoosterDescriptionPath() {
+        return Objects.toString(getMetadata().get("descriptionPath"), ".openshiftio/description.adoc");
+    }
 
-   /**
-    * @return the mission
-    */
-   public Mission getMission()
-   {
-      return mission;
-   }
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
 
-   /**
-    * @param mission the mission to set
-    */
-   public void setMission(Mission mission)
-   {
-      this.mission = mission;
-   }
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
 
-   /**
-    * @return the runtime
-    */
-   public Runtime getRuntime()
-   {
-      return runtime;
-   }
+    /**
+     * @return the githubRepo
+     */
+    public String getGithubRepo() {
+        return githubRepo;
+    }
 
-   /**
-    * @param runtime the runtime to set
-    */
-   public void setRuntime(Runtime runtime)
-   {
-      this.runtime = runtime;
-   }
+    /**
+     * @param githubRepo the githubRepo to set
+     */
+    public void setGithubRepo(String githubRepo) {
+        this.githubRepo = githubRepo;
+    }
 
-   /**
-    * @return the version
-    */
-   public Version getVersion()
-   {
-      return version;
-   }
+    /**
+     * @return the gitRef
+     */
+    public String getGitRef() {
+        return gitRef;
+    }
 
-   /**
-    * @param version the version to set
-    */
-   public void setVersion(Version version)
-   {
-      this.version = version;
-   }
+    /**
+     * @param gitRef the gitRef to set
+     */
+    public void setGitRef(String gitRef) {
+        this.gitRef = gitRef;
+    }
 
-   /**
-    * @return the contentPath
-    */
-   @Transient
-   public Path getContentPath()
-   {
-      return contentPath;
-   }
+    /**
+     * @return the buildProfile
+     */
+    public String getBuildProfile() {
+        return buildProfile;
+    }
 
-   /**
-    * @param contentPath the contentPath to set
-    */
-   public void setContentPath(Path contentPath)
-   {
-      this.contentPath = contentPath;
-   }
+    /**
+     * @param buildProfile the buildProfile to set
+     */
+    public void setBuildProfile(String buildProfile) {
+        this.buildProfile = buildProfile;
+    }
 
-   /**
-    * @return the metadata
-    */
-   public Map<String, Object> getMetadata()
-   {
-      return metadata;
-   }
+    /**
+     * @return the boosterDescriptorPath
+     */
+    @Transient
+    public String getBoosterDescriptorPath() {
+        return boosterDescriptorPath;
+    }
 
-   /**
-    * @param metadata the metadata to set
-    */
-   public void setMetadata(Map<String, Object> metadata)
-   {
-      this.metadata = metadata;
-   }
+    /**
+     * @param boosterDescriptorPath the obsidianDescriptorPath to set
+     */
+    public void setBoosterDescriptorPath(String boosterDescriptorPath) {
+        this.boosterDescriptorPath = boosterDescriptorPath;
+    }
 
-   /**
-    * @return the labels
-    */
-   public Set<String> getLabels() {
-      return labels;
-   }
+    public String getSupportedDeploymentTypes() {
+        return supportedDeploymentTypes;
+    }
 
-   /**
-    * @param labels the labels to set
-    */
-   public void setLabels(Set<String> labels) {
-      assert labels !=null;
-      this.labels = labels;
-   }
+    /**
+     * @param supportedDeploymentTypes the deployment types that are supported by this booster.
+     *                                 Leaving it unset or empty means any and all deployment types
+     */
+    public void setSupportedDeploymentTypes(String supportedDeploymentTypes) {
+        this.supportedDeploymentTypes = supportedDeploymentTypes;
+    }
 
-   @Override
-   public int hashCode()
-   {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((id == null) ? 0 : id.hashCode());
-      return result;
-   }
+    /**
+     * @return the mission
+     */
+    public Mission getMission() {
+        return mission;
+    }
 
-   @Override
-   public boolean equals(Object obj)
-   {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      Booster other = (Booster) obj;
-      if (id == null)
-      {
-         if (other.id != null)
+    /**
+     * @param mission the mission to set
+     */
+    public void setMission(Mission mission) {
+        this.mission = mission;
+    }
+
+    /**
+     * @return the runtime
+     */
+    public Runtime getRuntime() {
+        return runtime;
+    }
+
+    /**
+     * @param runtime the runtime to set
+     */
+    public void setRuntime(Runtime runtime) {
+        this.runtime = runtime;
+    }
+
+    /**
+     * @return the version
+     */
+    public Version getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(Version version) {
+        this.version = version;
+    }
+
+    /**
+     * @return the contentPath
+     */
+    @Transient
+    public Path getContentPath() {
+        return contentPath;
+    }
+
+    /**
+     * @param contentPath the contentPath to set
+     */
+    public void setContentPath(Path contentPath) {
+        this.contentPath = contentPath;
+    }
+
+    /**
+     * @return the metadata
+     */
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    /**
+     * @param metadata the metadata to set
+     */
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
+    /**
+     * @return the labels
+     */
+    public Set<String> getLabels() {
+        return labels;
+    }
+
+    /**
+     * @param labels the labels to set
+     */
+    public void setLabels(Set<String> labels) {
+        assert labels != null;
+        this.labels = labels;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
             return false;
-      }
-      else if (!id.equals(other.id))
-         return false;
-      return true;
-   }
+        if (getClass() != obj.getClass())
+            return false;
+        Booster other = (Booster) obj;
+        if (id == null) {
+            if (other.id != null)
+                return false;
+        } else if (!id.equals(other.id))
+            return false;
+        return true;
+    }
 
-   @Override
-   public String toString()
-   {
-      return "Booster [id=" + id + ", githubRepo=" + githubRepo + ", gitRef=" + gitRef + ", buildProfile="
-               + buildProfile + ", description=" + description + ", boosterDescriptorPath=" + boosterDescriptorPath
-               + ", mission=" + mission + ", runtime=" + runtime + ", version=" + version + ", contentPath="
-               + contentPath + ", metadata=" + metadata+ ", labels=" + labels + "]";
-   }
+    @Override
+    public String toString() {
+        return "Booster [id=" + id + ", githubRepo=" + githubRepo + ", gitRef=" + gitRef + ", buildProfile="
+                + buildProfile + ", description=" + description + ", boosterDescriptorPath=" + boosterDescriptorPath
+                + ", mission=" + mission + ", runtime=" + runtime + ", version=" + version + ", contentPath="
+                + contentPath + ", metadata=" + metadata + ", labels=" + labels + "]";
+    }
 }

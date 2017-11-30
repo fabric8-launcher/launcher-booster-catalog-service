@@ -12,17 +12,16 @@ import io.openshift.booster.catalog.BoosterCatalog;
 
 /**
  * Listens for {@link BoosterCatalog} events
- * 
+ *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public interface BoosterCatalogListener
-{
+public interface BoosterCatalogListener {
 
-   /**
-    * Invoked when a booster is added to the catalog
-    * 
-    * @param booster
-    */
-   void boosterAdded(Booster booster);
+    /**
+     * Invoked when a booster is added to the catalog
+     *
+     * @param booster
+     */
+    void boosterAdded(Booster booster);
 
 }

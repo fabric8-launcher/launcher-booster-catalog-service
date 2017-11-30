@@ -17,38 +17,33 @@ import java.util.logging.Logger;
 import io.openshift.booster.catalog.Booster;
 
 /**
- *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class LocalBoosterCatalogPathProvider implements BoosterCatalogPathProvider
-{
-   private final URL catalogZipURL;
-   private static final Logger logger = Logger.getLogger(LocalBoosterCatalogPathProvider.class.getName());
+public class LocalBoosterCatalogPathProvider implements BoosterCatalogPathProvider {
+    public LocalBoosterCatalogPathProvider(URL catalogZip) {
+        this.catalogZipURL = catalogZip;
+    }
 
-   public LocalBoosterCatalogPathProvider(URL catalogZip)
-   {
-      this.catalogZipURL = catalogZip;
-   }
+    private static final Logger logger = Logger.getLogger(LocalBoosterCatalogPathProvider.class.getName());
 
-   @Override
-   public Path createCatalogPath() throws IOException
-   {
-      Path catalogPath = Files.createTempDirectory("booster-catalog");
-      logger.info("Unzipping booster contents to " + catalogPath);
-      Path catalogPathZip = catalogPath.resolve("booster.zip");
-      // Copy to temp folder
-      try (InputStream is = catalogZipURL.openStream())
-      {
-         Files.copy(is, catalogPathZip);
-      }
-      io.openshift.booster.Files.unzip(catalogPathZip, catalogPath);
-      Files.delete(catalogPathZip);
-      return catalogPath;
-   }
+    private final URL catalogZipURL;
 
-   @Override
-   public Path createBoosterContentPath(Booster booster) throws IOException
-   {
-      throw new IllegalStateException("Could not find the content path for " + booster);
-   }
+    @Override
+    public Path createCatalogPath() throws IOException {
+        Path catalogPath = Files.createTempDirectory("booster-catalog");
+        logger.info("Unzipping booster contents to " + catalogPath);
+        Path catalogPathZip = catalogPath.resolve("booster.zip");
+        // Copy to temp folder
+        try (InputStream is = catalogZipURL.openStream()) {
+            Files.copy(is, catalogPathZip);
+        }
+        io.openshift.booster.Files.unzip(catalogPathZip, catalogPath);
+        Files.delete(catalogPathZip);
+        return catalogPath;
+    }
+
+    @Override
+    public Path createBoosterContentPath(Booster booster) throws IOException {
+        throw new IllegalStateException("Could not find the content path for " + booster);
+    }
 }

@@ -8,89 +8,77 @@
 package io.openshift.booster.catalog;
 
 /**
- *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class Runtime implements Comparable<Runtime>
-{
-   private final String id;
-   private final String name;
+public class Runtime implements Comparable<Runtime> {
+    public Runtime(String id) {
+        this(id, id);
+    }
 
-   public Runtime(String id)
-   {
-      this(id, id);
-   }
+    public Runtime(String id, String name) {
+        assert id != null : "Runtime Id cannot be null";
+        assert name != null : "Runtime Name cannot be null";
+        this.id = id;
+        this.name = name;
+    }
 
-   public Runtime(String id, String name)
-   {
-      assert id != null : "Runtime Id cannot be null";
-      assert name != null : "Runtime Name cannot be null";
-      this.id = id;
-      this.name = name;
-   }
+    private final String id;
 
-   /**
-    * This method is needed so the Web UI can know what's the internal ID used
-    */
-   public String getKey()
-   {
-      return getId();
-   }
+    private final String name;
 
-   /**
-    * @return the id
-    */
-   public String getId()
-   {
-      return id;
-   }
+    /**
+     * This method is needed so the Web UI can know what's the internal ID used
+     */
+    public String getKey() {
+        return getId();
+    }
 
-   /**
-    * @return the name
-    */
-   public String getName()
-   {
-      return name;
-   }
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
 
-   @Override
-   public int compareTo(Runtime o)
-   {
-      return getName().compareTo(o.getName());
-   }
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-   @Override
-   public int hashCode()
-   {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((id == null) ? 0 : id.hashCode());
-      return result;
-   }
+    @Override
+    public int compareTo(Runtime o) {
+        return getName().compareTo(o.getName());
+    }
 
-   @Override
-   public boolean equals(Object obj)
-   {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      Runtime other = (Runtime) obj;
-      if (id == null)
-      {
-         if (other.id != null)
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
             return false;
-      }
-      else if (!id.equals(other.id))
-         return false;
-      return true;
-   }
+        if (getClass() != obj.getClass())
+            return false;
+        Runtime other = (Runtime) obj;
+        if (id == null) {
+            if (other.id != null)
+                return false;
+        } else if (!id.equals(other.id))
+            return false;
+        return true;
+    }
 
-   @Override
-   public String toString()
-   {
-      return "Runtime [id=" + id + ", name=" + name + "]";
-   }
+    @Override
+    public String toString() {
+        return "Runtime [id=" + id + ", name=" + name + "]";
+    }
 }

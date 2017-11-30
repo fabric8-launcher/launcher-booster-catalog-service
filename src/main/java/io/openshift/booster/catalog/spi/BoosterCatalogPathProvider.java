@@ -15,18 +15,17 @@ import io.openshift.booster.catalog.BoosterCatalogService;
 
 /**
  * A SPI interface used in {@link BoosterCatalogService}
- * 
+ *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public interface BoosterCatalogPathProvider
-{
-   /**
-    * Returns the path where the booster catalog is (for indexing)
-    */
-   Path createCatalogPath() throws IOException;
+public interface BoosterCatalogPathProvider {
+    /**
+     * Returns the path where the booster catalog is (for indexing)
+     */
+    Path createCatalogPath() throws IOException;
 
-   /**
-    * Creates the content for a given booster and returns the target {@link Path}
-    */
-   Path createBoosterContentPath(Booster booster) throws IOException;
+    /**
+     * Creates the content for a given booster and returns the target {@link Path}
+     */
+    Path createBoosterContentPath(Booster booster) throws IOException;
 }

@@ -17,27 +17,24 @@ import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 
 /**
  * Indexes a Booster catalog and adds all its contents to a ZIP file
- * 
+ *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class BoosterIndexer
-{
-   public static void main(String... args) throws Exception
-   {
-      String catalogRepository = args[0];
-      String catalogRef = args[1];
-      Path targetDir = Paths.get(args[2]);
-      Path targetZip = Paths.get(args[3]);
+public class BoosterIndexer {
+    public static void main(String... args) throws Exception {
+        String catalogRepository = args[0];
+        String catalogRef = args[1];
+        Path targetDir = Paths.get(args[2]);
+        Path targetZip = Paths.get(args[3]);
 
-      BoosterCatalogService build = new BoosterCatalogService.Builder()
-               .pathProvider(new NativeGitBoosterCatalogPathProvider(catalogRepository, catalogRef, targetDir))
-               .build();
+        BoosterCatalogService build = new BoosterCatalogService.Builder()
+                .pathProvider(new NativeGitBoosterCatalogPathProvider(catalogRepository, catalogRef, targetDir))
+                .build();
 
-      build.index().get();
-      try (OutputStream os = Files.newOutputStream(targetZip))
-      {
-         io.openshift.booster.Files.zip("", targetDir, os);
-      }
-   }
+        build.index().get();
+        try (OutputStream os = Files.newOutputStream(targetZip)) {
+            io.openshift.booster.Files.zip("", targetDir, os);
+        }
+    }
 
 }

@@ -8,33 +8,29 @@
 package io.openshift.booster.catalog;
 
 /**
-*
-* @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
-*/
-public enum DeploymentType
-{
-  /**
-   * Deploy in Openshift
-   */
-  CD("Continuous delivery"),
-  /**
-   * Deploy as a ZIP file
-   */
-  ZIP("ZIP File"),
-  /**
-   * Deploy on Openshift.io (not used in launch)
-   */
-  OSIO("Openshift.io");
+ * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
+ */
+public enum DeploymentType {
+    /**
+     * Deploy in Openshift
+     */
+    CD("Continuous delivery"),
+    /**
+     * Deploy as a ZIP file
+     */
+    ZIP("ZIP File"),
+    /**
+     * Deploy on Openshift.io (not used in launch)
+     */
+    OSIO("Openshift.io");
 
-  private String description;
+    private DeploymentType(String description) {
+        this.description = description;
+    }
 
-  private DeploymentType(String description)
-  {
-     this.description = description;
-  }
+    private String description;
 
-  public String getDescription()
-  {
-     return description;
-  }
+    public String getDescription() {
+        return description;
+    }
 }
