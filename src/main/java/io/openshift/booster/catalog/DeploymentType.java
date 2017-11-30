@@ -24,7 +24,7 @@ public enum DeploymentType {
      */
     OSIO("Openshift.io");
 
-    private DeploymentType(String description) {
+    DeploymentType(String description) {
         this.description = description;
     }
 
