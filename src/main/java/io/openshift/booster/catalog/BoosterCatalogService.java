@@ -356,7 +356,7 @@ public class BoosterCatalogService implements BoosterCatalog {
      * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
      */
     public static class Builder {
-        private String catalogRepositoryURI = "https://github.com/fabric8-launch/booster-catalog.git";
+        private String catalogRepositoryURI = "https://github.com/fabric8-launcher/launcher-booster-catalog.git";
 
         private String catalogRef = "master";
 
