@@ -144,7 +144,7 @@ public interface BoosterCatalog {
          * @param labels The labels to filter on
          * @return The selector itself for chaining calls
          */
-        Selector labels(String[] labels);
+        Selector labels(String... labels);
 
         /**
          * Returns all the {@link Runtime}s that satisfy the applied filters

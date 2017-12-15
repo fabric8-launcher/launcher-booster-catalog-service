@@ -481,7 +481,7 @@ public class BoosterCatalogService implements BoosterCatalog {
         }
 
         @Override
-        public Selector labels(String[] labels) {
+        public Selector labels(String... labels) {
             this.labels = labels;
             return this;
         }
