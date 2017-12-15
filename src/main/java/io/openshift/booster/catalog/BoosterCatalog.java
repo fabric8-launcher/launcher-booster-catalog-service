@@ -28,9 +28,7 @@ public interface BoosterCatalog {
     /**
      * Returns a {@link Collection} of {@link Booster} objects, filtering by a set of labels.
      *
-     * @param mission The {@link Mission} belonging to the {@link Booster} objects
-     * @param runtime The {@link Runtime} belonging to the {@link Booster} objects
-     * @param labels  The labels belonging to the {@link Runtime} objects
+     * @param labels The labels belonging to the {@link Runtime} objects
      * @return a {@link Collection} of {@link Booster} objects
      */
     Collection<Booster> getBoosters(String... labels);
@@ -105,7 +103,7 @@ public interface BoosterCatalog {
      * the set of {@link Runtime}s, {@link Mission}s, {@link Version}s or
      * {@link Booster}s that satisfy the filters
      */
-    public interface Selector {
+    interface Selector {
         /**
          * Apply a {@link DeploymentType} filter to all the boosters
          *
