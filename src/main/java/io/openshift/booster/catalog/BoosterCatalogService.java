@@ -7,6 +7,17 @@
 
 package io.openshift.booster.catalog;
 
+import io.openshift.booster.CopyFileVisitor;
+import io.openshift.booster.catalog.spi.BoosterCatalogListener;
+import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -36,18 +47,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-
-import io.openshift.booster.CopyFileVisitor;
-import io.openshift.booster.catalog.spi.BoosterCatalogListener;
-import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
-import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
-import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
 
 import static io.openshift.booster.Files.removeFileExtension;
 
@@ -285,7 +284,6 @@ public class BoosterCatalogService implements BoosterCatalog {
         Yaml yaml = new Yaml(new YamlConstructor(), rep);
         Booster booster = null;
         try (BufferedReader reader = Files.newBufferedReader(file)) {
-            // Read YAML entry
             booster = yaml.loadAs(reader, Booster.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while reading " + file, e);
@@ -333,7 +331,7 @@ public class BoosterCatalogService implements BoosterCatalog {
                                     .stream()
                                     .map(m -> new Version(Objects.toString(m.get("id")), Objects.toString(m.get("name"))))
                                     .filter(v -> b.getVersion().getId().equals(v.getId()))
-                                    .forEach(v -> b.setVersion(v));
+                                    .forEach(b::setVersion);
                         }
                     }
                 }
@@ -356,7 +354,8 @@ public class BoosterCatalogService implements BoosterCatalog {
      * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
      */
     public static class Builder {
-        private String catalogRepositoryURI = "https://github.com/fabric8-launcher/launcher-booster-catalog.git";
+
+        private String catalogRepositoryURI = Configuration.catalogRepositoryURI();
 
         private String catalogRef = "master";
 
@@ -421,10 +420,7 @@ public class BoosterCatalogService implements BoosterCatalog {
 
         private BoosterCatalogPathProvider discoverCatalogProvider() {
             final BoosterCatalogPathProvider provider;
-            // Check if we can use a local ZIP
-            boolean ignoreLocalZip = Boolean.getBoolean("BOOSTER_CATALOG_IGNORE_LOCAL")
-                    || Boolean.parseBoolean(System.getenv("BOOSTER_CATALOG_IGNORE_LOCAL"));
-            if (ignoreLocalZip) {
+            if (Configuration.ignoreLocalZip()) {
                 provider = new NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
             } else {
                 URL resource = getClass().getClassLoader()

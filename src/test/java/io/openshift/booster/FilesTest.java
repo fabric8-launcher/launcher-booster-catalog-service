@@ -7,38 +7,39 @@
 
 package io.openshift.booster;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
- */
 public class FilesTest {
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
-    Path catalogZip;
+    private Path catalogZip;
+
+    private Path targetDir;
 
     @Before
-    public void setUp() throws IOException {
+    public void configurePaths() throws IOException {
         catalogZip = Paths.get("src/test/resources/booster.zip");
+        targetDir = tempFolder.newFolder("boosters").toPath();
     }
 
-    /**
-     * Test method for {@link io.openshift.booster.Files#unzip(java.nio.file.Path, java.nio.file.Path)}.
-     */
     @Test
-    public void testUnzip() throws Exception {
-        Path targetDir = tempFolder.newFolder("tmpdir").toPath();
+    public void should_unzip_sample_booster_with_metadata() throws Exception {
+        // when
         Files.unzip(catalogZip, targetDir);
-        assertThat(targetDir.resolve("metadata.json")).exists();
+        final Path metadata = targetDir.resolve("metadata.json");
+
+        // then
+        assertThat(metadata).exists();
     }
 }

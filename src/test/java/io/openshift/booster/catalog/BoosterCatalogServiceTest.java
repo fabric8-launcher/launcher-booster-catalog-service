@@ -7,6 +7,13 @@
 
 package io.openshift.booster.catalog;
 
+import io.openshift.booster.catalog.BoosterCatalogService.Builder;
+import org.arquillian.smart.testing.rules.git.server.GitServer;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.contrib.java.lang.system.ProvideSystemProperty;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -16,16 +23,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.openshift.booster.catalog.BoosterCatalogService.Builder;
-import io.openshift.booster.catalog.spi.BoosterCatalogListener;
-import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
- */
 public class BoosterCatalogServiceTest {
+
+    @ClassRule
+    public static GitServer gitServer = GitServer.bundlesFromDirectory("repos/boosters")
+            .fromBundle("chirino-booster-catalog","repos/custom-catalogs/chirino-booster-catalog.bundle")
+            .fromBundle("gastaldi-booster-catalog","repos/custom-catalogs/gastaldi-booster-catalog.bundle")
+            .usingPort(8765)
+            .create();
+
+    @Rule
+    public final ProvideSystemProperty launcherGitHost = new ProvideSystemProperty("LAUNCHER_GIT_HOST", "http://localhost:8765/");
+
+    @Rule
+    public final ProvideSystemProperty launcherBoosterCatalogRepository = new ProvideSystemProperty("LAUNCHER_BOOSTER_CATALOG_REPOSITORY", "http://localhost:8765/booster-catalog/");
+
     private static BoosterCatalogService defaultService;
 
     @Test
@@ -41,7 +55,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testIndex() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef("openshift-online-free").build();
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryBranch()).build();
         assertThat(service.getBoosters()).isEmpty();
         service.index().get();
         assertThat(service.getBoosters()).isNotEmpty();
@@ -50,10 +64,9 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testVertxVersions() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("https://github.com/gastaldi/booster-catalog.git").catalogRef("vertx_two_versions")
+                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("vertx_two_versions")
                 .build();
         service.index().get();
-        assertThat(service.getBoosters()).hasSize(2);
         Set<Version> versions = service.getVersions(new Mission("rest-http"), new Runtime("vert.x"));
         assertThat(versions).hasSize(2);
     }
@@ -61,7 +74,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testLabels() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("https://github.com/chirino/booster-catalog.git").catalogRef("filter_test")
+                .catalogRepository("http://localhost:8765/chirino-booster-catalog").catalogRef("filter_test")
                 .build();
         service.index().get();
         assertThat(service.getBoosters("vert.x")).hasSize(2);
@@ -107,7 +120,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testFilter() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef("openshift-online-free")
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryBranch())
                 .filter(b -> b.getRuntime().getId().equals("spring-boot")).build();
         service.index().get();
         assertThat(service.getRuntimes()).containsOnly(new Runtime("spring-boot"));
@@ -116,13 +129,8 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testListener() throws Exception {
         List<Booster> boosters = new ArrayList<>();
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef("openshift-online-free")
-                .listener(new BoosterCatalogListener() {
-                    @Override
-                    public void boosterAdded(Booster booster) {
-                        boosters.add(booster);
-                    }
-                }).filter(b -> boosters.size() == 1).build();
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryBranch())
+                .listener(boosters::add).filter(b -> boosters.size() == 1).build();
         service.index().get();
         assertThat(boosters).containsAll(service.getBoosters());
     }
@@ -130,14 +138,10 @@ public class BoosterCatalogServiceTest {
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
             Builder builder = new BoosterCatalogService.Builder();
-            String repo = System.getenv("LAUNCHPAD_BACKEND_CATALOG_GIT_REPOSITORY");
-            if (repo != null) {
-                builder.catalogRepository(repo);
-            }
-            String ref = System.getenv().getOrDefault("LAUNCHPAD_BACKEND_CATALOG_GIT_REF", "openshift-online-free");
-            if (ref != null) {
-                builder.catalogRef(ref);
-            }
+            String repo = Configuration.catalogRepositoryURI();
+            builder.catalogRepository(repo);
+            String ref = Configuration.catalogRepositoryBranch();
+            builder.catalogRef(ref);
             defaultService = builder.build();
         }
         return defaultService;

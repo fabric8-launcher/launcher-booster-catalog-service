@@ -40,8 +40,12 @@
     </plugins>
   </build>
   <properties>
-    <snakeyaml.version>1.18</snakeyaml.version>
+    <snakeyaml.version>1.19</snakeyaml.version>
     <json.version>1.0.4</json.version>
+    <version.junit>4.12</version.junit>
+    <version.assertj>3.8.0</version.assertj>
+    <version.git.rules>0.0.6</version.git.rules>
+    <version.system.rules>1.16.1</version.system.rules>
   </properties>
   <dependencies>
     <!-- Compile-time dependency -->
@@ -59,13 +63,25 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.8.2</version>
+      <version>${version.junit}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.6.2</version>
+      <version>${version.assertj}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.arquillian.smart.testing</groupId>
+      <artifactId>git-rules</artifactId>
+      <version>${version.git.rules}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>system-rules</artifactId>
+      <version>${version.system.rules}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

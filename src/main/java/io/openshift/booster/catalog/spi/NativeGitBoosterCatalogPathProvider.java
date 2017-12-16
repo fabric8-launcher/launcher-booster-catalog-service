@@ -7,14 +7,15 @@
 
 package io.openshift.booster.catalog.spi;
 
+import io.openshift.booster.catalog.Booster;
+import io.openshift.booster.catalog.Configuration;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import io.openshift.booster.catalog.Booster;
 
 /**
  * Default implementation for {@link BoosterCatalogPathProvider}
@@ -34,9 +35,6 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
     }
 
     private static final Logger logger = Logger.getLogger(NativeGitBoosterCatalogPathProvider.class.getName());
-
-    private static final String BOOSTER_CATALOG_GIT_HOST = getEnvVarOrSysProp("BOOSTER_CATALOG_DEFAULT_GIT_HOST",
-                                                                              "https://github.com/");
 
     private final String catalogRepositoryURI;
 
@@ -72,7 +70,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
         int exitCode;
         try {
             ProcessBuilder builder = new ProcessBuilder()
-                    .command("git", "clone", BOOSTER_CATALOG_GIT_HOST + booster.getGithubRepo(),
+                    .command("git", "clone", Configuration.launcherGitHost() + booster.getGithubRepo(),
                              "--branch", booster.getGitRef(),
                              "--recursive",
                              "--depth=1",
@@ -92,10 +90,6 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
             throw new IOException("Interrupted", e);
         }
         return booster.getContentPath();
-    }
-
-    private static String getEnvVarOrSysProp(String name, String defaultValue) {
-        return System.getProperty(name, System.getenv().getOrDefault(name, defaultValue));
     }
 
 }
