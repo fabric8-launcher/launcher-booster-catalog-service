@@ -45,7 +45,7 @@
     <version.junit>4.12</version.junit>
     <version.assertj>3.8.0</version.assertj>
     <version.git.rules>0.0.6</version.git.rules>
-    <version.system.rules>1.16.1</version.system.rules>
+    <version.system.rules>1.17.0</version.system.rules>
   </properties>
   <dependencies>
     <!-- Compile-time dependency -->

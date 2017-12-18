@@ -35,10 +35,8 @@ public class BoosterCatalogServiceTest {
             .create();
 
     @Rule
-    public final ProvideSystemProperty launcherGitHost = new ProvideSystemProperty("LAUNCHER_GIT_HOST", "http://localhost:8765/");
-
-    @Rule
-    public final ProvideSystemProperty launcherBoosterCatalogRepository = new ProvideSystemProperty("LAUNCHER_BOOSTER_CATALOG_REPOSITORY", "http://localhost:8765/booster-catalog/");
+    public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty("LAUNCHER_GIT_HOST", "http://localhost:8765/")
+            .and("LAUNCHER_BOOSTER_CATALOG_REPOSITORY", "http://localhost:8765/booster-catalog/");
 
     private static BoosterCatalogService defaultService;
 
