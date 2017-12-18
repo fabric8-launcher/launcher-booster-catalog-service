@@ -53,7 +53,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testIndex() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryBranch()).build();
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryRef()).build();
         assertThat(service.getBoosters()).isEmpty();
         service.index().get();
         assertThat(service.getBoosters()).isNotEmpty();
@@ -118,7 +118,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testFilter() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryBranch())
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryRef())
                 .filter(b -> b.getRuntime().getId().equals("spring-boot")).build();
         service.index().get();
         assertThat(service.getRuntimes()).containsOnly(new Runtime("spring-boot"));
@@ -127,7 +127,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testListener() throws Exception {
         List<Booster> boosters = new ArrayList<>();
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryBranch())
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryRef())
                 .listener(boosters::add).filter(b -> boosters.size() == 1).build();
         service.index().get();
         assertThat(boosters).containsAll(service.getBoosters());
@@ -138,7 +138,7 @@ public class BoosterCatalogServiceTest {
             Builder builder = new BoosterCatalogService.Builder();
             String repo = Configuration.catalogRepositoryURI();
             builder.catalogRepository(repo);
-            String ref = Configuration.catalogRepositoryBranch();
+            String ref = Configuration.catalogRepositoryRef();
             builder.catalogRef(ref);
             defaultService = builder.build();
         }

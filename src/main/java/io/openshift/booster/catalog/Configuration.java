@@ -8,7 +8,7 @@ public class Configuration {
     private static final String LAUNCHER_BOOSTER_CATALOG_REPOSITORY = getEnvVarOrSysProp("LAUNCHER_BOOSTER_CATALOG_REPOSITORY",
             "https://github.com/fabric8-launcher/launcher-booster-catalog.git");
 
-    private static final String LAUNCHER_CATALOG_BRANCH = getEnvVarOrSysProp("LAUNCHER_CATALOG_BRANCH",
+    private static final String LAUNCHER_CATALOG_REF = getEnvVarOrSysProp("LAUNCHER_CATALOG_REF",
             "openshift-online-free");
 
     public static boolean ignoreLocalZip() {
@@ -24,8 +24,8 @@ public class Configuration {
         return LAUNCHER_GIT_HOST;
     }
 
-    public static String catalogRepositoryBranch() {
-        return LAUNCHER_CATALOG_BRANCH;
+    public static String catalogRepositoryRef() {
+        return LAUNCHER_CATALOG_REF;
     }
 
     private static String getEnvVarOrSysProp(String name, String defaultValue) {
