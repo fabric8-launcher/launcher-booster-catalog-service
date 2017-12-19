@@ -7,6 +7,8 @@
 
 package io.openshift.booster;
 
+import io.openshift.booster.catalog.BoosterCatalogService;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,8 +20,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-
-import io.openshift.booster.catalog.BoosterCatalogService;
 
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
@@ -76,7 +76,7 @@ public class Files {
      */
     public static void unzip(Path zipFile, Path targetDir) throws IOException {
         try (ZipInputStream zin = new ZipInputStream(java.nio.file.Files.newInputStream(zipFile))) {
-            ZipEntry ze = null;
+            ZipEntry ze;
             while ((ze = zin.getNextEntry()) != null) {
                 Path newEntry = Paths.get(targetDir.toString(), ze.getName());
                 if (ze.isDirectory()) {

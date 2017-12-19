@@ -7,14 +7,14 @@
 
 package io.openshift.booster.catalog.spi;
 
+import io.openshift.booster.catalog.Booster;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Logger;
-
-import io.openshift.booster.catalog.Booster;
 
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
@@ -43,7 +43,7 @@ public class LocalBoosterCatalogPathProvider implements BoosterCatalogPathProvid
     }
 
     @Override
-    public Path createBoosterContentPath(Booster booster) throws IOException {
+    public Path createBoosterContentPath(Booster booster) {
         throw new IllegalStateException("Could not find the content path for " + booster);
     }
 }

@@ -61,6 +61,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
             int exitCode = builder.start().waitFor();
             assert exitCode == 0 : "Process returned exit code: " + exitCode;
         } catch (InterruptedException e) {
+            logger.log(Level.WARNING, "Interrupted indexing process");
         }
         return catalogPath;
     }

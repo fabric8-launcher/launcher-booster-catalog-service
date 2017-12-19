@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FilesTest {
 
     @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    public final TemporaryFolder tempFolder = new TemporaryFolder();
 
     private Path catalogZip;
 

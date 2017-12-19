@@ -28,7 +28,7 @@ public enum DeploymentType {
         this.description = description;
     }
 
-    private String description;
+    private final String description;
 
     public String getDescription() {
         return description;

@@ -7,20 +7,20 @@
 
 package io.openshift.booster;
 
+import io.openshift.booster.catalog.BoosterCatalogService;
+import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
+
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import io.openshift.booster.catalog.BoosterCatalogService;
-import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 
 /**
  * Indexes a Booster catalog and adds all its contents to a ZIP file
  *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class BoosterIndexer {
+class BoosterIndexer {
     public static void main(String... args) throws Exception {
         String catalogRepository = args[0];
         String catalogRef = args[1];
