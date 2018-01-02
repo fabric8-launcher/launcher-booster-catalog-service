@@ -24,7 +24,8 @@
   "runtimes": [
     {
       "id": "wildfly-swarm",
-      "name": "WildFly Swarm"
+      "name": "WildFly Swarm",
+      "icon": "data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' id='Layer_1' version='1' viewBox='0 0 128 128'%3E%3Cstyle%3E.st1{fill:%23f7931e}.st2{fill:%23585"
     },
     {
       "id": "vert.x",

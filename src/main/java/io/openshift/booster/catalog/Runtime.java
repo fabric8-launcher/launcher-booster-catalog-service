@@ -11,16 +11,19 @@ package io.openshift.booster.catalog;
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
 public class Runtime implements Comparable<Runtime> {
-    public Runtime(String id) {
-        this(id, id);
-    }
+   public Runtime(String id) {
+      this(id, id, null);
+   }
 
-    public Runtime(String id, String name) {
+   public Runtime(String id, String name, String icon) {
         assert id != null : "Runtime Id cannot be null";
         assert name != null : "Runtime Name cannot be null";
         this.id = id;
         this.name = name;
+        this.icon = icon;
     }
+
+    private final String icon;
 
     private final String id;
 
@@ -45,6 +48,13 @@ public class Runtime implements Comparable<Runtime> {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return the icon
+     */
+    public String getIcon() {
+        return icon;
     }
 
     @Override
@@ -76,6 +86,6 @@ public class Runtime implements Comparable<Runtime> {
 
     @Override
     public String toString() {
-        return "Runtime [id=" + id + ", name=" + name + "]";
+        return "Runtime [id=" + id + ", name=" + name + ", icon=" + icon + "]";
     }
 }

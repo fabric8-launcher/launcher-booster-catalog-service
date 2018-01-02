@@ -261,12 +261,12 @@ public class BoosterCatalogService implements BoosterCatalog {
             index.getJsonArray("runtimes")
                     .stream()
                     .map(JsonObject.class::cast)
-                    .map(e -> new Runtime(e.getString("id"), e.getString("name")))
-                    .forEach(r -> runtimes.put(r.getId(), r));
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
-        }
-    }
+                  .map(e -> new Runtime(e.getString("id"), e.getString("name"), e.getString("icon", null)))
+                  .forEach(r -> runtimes.put(r.getId(), r));
+      } catch (IOException e) {
+        logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
+      }
+   }
 
     /**
      * Takes a YAML file from the repository and indexes it
