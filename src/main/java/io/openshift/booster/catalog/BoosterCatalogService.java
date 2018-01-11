@@ -355,7 +355,7 @@ public class BoosterCatalogService implements BoosterCatalog {
      */
     public static class Builder {
 
-        private String catalogRepositoryURI = Configuration.catalogRepositoryURI();
+        private String catalogRepositoryURI = LauncherConfiguration.boosterCatalogRepositoryURI();
 
         private String catalogRef = "master";
 
@@ -420,7 +420,7 @@ public class BoosterCatalogService implements BoosterCatalog {
 
         private BoosterCatalogPathProvider discoverCatalogProvider() {
             final BoosterCatalogPathProvider provider;
-            if (Configuration.ignoreLocalZip()) {
+            if (LauncherConfiguration.ignoreLocalZip()) {
                 provider = new NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);
             } else {
                 URL resource = getClass().getClassLoader()

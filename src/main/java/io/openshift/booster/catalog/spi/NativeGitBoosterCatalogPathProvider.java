@@ -8,7 +8,7 @@
 package io.openshift.booster.catalog.spi;
 
 import io.openshift.booster.catalog.Booster;
-import io.openshift.booster.catalog.Configuration;
+import io.openshift.booster.catalog.LauncherConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,7 +71,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
         int exitCode;
         try {
             ProcessBuilder builder = new ProcessBuilder()
-                    .command("git", "clone", Configuration.launcherGitHost() + booster.getGithubRepo(),
+                    .command("git", "clone", LauncherConfiguration.launcherGitHost() + booster.getGithubRepo(),
                              "--branch", booster.getGitRef(),
                              "--recursive",
                              "--depth=1",

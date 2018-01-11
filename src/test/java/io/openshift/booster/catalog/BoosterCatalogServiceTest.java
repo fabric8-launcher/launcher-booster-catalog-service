@@ -34,8 +34,8 @@ public class BoosterCatalogServiceTest {
             .create();
 
     @Rule
-    public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty("LAUNCHER_GIT_HOST", "http://localhost:8765/")
-            .and("LAUNCHER_BOOSTER_CATALOG_REPOSITORY", "http://localhost:8765/booster-catalog/");
+    public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty(LauncherConfiguration.PropertyName.LAUNCHER_GIT_HOST, "http://localhost:8765/")
+            .and(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
@@ -58,7 +58,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testIndex() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryRef()).build();
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef()).build();
         softly.assertThat(service.getBoosters()).isEmpty();
 
         service.index().get();
@@ -136,7 +136,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testFilter() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryRef())
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef())
                 .filter(b -> b.getRuntime().getId().equals("spring-boot")).build();
 
         service.index().get();
@@ -147,7 +147,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testListener() throws Exception {
         List<Booster> boosters = new ArrayList<>();
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(Configuration.catalogRepositoryRef())
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef())
                 .listener(boosters::add).filter(b -> boosters.size() == 1).build();
 
         service.index().get();
@@ -158,9 +158,9 @@ public class BoosterCatalogServiceTest {
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
             Builder builder = new BoosterCatalogService.Builder();
-            String repo = Configuration.catalogRepositoryURI();
+            String repo = LauncherConfiguration.boosterCatalogRepositoryURI();
             builder.catalogRepository(repo);
-            String ref = Configuration.catalogRepositoryRef();
+            String ref = LauncherConfiguration.boosterCatalogRepositoryRef();
             builder.catalogRef(ref);
             defaultService = builder.build();
         }
