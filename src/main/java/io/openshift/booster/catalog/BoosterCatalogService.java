@@ -255,7 +255,7 @@ public class BoosterCatalogService implements BoosterCatalog {
             index.getJsonArray("missions")
                     .stream()
                     .map(JsonObject.class::cast)
-                    .map(e -> new Mission(e.getString("id"), e.getString("name")))
+                    .map(e -> new Mission(e.getString("id"), e.getString("name"), e.getString("description", null)))
                     .forEach(m -> missions.put(m.getId(), m));
 
             index.getJsonArray("runtimes")

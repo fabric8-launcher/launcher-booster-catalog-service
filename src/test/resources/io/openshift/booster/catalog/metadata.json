@@ -2,7 +2,8 @@
   "missions": [
     {
       "id": "configmap",
-      "name": "Externalized Configuration"
+      "name": "Externalized Configuration",
+      "description": "Short introduction about this mission"
     },
     {
       "id": "crud",
