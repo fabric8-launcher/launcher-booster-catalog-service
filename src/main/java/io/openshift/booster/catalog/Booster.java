@@ -10,7 +10,7 @@ package io.openshift.booster.catalog;
 import java.beans.Transient;
 import java.nio.file.Path;
 import java.util.ArrayList;
-
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +38,13 @@ public class Booster {
 
     private CompletableFuture<Path> contentResult = null;
     
-    public Booster(BoosterFetcher boosterFetcher) {
+    Booster(BoosterFetcher boosterFetcher) {
         this.data = new LinkedHashMap<>();
         this.boosterFetcher = boosterFetcher;
         this.data.put("metadata", new LinkedHashMap<>());
     }
     
-    public Booster(Map<String, Object> data, BoosterFetcher boosterFetcher) {
+    Booster(Map<String, Object> data, BoosterFetcher boosterFetcher) {
         this(boosterFetcher);
         mergeMaps(this.data, data);
     }
@@ -103,6 +103,32 @@ public class Booster {
      */
     public String getGitRef() {
         return Objects.toString(data.get("gitRef"), null);
+    }
+
+    /**
+     * @return the environments
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getEnvironments() {
+        return (Map<String, Object>)data.getOrDefault("environments", Collections.emptyMap());
+    }
+
+    /**
+     * This method returns a version of this Booster configured specifically
+     * for the indicated environment. If the environment doesn't exist or it
+     * doesn't contain any information the current Booster is returned.
+     * @param  environmentName The name of the environment
+     * @return the current Booster configured for the specified environment
+     */
+    @SuppressWarnings("unchecked")
+    public Booster forEnvironment(String environmentName) {
+        Map<String, Object> env = (Map<String, Object>)getEnvironments().get(environmentName);
+        if (env != null && !env.isEmpty()) {
+            Booster envBooster = new Booster(env, boosterFetcher);
+            return merged(envBooster);
+        } else {
+            return this;
+        }
     }
 
     /**
