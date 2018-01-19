@@ -131,7 +131,7 @@ public class BoosterCatalogServiceTest {
         service.index().get();
         Runtime springBoot = new Runtime("spring-boot");
 
-        Collection<Booster> boosters = service.getBoosters(BoosterCatalogService.runtimes(springBoot));
+        Collection<Booster> boosters = service.getBoosters(BoosterFilters.runtimes(springBoot));
 
         softly.assertThat(boosters.size()).isGreaterThan(1);
     }
@@ -142,17 +142,7 @@ public class BoosterCatalogServiceTest {
         service.index().get();
         Runtime springBoot = new Runtime("spring-boot");
 
-        Set<Mission> missions = service.getMissions(BoosterCatalogService.runtimes(springBoot));
-
-        softly.assertThat(missions.size()).isGreaterThan(1);
-    }
-
-    @Test
-    public void testGetMissionByDeploymentType() throws Exception {
-        BoosterCatalogService service = buildDefaultCatalogService();
-        service.index().get();
-
-        Set<Mission> missions = service.getMissions(BoosterCatalogService.deploymentTypes(DeploymentType.ZIP));
+        Set<Mission> missions = service.getMissions(BoosterFilters.runtimes(springBoot));
 
         softly.assertThat(missions.size()).isGreaterThan(1);
     }
@@ -194,7 +184,7 @@ public class BoosterCatalogServiceTest {
         Runtime springBoot = new Runtime("spring-boot");
 
         // Just get the first booster we can find
-        Optional<Booster> booster = service.getBooster(BoosterCatalogService.runtimes(springBoot));
+        Optional<Booster> booster = service.getBooster(BoosterFilters.runtimes(springBoot));
 
         softly.assertThat(booster.isPresent()).isTrue();
         

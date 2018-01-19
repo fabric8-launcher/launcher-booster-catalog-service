@@ -8,6 +8,10 @@
 package io.openshift.booster.catalog;
 
 import static io.openshift.booster.Files.removeFileExtension;
+import static io.openshift.booster.catalog.BoosterFilters.ignored;
+import static io.openshift.booster.catalog.BoosterFilters.missions;
+import static io.openshift.booster.catalog.BoosterFilters.runtimes;
+import static io.openshift.booster.catalog.BoosterFilters.versions;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -475,69 +479,27 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
     }
 
     /**
-     * Process the metadataFile and adds to the specified missions and runtimes maps
+     * Process the metadataFile and adds to the specified missions and runtimes
+     * maps
      */
     void processMetadata(Path metadataFile, Map<String, Mission> missions, Map<String, Runtime> runtimes) {
         logger.info(() -> "Reading metadata at " + metadataFile + " ...");
 
         try (BufferedReader reader = Files.newBufferedReader(metadataFile);
-             JsonReader jsonReader = Json.createReader(reader)) {
+                JsonReader jsonReader = Json.createReader(reader)) {
             JsonObject index = jsonReader.readObject();
-            index.getJsonArray("missions")
-                    .stream()
-                    .map(JsonObject.class::cast)
+            index.getJsonArray("missions").stream().map(JsonObject.class::cast)
                     .map(e -> new Mission(e.getString("id"), e.getString("name"), e.getString("description", null)))
                     .forEach(m -> missions.put(m.getId(), m));
 
-            index.getJsonArray("runtimes")
-                    .stream()
-                    .map(JsonObject.class::cast)
-                  .map(e -> new Runtime(e.getString("id"), e.getString("name"), e.getString("icon", null)))
-                  .forEach(r -> runtimes.put(r.getId(), r));
-      } catch (IOException e) {
-        logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
-      }
-   }
-    
-    public static Predicate<Booster> ignored(boolean ignored) {
-        return (Booster b) -> b.isIgnore() == ignored;
-    }
-    
-    public static Predicate<Booster> deploymentTypes(DeploymentType deploymentType) {
-        return (Booster b) -> isSupported(b.getMetadata("supportedDeploymentTypes"), deploymentType);
-    }
-
-    private static boolean isSupported(Object supportedDeploymentTypes, DeploymentType deploymentType) {
-        if (deploymentType != null && supportedDeploymentTypes != null) {
-            Set<String> types;
-            if (supportedDeploymentTypes instanceof List) {
-                // Make sure we have a list of lowercase strings
-                types = ((List<String>)supportedDeploymentTypes)
-                        .stream()
-                        .map(Objects::toString)
-                        .map(String::toLowerCase)
-                        .collect(Collectors.toSet());
-            } else {
-                types = Collections.singleton(supportedDeploymentTypes.toString());
-            }
-            return types.contains(deploymentType.name().toLowerCase());
-        } else {
-            return true;
+            index.getJsonArray("runtimes").stream().map(JsonObject.class::cast)
+                    .map(e -> new Runtime(e.getString("id"), e.getString("name"), e.getString("icon", null)))
+                    .forEach(r -> runtimes.put(r.getId(), r));
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
         }
     }
     
-    public static Predicate<Booster> runtimes(Runtime runtime) {
-        return (Booster b) -> runtime == null || runtime.equals(b.getRuntime());
-    }
-    
-    public static Predicate<Booster> missions(Mission mission) {
-        return (Booster b) -> mission == null || mission.equals(b.getMission());
-    }
-    
-    public static Predicate<Booster> versions(Version version) {
-        return (Booster b) -> version == null || version.equals(b.getVersion());
-    }
-
     /**
      * {@link BoosterCatalogService} Builder class
      *
