@@ -7,31 +7,20 @@
 
 package io.openshift.booster.catalog;
 
-import io.openshift.booster.CopyFileVisitor;
-import io.openshift.booster.catalog.spi.BoosterCatalogListener;
-import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
-import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
-import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
+import static io.openshift.booster.Files.removeFileExtension;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +29,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
@@ -47,16 +37,29 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-import static io.openshift.booster.Files.removeFileExtension;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
+
+import io.openshift.booster.CopyFileVisitor;
+import io.openshift.booster.catalog.spi.BoosterCatalogListener;
+import io.openshift.booster.catalog.spi.BoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.LocalBoosterCatalogPathProvider;
+import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
  * marshalls into {@link Booster} objects.
  *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
+ * @author <a href="mailto:tschotan@redhat.com">Tako Schotanus</a>
  */
-public class BoosterCatalogService implements BoosterCatalog {
+public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
     /**
      * Files to be excluded from project creation
      */
@@ -65,13 +68,13 @@ public class BoosterCatalogService implements BoosterCatalog {
                                             ".ds_store",
                                             ".obsidian", ".gitmodules"));
 
-    private BoosterCatalogService(BoosterCatalogPathProvider provider, Predicate<Booster> filter,
+    private BoosterCatalogService(BoosterCatalogPathProvider provider, Predicate<Booster> indexFilter,
                                   BoosterCatalogListener listener,
                                   ExecutorService executor) {
         Objects.requireNonNull(provider, "Booster catalog path provider is required");
         Objects.requireNonNull(executor, "Executor is required");
         this.provider = provider;
-        this.filter = filter;
+        this.indexFilter = indexFilter;
         this.listener = listener;
         this.executor = executor;
     }
@@ -79,39 +82,112 @@ public class BoosterCatalogService implements BoosterCatalog {
     private static final String CLONED_BOOSTERS_DIR = ".boosters";
 
     private static final String METADATA_FILE = "metadata.json";
+    
+    private static final String COMMON_YAML_FILE = "common.yaml";
 
     private static final Logger logger = Logger.getLogger(BoosterCatalogService.class.getName());
 
-    private final Set<Booster> boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
+    private volatile Set<Booster> boosters = Collections.emptySet();
 
     private final BoosterCatalogPathProvider provider;
 
-    private final Predicate<Booster> filter;
+    private final Predicate<Booster> indexFilter;
 
     private final BoosterCatalogListener listener;
 
     private final ExecutorService executor;
 
-    private final CompletableFuture<Set<Booster>> result = new CompletableFuture<>();
-
-    private volatile boolean indexingStarted = false;
+    private volatile CompletableFuture<Set<Booster>> indexResult;
+    private volatile CompletableFuture<Set<Booster>> prefetchResult;
 
     /**
      * Indexes the existing YAML files provided by the {@link BoosterCatalogPathProvider} implementation
      */
     public synchronized CompletableFuture<Set<Booster>> index() {
-        if (!indexingStarted) {
-            indexingStarted = true;
+        if (indexResult == null) {
+            indexResult = new CompletableFuture<Set<Booster>>();
             CompletableFuture.runAsync(() -> {
                 try {
+                    boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
                     doIndex();
-                    result.complete(boosters);
+                    indexResult.complete(boosters);
                 } catch (Exception ex) {
-                    result.completeExceptionally(ex);
+                    indexResult.completeExceptionally(ex);
                 }
             }, executor);
         }
-        return result;
+        return indexResult;
+    }
+
+    /**
+     * Re-runs the indexing of the catalog and the boosters
+     * Attention: this won't do anything if indexing is already in progress
+     */
+    public synchronized CompletableFuture<Set<Booster>> reindex() {
+        if (indexResult != null && indexResult.isDone()) {
+            indexResult = null;
+        }
+        return index();
+    }
+    
+    /**
+     * Pre-fetches the code for {@link Booster}s that were found when running {@link index}.
+     * It's not necessary to run this because {@link Booster} code will be downloaded on
+     * demand, but if you want to avoid any delays for the user you can run this method.
+     */
+    public synchronized CompletableFuture<Set<Booster>> prefetchBoosters() {
+        assert(indexResult != null);
+        if (prefetchResult == null) {
+            prefetchResult = new CompletableFuture<Set<Booster>>();
+            CompletableFuture.runAsync(() -> {
+                try {
+                    logger.info(() -> "Pre-fetching boosters...");
+                    for (Booster b : boosters) {
+                        try {
+                            b.content().get();
+                        } catch (InterruptedException e) {
+                            break;
+                        } catch (Exception e) {
+                            // We ignore errors and go on to fetch the next Booster
+                            logger.log(Level.SEVERE, "Error while fetching booster '" + b.getName() + "'", e);
+                        }
+                    }
+                    prefetchResult.complete(boosters);
+                } catch (Exception ex) {
+                    prefetchResult.completeExceptionally(ex);
+                }
+            }, executor);
+        }
+        return prefetchResult;
+    }
+
+    /**
+     * Clones a Booster repo and provides the path where to find it as a result
+     */
+    @Override
+    public CompletableFuture<Path> fetchBoosterContent(Booster booster) {
+        synchronized (booster) {
+            CompletableFuture<Path> contentResult = new CompletableFuture<>();
+            Path contentPath = booster.getContentPath();
+            if (Files.notExists(contentPath)) {
+                try {
+                    Files.createDirectories(contentPath);
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            provider.createBoosterContentPath(booster);
+                            contentResult.complete(contentPath);
+                        } catch (Exception ex) {
+                            contentResult.completeExceptionally(ex);
+                        }
+                    }, executor);
+                } catch (IOException ex) {
+                    contentResult.completeExceptionally(ex);
+                }
+            } else {
+                contentResult.complete(contentPath);
+            }
+            return contentResult;
+        }
     }
 
     /**
@@ -119,70 +195,113 @@ public class BoosterCatalogService implements BoosterCatalog {
      */
     @Override
     public Path copy(Booster booster, Path projectRoot) throws IOException {
-        Path modulePath = booster.getContentPath();
-        return Files.walkFileTree(modulePath,
-                                  new CopyFileVisitor(projectRoot,
-                                                      (p) -> !EXCLUDED_PROJECT_FILES.contains(p.toFile().getName().toLowerCase())));
-    }
-
-    @Override
-    public Set<Mission> getMissions(String... labels) {
-        return selector().labels(labels).getMissions();
-    }
-
-    @Override
-    public Set<Mission> getMissions(Runtime runtime, String... labels) {
-        Objects.requireNonNull(runtime, "Runtime should not be null");
-        return selector().runtime(runtime).labels(labels).getMissions();
-    }
-
-    @Override
-    public Set<Runtime> getRuntimes(String... labels) {
-        return selector().labels(labels).getRuntimes();
-    }
-
-    @Override
-    public Set<Runtime> getRuntimes(Mission mission, String... labels) {
-        if (mission == null) {
-            return Collections.emptySet();
+        try {
+            Path modulePath = booster.content().get();
+            return Files.walkFileTree(modulePath,
+                    new CopyFileVisitor(projectRoot,
+                                        (p) -> !EXCLUDED_PROJECT_FILES.contains(p.toFile().getName().toLowerCase())));
+        } catch (InterruptedException | ExecutionException ex) {
+            throw new IOException("Unable to copy Booster", ex);
         }
-        return selector().mission(mission).labels(labels).getRuntimes();
+    }
+
+    // Return all indexed boosters, except the ones that were marked ignored
+    // and the ones that don't pass the global `indexFilter`
+    protected Stream<Booster> getPrefilteredBoosters() {
+        return boosters.stream().filter(indexFilter).filter(ignored(false));
+    }
+    
+    @Override
+    public Set<Mission> getMissions() {
+        return toMissions(getPrefilteredBoosters());
     }
 
     @Override
-    public Set<Version> getVersions(Mission mission, Runtime runtime, String... labels) {
+    public Set<Mission> getMissions(Predicate<Booster> filter) {
+        return toMissions(getPrefilteredBoosters().filter(filter));
+    }
+
+    @Override
+    public Set<Runtime> getRuntimes() {
+        return toRuntimes(getPrefilteredBoosters());
+    }
+
+    @Override
+    public Set<Runtime> getRuntimes(Predicate<Booster> filter) {
+        return toRuntimes(getPrefilteredBoosters().filter(filter));
+    }
+
+    @Override
+    public Set<Version> getVersions(Predicate<Booster> filter) {
+        return toVersions(getPrefilteredBoosters().filter(filter));
+    }
+
+    @Override
+    public Set<Version> getVersions(Mission mission, Runtime runtime) {
         if (mission == null || runtime == null) {
             return Collections.emptySet();
         }
-        return selector().runtime(runtime).mission(mission).labels(labels).getVersions();
+        return getVersions(missions(mission).and(runtimes(runtime)));
     }
 
     @Override
-    public Optional<Booster> getBooster(Mission mission, Runtime runtime, String... labels) {
-        return getBooster(mission, runtime, null, labels);
+    public Optional<Booster> getBooster(Predicate<Booster> filter) {
+        return getPrefilteredBoosters()
+                .filter(filter)
+                .findAny();
     }
 
     @Override
-    public Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version, String... labels) {
+    public Optional<Booster> getBooster(Mission mission, Runtime runtime) {
         Objects.requireNonNull(mission, "Mission should not be null");
         Objects.requireNonNull(runtime, "Runtime should not be null");
-        return selector().runtime(runtime).mission(mission).version(version).labels(labels).getBooster();
+        return getBooster(missions(mission).and(runtimes(runtime)));
     }
 
     @Override
-    public Collection<Booster> getBoosters(Runtime runtime, String... labels) {
+    public Optional<Booster> getBooster(Mission mission, Runtime runtime, Version version) {
+        Objects.requireNonNull(mission, "Mission should not be null");
         Objects.requireNonNull(runtime, "Runtime should not be null");
-        return selector().runtime(runtime).labels(labels).getBoosters();
+        Objects.requireNonNull(version, "Version should not be null");
+        return getPrefilteredBoosters()
+                .filter(missions(mission))
+                .filter(runtimes(runtime))
+                .filter(versions(version))
+                .findAny();
     }
 
     @Override
-    public Collection<Booster> getBoosters(String... labels) {
-        return selector().labels(labels).getBoosters();
+    public Collection<Booster> getBoosters() {
+        return toBoosters(getPrefilteredBoosters());
+    }
+    
+    @Override
+    public Collection<Booster> getBoosters(Predicate<Booster> filter) {
+        return toBoosters(getPrefilteredBoosters().filter(filter));
     }
 
-    @Override
-    public Selector selector() {
-        return new SelectorImpl();
+    private Collection<Booster> toBoosters(Stream<Booster> bs) {
+        return bs
+                .collect(Collectors.toSet());
+    }
+
+    private Set<Runtime> toRuntimes(Stream<Booster> bs) {
+        return bs
+                .map(Booster::getRuntime)
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private Set<Mission> toMissions(Stream<Booster> bs) {
+        return bs
+                .map(Booster::getMission)
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private Set<Version> toVersions(Stream<Booster> bs) {
+        return bs
+                .filter(b -> b.getVersion() != null)
+                .map(Booster::getVersion)
+                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     private void doIndex() throws Exception {
@@ -197,54 +316,166 @@ public class BoosterCatalogService implements BoosterCatalog {
     }
 
     private void indexBoosters(final Path catalogPath, final Set<Booster> boosters) throws IOException {
-        Path moduleRoot = catalogPath.resolve(CLONED_BOOSTERS_DIR);
-        Path metadataFile = catalogPath.resolve(METADATA_FILE);
         Map<String, Mission> missions = new HashMap<>();
         Map<String, Runtime> runtimes = new HashMap<>();
-        Map<String, Version> versions = new HashMap<>();
+        
+        indexPath(catalogPath, catalogPath, new Booster(this), boosters);
+        
+        // Read the metadata for missions and runtimes
+        Path metadataFile = catalogPath.resolve(METADATA_FILE);
         if (Files.exists(metadataFile)) {
             processMetadata(metadataFile, missions, runtimes);
         }
-        Files.walkFileTree(catalogPath, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                if (Thread.interrupted()) {
-                    return FileVisitResult.TERMINATE;
-                }
-                File ioFile = file.toFile();
-                String fileName = ioFile.getName().toLowerCase();
-                // Skip any file that starts with .
-                if (!fileName.startsWith(".") && (fileName.endsWith(".yaml") || fileName.endsWith(".yml"))) {
-                    String id = removeFileExtension(fileName);
-                    Path modulePath = moduleRoot.resolve(id);
-                    indexBooster(id, catalogPath, file, modulePath, missions, runtimes, versions).ifPresent(b -> {
-                        if (listener != null) {
-                            listener.boosterAdded(b);
+        
+        // Update the boosters with the proper info for missions, runtimes and versions
+        for (Booster booster : boosters) {
+            List<String> path = booster.getMetadata("descriptor/path");
+            if (path != null && !path.isEmpty()) {
+                if (path.size() >= 1) {
+                    booster.setMission(missions.computeIfAbsent(path.get(0), Mission::new));
+                    if (path.size() >= 2) {
+                        booster.setRuntime(runtimes.computeIfAbsent(path.get(1), Runtime::new));
+                        if (path.size() >= 3) {
+                            String versionId = path.get(2);
+                            String versionName = booster.getMetadata("version/name", versionId);
+                            booster.setVersion(new Version(versionId, versionName));
                         }
-                        boosters.add(b);
-                    });
+                    }
                 }
-                return FileVisitResult.CONTINUE;
             }
+        }
+        
+        // Notify the listener of all the boosters that were added
+        // (this excludes ignored boosters and those filtered by the global indexFilter)
+        if (listener != null) {
+            getPrefilteredBoosters().forEach(listener::boosterAdded);
+        }
+    }
 
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                if (Thread.interrupted()) {
-                    return FileVisitResult.TERMINATE;
+    private void indexPath(final Path catalogPath, final Path path, final Booster commonBooster, final Set<Booster> boosters) {
+        if (Thread.interrupted()) {
+            throw new RuntimeException("Interrupted");
+        }
+        
+        // We skip ".booster" folders, ".git" folders and "common.yaml" files
+        Path moduleRoot = catalogPath.resolve(CLONED_BOOSTERS_DIR);
+        if (path.startsWith(moduleRoot)
+                || path.getFileName().startsWith(".git")
+                || COMMON_YAML_FILE.equals(path.getFileName().toString())) {
+            return;
+        }
+        
+        try {
+            File file = path.toFile();
+            if (file.isDirectory()) {
+                // We check if a file named `common.yaml` exists and if so
+                // we merge it's data with the `commonBooster` before passing
+                // that on to `indexPath()`
+                File common = new File(path.toFile(), COMMON_YAML_FILE);
+                final Booster activeCommonBooster;
+                if (common.isFile()) {
+                    Booster localCommonBooster = readBooster(common.toPath());
+                    if (localCommonBooster != null) {
+                        activeCommonBooster = commonBooster.merged(localCommonBooster);
+                    } else {
+                        activeCommonBooster = commonBooster;
+                    }
+                } else {
+                    activeCommonBooster = commonBooster;
                 }
-                return dir.startsWith(moduleRoot) || dir.getFileName().startsWith(".git")
-                        ? FileVisitResult.SKIP_SUBTREE
-                        : FileVisitResult.CONTINUE;
+                
+                Files.list(path).forEach(subpath -> indexPath(catalogPath, subpath, activeCommonBooster, boosters));
+            } else {
+                File ioFile = path.toFile();
+                String fileName = ioFile.getName().toLowerCase();
+                // Skip any file that starts with "."
+                if (!fileName.startsWith(".") && (fileName.endsWith(".yaml") || fileName.endsWith(".yml"))) {
+                    String id = makeBoosterId(catalogPath, path);
+                    Path modulePath = moduleRoot.resolve(id);
+                    Booster b = indexBooster(commonBooster, id, catalogPath, path, modulePath);
+                    if (b != null) {
+                        boosters.add(b);
+                    };
+                }
             }
-        });
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    // We take the relative path of the booster name, remove the file extension
+    // and turn any path symbols into underscores to create a unique booster id.
+    // Eg. "http-crud/vertx/booster.yaml" becomes "http-crud_vertx_booster"
+    private String makeBoosterId(final Path catalogPath, final Path boosterPath) {
+        Path relativePath = catalogPath.relativize(boosterPath);
+        String pathString = removeFileExtension(relativePath.toString().toLowerCase());
+        return pathString.replace('/', '_').replace('\\', '_');
+    }
+    
+    /**
+     * Takes a YAML file from the repository and indexes it
+     *
+     * @param file A YAML file from the booster-catalog repository
+     * @return a {@link Booster} or null if the booster could not be read
+     */
+    protected Booster indexBooster(Booster common, String id, Path catalogPath, Path file, Path moduleDir) {
+        logger.info(() -> "Indexing " + file + " ...");
+        Booster booster = readBooster(file);
+        if (booster != null) {
+            booster = common.merged(booster);
+            // Booster ID = filename without extension
+            booster.setId(id);
+            booster.setContentPath(moduleDir);
+            
+            // We set some useful values in the "metadata" section:
+            
+            // Information about the booster descriptor, eg if the booster descriptor
+            // file was named "http/vertx/community/booster.yaml" the following will
+            // be added to the metadata section:
+            //    metadata:
+            //      descriptor:
+            //        name: booster.yaml
+            //        path: [http, vertx, community]
+            Map<String, Object> descriptor = new LinkedHashMap<String, Object>();
+            descriptor.put("name", file.getFileName().toString());
+            descriptor.put("path", getDescriptorPathList(file, catalogPath));
+            booster.getMetadata().put("descriptor", descriptor);
+        }
+        return booster;
+    }
+
+    private Booster readBooster(Path file) {
+        Representer rep = new Representer();
+        rep.getPropertyUtils().setSkipMissingProperties(true);
+        Yaml yaml = new Yaml(new YamlConstructor(), rep);
+        try (BufferedReader reader = Files.newBufferedReader(file)) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> boosterData = yaml.loadAs(reader, Map.class);
+            return new Booster(boosterData, this);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error while reading " + file, e);
+            return null;
+        }
+    }
+
+    private List<String> getDescriptorPathList(Path boosterPath, Path catalogPath) {
+        Path relativePath = catalogPath.relativize(boosterPath);
+        Path boosterDir = relativePath.getParent();
+        return getPathList(boosterDir);
+    }
+
+    private List<String> getPathList(Path path) {
+        if (path != null) {
+            return StreamSupport.stream(path.spliterator(), false)
+                    .map(Objects::toString)
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     /**
      * Process the metadataFile and adds to the specified missions and runtimes maps
-     *
-     * @param metadataFile
-     * @param missions
-     * @param runtimes
      */
     void processMetadata(Path metadataFile, Map<String, Mission> missions, Map<String, Runtime> runtimes) {
         logger.info(() -> "Reading metadata at " + metadataFile + " ...");
@@ -267,85 +498,44 @@ public class BoosterCatalogService implements BoosterCatalog {
         logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
       }
    }
+    
+    public static Predicate<Booster> ignored(boolean ignored) {
+        return (Booster b) -> b.isIgnore() == ignored;
+    }
+    
+    public static Predicate<Booster> deploymentTypes(DeploymentType deploymentType) {
+        return (Booster b) -> isSupported(b.getMetadata("supportedDeploymentTypes"), deploymentType);
+    }
 
-    /**
-     * Takes a YAML file from the repository and indexes it
-     *
-     * @param file A YAML file from the booster-catalog repository
-     * @return an {@link Optional} containing a {@link Booster}
-     */
-    @SuppressWarnings("unchecked")
-    private Optional<Booster> indexBooster(String id, Path catalogPath, Path file, Path moduleDir,
-                                           Map<String, Mission> missions,
-                                           Map<String, Runtime> runtimes, Map<String, Version> versions) {
-        logger.info(() -> "Indexing " + file + " ...");
-        Representer rep = new Representer();
-        rep.getPropertyUtils().setSkipMissingProperties(true);
-        Yaml yaml = new Yaml(new YamlConstructor(), rep);
-        Booster booster = null;
-        try (BufferedReader reader = Files.newBufferedReader(file)) {
-            booster = yaml.loadAs(reader, Booster.class);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error while reading " + file, e);
-        }
-        if (booster != null) {
-            try {
-                // Booster ID = filename without extension
-                booster.setId(id);
-
-                String versionId;
-                String runtimeId;
-                String missionId;
-                if (file.getParent().getParent().getParent().equals(catalogPath)) {
-                    versionId = null;
-                    runtimeId = file.getParent().toFile().getName();
-                    missionId = file.getParent().getParent().toFile().getName();
-                } else {
-                    versionId = file.getParent().toFile().getName();
-                    runtimeId = file.getParent().getParent().toFile().getName();
-                    missionId = file.getParent().getParent().getParent().toFile().getName();
-                }
-
-                booster.setMission(missions.computeIfAbsent(missionId, Mission::new));
-                booster.setRuntime(runtimes.computeIfAbsent(runtimeId, Runtime::new));
-                if (versionId != null) {
-                    booster.setVersion(versions.computeIfAbsent(versionId, Version::new));
-                }
-                if (filter != null && !filter.test(booster)) {
-                    return Optional.empty();
-                }
-                booster.setContentPath(moduleDir);
-                if (Files.notExists(moduleDir)) {
-                    moduleDir = provider.createBoosterContentPath(booster);
-                }
-                Path metadataPath = moduleDir.resolve(booster.getBoosterDescriptorPath());
-                try (BufferedReader metadataReader = Files.newBufferedReader(metadataPath)) {
-                    Map<String, Object> metadata = yaml.loadAs(metadataReader, Map.class);
-                    booster.setMetadata(metadata);
-
-                    if (versionId != null) {
-                        List<Map<String, Object>> vlist = (List<Map<String, Object>>) metadata.get("versions");
-                        if (vlist != null) {
-                            final Booster b = booster;
-                            vlist
-                                    .stream()
-                                    .map(m -> new Version(Objects.toString(m.get("id")), Objects.toString(m.get("name"))))
-                                    .filter(v -> b.getVersion().getId().equals(v.getId()))
-                                    .forEach(b::setVersion);
-                        }
-                    }
-                }
-
-                Path descriptionPath = moduleDir.resolve(booster.getBoosterDescriptionPath());
-                if (Files.exists(descriptionPath)) {
-                    byte[] descriptionContent = Files.readAllBytes(descriptionPath);
-                    booster.setDescription(new String(descriptionContent));
-                }
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error while reading metadata from " + file, e);
+    private static boolean isSupported(Object supportedDeploymentTypes, DeploymentType deploymentType) {
+        if (deploymentType != null && supportedDeploymentTypes != null) {
+            Set<String> types;
+            if (supportedDeploymentTypes instanceof List) {
+                // Make sure we have a list of lowercase strings
+                types = ((List<String>)supportedDeploymentTypes)
+                        .stream()
+                        .map(Objects::toString)
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toSet());
+            } else {
+                types = Collections.singleton(supportedDeploymentTypes.toString());
             }
+            return types.contains(deploymentType.name().toLowerCase());
+        } else {
+            return true;
         }
-        return Optional.ofNullable(booster);
+    }
+    
+    public static Predicate<Booster> runtimes(Runtime runtime) {
+        return (Booster b) -> runtime == null || runtime.equals(b.getRuntime());
+    }
+    
+    public static Predicate<Booster> missions(Mission mission) {
+        return (Booster b) -> mission == null || mission.equals(b.getMission());
+    }
+    
+    public static Predicate<Booster> versions(Version version) {
+        return (Booster b) -> version == null || version.equals(b.getVersion());
     }
 
     /**
@@ -363,7 +553,7 @@ public class BoosterCatalogService implements BoosterCatalog {
 
         private BoosterCatalogPathProvider pathProvider;
 
-        private Predicate<Booster> filter;
+        private Predicate<Booster> filter = x -> true;
 
         private BoosterCatalogListener listener;
 
@@ -433,134 +623,6 @@ public class BoosterCatalogService implements BoosterCatalog {
                 }
             }
             return provider;
-        }
-    }
-
-    /**
-     * {@link BoosterCatalogService} Selector class
-     *
-     * @author <a href="mailto:tschotan@redhat.com">Tako Schotanus</a>
-     */
-    public class SelectorImpl implements Selector {
-        private DeploymentType deploymentType;
-
-        private Runtime runtime;
-
-        private Mission mission;
-
-        private Version version;
-
-        private String[] labels;
-
-        @Override
-        public Selector deploymentType(DeploymentType deploymentType) {
-            this.deploymentType = deploymentType;
-            return this;
-        }
-
-        @Override
-        public Selector runtime(Runtime runtime) {
-            this.runtime = runtime;
-            return this;
-        }
-
-        @Override
-        public Selector mission(Mission mission) {
-            this.mission = mission;
-            return this;
-        }
-
-        @Override
-        public Selector version(Version version) {
-            this.version = version;
-            return this;
-        }
-
-        @Override
-        public Selector labels(String... labels) {
-            this.labels = labels;
-            return this;
-        }
-
-        @Override
-        public Set<Runtime> getRuntimes() {
-            return filtered(boosters.stream())
-                    .map(Booster::getRuntime)
-                    .collect(Collectors.toCollection(TreeSet::new));
-        }
-
-        @Override
-        public Set<Mission> getMissions() {
-            return filtered(boosters.stream())
-                    .map(Booster::getMission)
-                    .collect(Collectors.toCollection(TreeSet::new));
-        }
-
-        @Override
-        public Set<Version> getVersions() {
-            return filtered(boosters.stream())
-                    .filter(b -> b.getVersion() != null)
-                    .map(Booster::getVersion)
-                    .collect(Collectors.toCollection(TreeSet::new));
-        }
-
-        @Override
-        public Collection<Booster> getBoosters() {
-            return filtered(boosters.stream())
-                    .collect(Collectors.toSet());
-        }
-
-        @Override
-        public Optional<Booster> getBooster() {
-            return filtered(boosters.stream())
-                    .findAny();
-        }
-
-        private Stream<Booster> filtered(Stream<Booster> stream) {
-            if (deploymentType != null) {
-                stream = stream.filter(b -> isSupported(b.getSupportedDeploymentTypes()));
-            }
-
-            if (runtime != null) {
-                stream = stream.filter(b -> runtime.equals(b.getRuntime()));
-            }
-
-            if (mission != null) {
-                stream = stream.filter(b -> mission.equals(b.getMission()));
-            }
-
-            if (version != null) {
-                stream = stream.filter(b -> version.equals(b.getVersion()));
-            }
-
-            if (labels != null && labels.length > 0) {
-                stream = stream.filter(x -> isMatchingLabels(x.getLabels()));
-            }
-
-            return stream;
-        }
-
-        private boolean isSupported(String supportedDeploymentTypes) {
-            if (supportedDeploymentTypes != null && !supportedDeploymentTypes.isEmpty()) {
-                String[] types = supportedDeploymentTypes.split(",");
-                for (String t : types) {
-                    if (t.equalsIgnoreCase(deploymentType.name())) {
-                        return true;
-                    }
-                }
-                return false;
-            } else {
-                return true;
-            }
-        }
-
-        private boolean isMatchingLabels(Set<String> boosterLabels) {
-            for (String label : labels) {
-                if (!boosterLabels.contains(label)) {
-                    return false;
-                }
-            }
-            return true;
         }
     }
 }

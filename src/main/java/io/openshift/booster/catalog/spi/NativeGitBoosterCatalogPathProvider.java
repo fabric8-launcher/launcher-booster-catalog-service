@@ -62,6 +62,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
             assert exitCode == 0 : "Process returned exit code: " + exitCode;
         } catch (InterruptedException e) {
             logger.log(Level.WARNING, "Interrupted indexing process");
+            throw new IOException("Interrupted", e);
         }
         return catalogPath;
     }
@@ -88,6 +89,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
             exitCode = builder.start().waitFor();
             assert exitCode == 0 : "Process returned exit code: " + exitCode;
         } catch (InterruptedException e) {
+            logger.log(Level.WARNING, "Interrupted booster fetching process");
             throw new IOException("Interrupted", e);
         }
         return booster.getContentPath();

@@ -9,65 +9,46 @@ package io.openshift.booster.catalog;
 
 import java.beans.Transient;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.ArrayList;
+
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 /**
  * A quickstart representation
  *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
+ * @author <a href="mailto:tschotan@redhat.com">Tako Schotanus</a>
  */
 public class Booster {
+    private Map<String, Object> data;
+    private final BoosterFetcher boosterFetcher;
+
     private String id;
-
-    private String githubRepo;
-
-    private String gitRef;
-
-    private String buildProfile;
-
-    private String description = "No description available";
-
-    private String boosterDescriptorPath = ".openshiftio/booster.yaml";
-
-    private String supportedDeploymentTypes = "";
-
+    
     private Mission mission;
-
     private Runtime runtime;
-
     private Version version;
-
-    private Set<String> labels = Collections.emptySet();
 
     private Path contentPath;
 
-    private Map<String, Object> metadata = Collections.emptyMap();
-
-    public String getName() {
-        return Objects.toString(getMetadata().get("name"), getId());
+    private CompletableFuture<Path> contentResult = null;
+    
+    public Booster(BoosterFetcher boosterFetcher) {
+        this.data = new LinkedHashMap<>();
+        this.boosterFetcher = boosterFetcher;
+        this.data.put("metadata", new LinkedHashMap<>());
     }
-
-    public String getDescription() {
-        return Objects.toString(getMetadata().get("description"), description);
+    
+    public Booster(Map<String, Object> data, BoosterFetcher boosterFetcher) {
+        this(boosterFetcher);
+        mergeMaps(this.data, data);
     }
-
-    /**
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return the boosterDescriptionPath
-     */
-    public String getBoosterDescriptionPath() {
-        return Objects.toString(getMetadata().get("descriptionPath"), ".openshiftio/description.adoc");
-    }
-
+    
     /**
      * @return the id
      */
@@ -83,72 +64,88 @@ public class Booster {
     }
 
     /**
-     * @return the githubRepo
+     * @return the name
      */
-    public String getGithubRepo() {
-        return githubRepo;
+    public String getName() {
+        return Objects.toString(data.get("name"), getId());
     }
 
     /**
-     * @param githubRepo the githubRepo to set
+     * @return the description
      */
-    public void setGithubRepo(String githubRepo) {
-        this.githubRepo = githubRepo;
+    public String getDescription() {
+        return Objects.toString(data.get("description"), "No description available");
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        data.put("description", description);
+    }
+    
+    /**
+     * @return a boolean indicating if the booster should be ignored or not
+     */
+    public boolean isIgnore() {
+        return Boolean.parseBoolean(Objects.toString(data.get("ignore"), "false"));
+    }
+
+    /**
+     * @return the githubRepo
+     */
+    public String getGithubRepo() {
+        return Objects.toString(data.get("githubRepo"), null);
     }
 
     /**
      * @return the gitRef
      */
     public String getGitRef() {
-        return gitRef;
+        return Objects.toString(data.get("gitRef"), null);
     }
 
     /**
-     * @param gitRef the gitRef to set
+     * @return the metadata
      */
-    public void setGitRef(String gitRef) {
-        this.gitRef = gitRef;
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getMetadata() {
+        return (Map<String, Object>)data.get("metadata");
     }
 
     /**
-     * @return the buildProfile
+     * @param key the key to look up in the booster's meta data section. Can take the form
+     * of a path where keys are separated by "/" to identify sub items
+     * @return specific meta data key value or <code>null</code> if the key wasn't found
      */
-    public String getBuildProfile() {
-        return buildProfile;
+    public <T> T getMetadata(String key) {
+        return getMetadata(key, null);
     }
 
     /**
-     * @param buildProfile the buildProfile to set
+     * @param key the key to look up in the booster's meta data section. Can take the form
+     * of a path where keys are separated by "/" to identify sub items
+     * @param defaultValue the value to return if the key isn't found
+     * @return specific meta data key value or <code>defaultValue</code> if the key wasn't found
      */
-    public void setBuildProfile(String buildProfile) {
-        this.buildProfile = buildProfile;
+    public <T> T getMetadata(String key, T defaultValue) {
+        return getMetadata(getMetadata(), key, defaultValue);
     }
 
-    /**
-     * @return the boosterDescriptorPath
-     */
-    @Transient
-    public String getBoosterDescriptorPath() {
-        return boosterDescriptorPath;
-    }
-
-    /**
-     * @param boosterDescriptorPath the obsidianDescriptorPath to set
-     */
-    public void setBoosterDescriptorPath(String boosterDescriptorPath) {
-        this.boosterDescriptorPath = boosterDescriptorPath;
-    }
-
-    public String getSupportedDeploymentTypes() {
-        return supportedDeploymentTypes;
-    }
-
-    /**
-     * @param supportedDeploymentTypes the deployment types that are supported by this booster.
-     *                                 Leaving it unset or empty means any and all deployment types
-     */
-    public void setSupportedDeploymentTypes(String supportedDeploymentTypes) {
-        this.supportedDeploymentTypes = supportedDeploymentTypes;
+    @SuppressWarnings("unchecked")
+    private <T> T getMetadata(Map<String, Object> data, String key, T defaultValue) {
+        String[] keys = key.split(Pattern.quote("/"));
+        if (keys.length > 1) {
+            Object item = getMetadata(data, keys[0], null);
+            if (item instanceof Map) {
+                String remainingKey = key.substring(keys[0].length() + 1);
+                return getMetadata((Map<String, Object>)item, remainingKey, defaultValue);
+            } else {
+                return defaultValue;
+            }
+        } else {
+            return (T)data.getOrDefault(key, defaultValue);
+        }
     }
 
     /**
@@ -209,34 +206,50 @@ public class Booster {
     }
 
     /**
-     * @return the metadata
+     * Clones a Booster repo and provides the path where to find it as a result
      */
-    public Map<String, Object> getMetadata() {
-        return metadata;
+    public synchronized CompletableFuture<Path> content() {
+        if (contentResult == null) {
+            contentResult = boosterFetcher.fetchBoosterContent(this);
+        }
+        return contentResult;
     }
 
-    /**
-     * @param metadata the metadata to set
-     */
-    public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
+    public Booster merged(Booster otherBooster) {
+        Booster mergedBooster = new Booster(boosterFetcher);
+        return mergedBooster.merge(this).merge(otherBooster);
     }
-
-    /**
-     * @return the labels
-     */
-    public Set<String> getLabels() {
-        return labels;
+    
+    protected Booster merge(Booster booster) {
+        mergeMaps(data, booster.data);
+        if (booster.id != null) id = booster.id;
+        if (booster.mission != null) mission = booster.mission;
+        if (booster.runtime != null) runtime = booster.runtime;
+        if (booster.version != null) version = booster.version;
+        if (booster.contentPath != null) contentPath = booster.contentPath;
+        return this;
     }
-
-    /**
-     * @param labels the labels to set
-     */
-    public void setLabels(Set<String> labels) {
-        assert labels != null;
-        this.labels = labels;
+    
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> mergeMaps(Map<String, Object> to, Map<String, Object> from) {
+        for (String key : from.keySet()) {
+            Object item = from.get(key);
+            if (item instanceof Map) {
+                Map<String, Object> to2 = new LinkedHashMap<>();
+                Map<String, Object> from2 = (Map<String, Object>)item;
+                if (to.containsKey(key) && to.get(key) instanceof Map) {
+                    mergeMaps(to2, (Map<String, Object>)to.get(key));
+                }
+                to.put(key, mergeMaps(to2, from2));
+            } else if (item instanceof List) {
+                to.put(key, new ArrayList<Object>((List<Object>)item));
+            } else {
+                to.put(key, item);
+            }
+        }
+        return to;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -261,9 +274,9 @@ public class Booster {
 
     @Override
     public String toString() {
-        return "Booster [id=" + id + ", githubRepo=" + githubRepo + ", gitRef=" + gitRef + ", buildProfile="
-                + buildProfile + ", description=" + description + ", boosterDescriptorPath=" + boosterDescriptorPath
-                + ", mission=" + mission + ", runtime=" + runtime + ", version=" + version + ", contentPath="
-                + contentPath + ", metadata=" + metadata + ", labels=" + labels + "]";
+        return "Booster [id=" + id + ", githubRepo=" + getGithubRepo() + ", gitRef=" + getGitRef()
+                + ", description=" + getDescription() + ", mission=" + mission + ", runtime="
+                + runtime + ", version=" + version + ", contentPath="+ contentPath + ", metadata="
+                + getMetadata() + "]";
     }
 }

@@ -32,6 +32,7 @@ class BoosterIndexer {
                 .build();
 
         build.index().get();
+        build.prefetchBoosters().get();
         try (OutputStream os = Files.newOutputStream(targetZip)) {
             io.openshift.booster.Files.zip("", targetDir, os);
         }
