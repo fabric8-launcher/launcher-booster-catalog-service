@@ -126,6 +126,61 @@ public class BoosterCatalogServiceTest {
     }
 
     @Test
+    public void testManualEnvironment() throws Exception {
+        BoosterCatalogService service = new BoosterCatalogService.Builder()
+                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("environments_test")
+                .build();
+        service.index().get();
+
+        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+
+        softly.assertThat(booster.isPresent()).isTrue();
+        
+        softly.assertThat(booster.get().getName()).isEqualTo("default-name");
+        softly.assertThat(booster.get().getGitRef()).isEqualTo("master");
+        
+        Booster envBooster = booster.get().forEnvironment("production");
+        softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
+        softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
+        softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(3);
+    }
+
+    @Test
+    public void testCatalogEnvironment() throws Exception {
+        BoosterCatalogService service = new BoosterCatalogService.Builder()
+                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("environments_test")
+                .environment("production")
+                .build();
+        service.index().get();
+
+        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+
+        softly.assertThat(booster.isPresent()).isTrue();
+        Booster envBooster = booster.get();
+        softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
+        softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
+        softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(3);
+    }
+
+    @Test
+    public void testCatalogCompoundEnvironment() throws Exception {
+        BoosterCatalogService service = new BoosterCatalogService.Builder()
+                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("environments_test")
+                .environment("production,extra")
+                .build();
+        service.index().get();
+
+        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+
+        softly.assertThat(booster.isPresent()).isTrue();
+        Booster envBooster = booster.get();
+        softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
+        softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
+        softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(4);
+        softly.assertThat(envBooster.<Boolean>getMetadata("bar")).isTrue();
+    }
+
+    @Test
     public void testGetBoosterRuntime() throws Exception {
         BoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();

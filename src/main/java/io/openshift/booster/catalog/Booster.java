@@ -301,8 +301,8 @@ public class Booster {
     @Override
     public String toString() {
         return "Booster [id=" + id + ", githubRepo=" + getGithubRepo() + ", gitRef=" + getGitRef()
-                + ", description=" + getDescription() + ", mission=" + mission + ", runtime="
-                + runtime + ", version=" + version + ", contentPath="+ contentPath + ", metadata="
-                + getMetadata() + "]";
+                + ", name=" + getName() + ", description=" + getDescription() + ", mission=" + mission
+                + ", runtime=" + runtime + ", version=" + version + ", contentPath="+ contentPath
+                + ", metadata=" + getMetadata() + ", environments=" + getEnvironments() + "]";
     }
 }

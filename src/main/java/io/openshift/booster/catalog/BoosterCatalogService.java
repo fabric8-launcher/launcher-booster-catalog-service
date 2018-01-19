@@ -72,14 +72,17 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
                                             ".ds_store",
                                             ".obsidian", ".gitmodules"));
 
-    private BoosterCatalogService(BoosterCatalogPathProvider provider, Predicate<Booster> indexFilter,
+    private BoosterCatalogService(BoosterCatalogPathProvider provider,
+                                  Predicate<Booster> indexFilter,
                                   BoosterCatalogListener listener,
+                                  String environment,
                                   ExecutorService executor) {
         Objects.requireNonNull(provider, "Booster catalog path provider is required");
         Objects.requireNonNull(executor, "Executor is required");
         this.provider = provider;
         this.indexFilter = indexFilter;
         this.listener = listener;
+        this.environment = environment;
         this.executor = executor;
     }
 
@@ -98,6 +101,8 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
     private final Predicate<Booster> indexFilter;
 
     private final BoosterCatalogListener listener;
+
+    private final String environment;
 
     private final ExecutorService executor;
 
@@ -398,6 +403,13 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
                     Path modulePath = moduleRoot.resolve(id);
                     Booster b = indexBooster(commonBooster, id, catalogPath, path, modulePath);
                     if (b != null) {
+                        // Check if we should get a specific environment
+                        if (environment != null && !environment.isEmpty()) {
+                            String[] envs = environment.split(",");
+                            for (String env : envs) {
+                                b = b.forEnvironment(env);
+                            }
+                        }
                         boosters.add(b);
                     };
                 }
@@ -519,6 +531,8 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
 
         private BoosterCatalogListener listener;
 
+        private String environment;
+        
         private ExecutorService executor;
 
         public Builder catalogRef(String catalogRef) {
@@ -546,6 +560,11 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
             return this;
         }
 
+        public Builder environment(String environment) {
+            this.environment = environment;
+            return this;
+        }
+
         public Builder executor(ExecutorService executor) {
             this.executor = executor;
             return this;
@@ -567,7 +586,7 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
             if (executor == null) {
                 executor = ForkJoinPool.commonPool();
             }
-            return new BoosterCatalogService(provider, filter, listener, executor);
+            return new BoosterCatalogService(provider, filter, listener, environment, executor);
         }
 
         private BoosterCatalogPathProvider discoverCatalogProvider() {
