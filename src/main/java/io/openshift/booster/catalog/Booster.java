@@ -92,10 +92,10 @@ public class Booster {
     }
 
     /**
-     * @return the githubRepo
+     * @return the gitRepo
      */
-    public String getGithubRepo() {
-        return Objects.toString(data.get("githubRepo"), null);
+    public String getGitRepo() {
+        return Objects.toString(data.get("gitRepo"), null);
     }
 
     /**
@@ -300,7 +300,7 @@ public class Booster {
 
     @Override
     public String toString() {
-        return "Booster [id=" + id + ", githubRepo=" + getGithubRepo() + ", gitRef=" + getGitRef()
+        return "Booster [id=" + id + ", gitRepo=" + getGitRepo() + ", gitRef=" + getGitRef()
                 + ", name=" + getName() + ", description=" + getDescription() + ", mission=" + mission
                 + ", runtime=" + runtime + ", version=" + version + ", contentPath="+ contentPath
                 + ", metadata=" + getMetadata() + ", environments=" + getEnvironments() + "]";
