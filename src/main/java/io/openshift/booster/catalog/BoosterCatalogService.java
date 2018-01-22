@@ -185,7 +185,7 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
                         try {
                             provider.createBoosterContentPath(booster);
                             contentResult.complete(contentPath);
-                        } catch (Exception ex) {
+                        } catch (Throwable ex) {
                             contentResult.completeExceptionally(ex);
                         }
                     }, executor);
