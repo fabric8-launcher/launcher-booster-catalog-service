@@ -75,6 +75,7 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
     private BoosterCatalogService(BoosterCatalogPathProvider provider,
                                   Predicate<Booster> indexFilter,
                                   BoosterCatalogListener listener,
+                                  BoosterDataTransformer transformer,
                                   String environment,
                                   ExecutorService executor) {
         Objects.requireNonNull(provider, "Booster catalog path provider is required");
@@ -82,6 +83,7 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
         this.provider = provider;
         this.indexFilter = indexFilter;
         this.listener = listener;
+        this.transformer = transformer;
         this.environment = environment;
         this.executor = executor;
     }
@@ -101,6 +103,8 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
     private final Predicate<Booster> indexFilter;
 
     private final BoosterCatalogListener listener;
+    
+    private final BoosterDataTransformer transformer;
 
     private final String environment;
 
@@ -467,6 +471,9 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
         try (BufferedReader reader = Files.newBufferedReader(file)) {
             @SuppressWarnings("unchecked")
             Map<String, Object> boosterData = yaml.loadAs(reader, Map.class);
+            if (transformer != null) {
+                boosterData = transformer.transform(boosterData);
+            }
             return new Booster(boosterData, this);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while reading " + file, e);
@@ -531,6 +538,8 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
 
         private BoosterCatalogListener listener;
 
+        private BoosterDataTransformer transformer;
+
         private String environment;
         
         private ExecutorService executor;
@@ -560,6 +569,11 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
             return this;
         }
 
+        public Builder transformer(BoosterDataTransformer transformer) {
+            this.transformer = transformer;
+            return this;
+        }
+
         public Builder environment(String environment) {
             this.environment = environment;
             return this;
@@ -586,7 +600,7 @@ public class BoosterCatalogService implements BoosterCatalog, BoosterFetcher {
             if (executor == null) {
                 executor = ForkJoinPool.commonPool();
             }
-            return new BoosterCatalogService(provider, filter, listener, environment, executor);
+            return new BoosterCatalogService(provider, filter, listener, transformer, environment, executor);
         }
 
         private BoosterCatalogPathProvider discoverCatalogProvider() {
