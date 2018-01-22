@@ -7,7 +7,15 @@
 
 package io.openshift.booster.catalog;
 
-import io.openshift.booster.catalog.BoosterCatalogService.Builder;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
 import org.junit.ClassRule;
@@ -15,16 +23,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import io.openshift.booster.catalog.BoosterCatalogService.Builder;
 
 public class BoosterCatalogServiceTest {
 
@@ -43,21 +42,6 @@ public class BoosterCatalogServiceTest {
     private static BoosterCatalogService defaultService;
 
     @Test
-    public void testProcessMetadata() throws Exception {
-        BoosterCatalogService service = buildDefaultCatalogService();
-        Path metadataFile = Paths.get(getClass().getResource("metadata.json").toURI());
-        Map<String, Mission> missions = new HashMap<>();
-        Map<String, Runtime> runtimes = new HashMap<>();
-
-        service.processMetadata(metadataFile, missions, runtimes);
-
-        softly.assertThat(missions).hasSize(5);
-        softly.assertThat(runtimes).hasSize(3);
-        softly.assertThat(runtimes.get("wildfly-swarm").getIcon()).isNotEmpty();
-        softly.assertThat(missions.get("configmap").getDescription()).isNotEmpty();
-    }
-
-    @Test
     public void testIndex() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef()).build();
         softly.assertThat(service.getBoosters()).isEmpty();
@@ -68,25 +52,13 @@ public class BoosterCatalogServiceTest {
     }
 
     @Test
-    public void testVertxVersions() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("vertx_two_versions")
-                .build();
-        service.index().get();
-
-        Set<Version> versions = service.getVersions(new Mission("rest-http"), new Runtime("vert.x"));
-
-        softly.assertThat(versions).hasSize(2);
-    }
-
-    @Test
     public void testCommonFiles() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
                 .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("common_test")
                 .build();
         service.index().get();
 
-        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
 
         softly.assertThat(booster.isPresent()).isTrue();
         softly.assertThat(booster.get().<Boolean>getMetadata("root")).isEqualTo(true);
@@ -102,7 +74,7 @@ public class BoosterCatalogServiceTest {
                 .build();
         service.index().get();
 
-        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
 
         softly.assertThat(booster.isPresent()).isTrue();
         softly.assertThat(booster.get().<Integer>getMetadata("sub/foo")).isEqualTo(3);
@@ -119,9 +91,9 @@ public class BoosterCatalogServiceTest {
                 .build();
         service.index().get();
 
-        Set<Version> versions = service.getVersions(new Mission("rest-http"), new Runtime("vert.x"));
+        Collection<Booster> boosters = service.getBoosters(missions("rest-http").and(runtimes("vert.x")));
 
-        softly.assertThat(versions).hasSize(1);
+        softly.assertThat(boosters).hasSize(1);
     }
 
     @Test
@@ -131,7 +103,7 @@ public class BoosterCatalogServiceTest {
                 .build();
         service.index().get();
 
-        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
 
         softly.assertThat(booster.isPresent()).isTrue();
         
@@ -152,7 +124,7 @@ public class BoosterCatalogServiceTest {
                 .build();
         service.index().get();
 
-        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
 
         softly.assertThat(booster.isPresent()).isTrue();
         Booster envBooster = booster.get();
@@ -169,7 +141,7 @@ public class BoosterCatalogServiceTest {
                 .build();
         service.index().get();
 
-        Optional<Booster> booster = service.getBooster(new Mission("rest-http"), new Runtime("vert.x"), new Version("community"));
+        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
 
         softly.assertThat(booster.isPresent()).isTrue();
         Booster envBooster = booster.get();
@@ -183,41 +155,21 @@ public class BoosterCatalogServiceTest {
     public void testGetBoosterRuntime() throws Exception {
         BoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();
-        Runtime springBoot = new Runtime("spring-boot");
 
-        Collection<Booster> boosters = service.getBoosters(BoosterFilters.runtimes(springBoot));
+        Collection<Booster> boosters = service.getBoosters(runtimes("spring-boot"));
 
         softly.assertThat(boosters.size()).isGreaterThan(1);
     }
 
     @Test
-    public void testGetMissionByRuntime() throws Exception {
-        BoosterCatalogService service = buildDefaultCatalogService();
-        service.index().get();
-        Runtime springBoot = new Runtime("spring-boot");
-
-        Set<Mission> missions = service.getMissions(BoosterFilters.runtimes(springBoot));
-
-        softly.assertThat(missions.size()).isGreaterThan(1);
-    }
-
-    @Test
-    public void testGetRuntimes() throws Exception {
-        BoosterCatalogService service = buildDefaultCatalogService();
-        service.index().get();
-
-        softly.assertThat(service.getRuntimes()).contains(new Runtime("spring-boot"), new Runtime("vert.x"),
-                                                   new Runtime("wildfly-swarm"));
-    }
-
-    @Test
     public void testFilter() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef())
-                .filter(b -> b.getRuntime().getId().equals("spring-boot")).build();
+                .filter(b -> getPath(b, 1).equals("spring-boot")).build();
 
         service.index().get();
 
-        softly.assertThat(service.getRuntimes()).containsOnly(new Runtime("spring-boot"));
+        softly.assertThat(service.getBoosters().size()).isGreaterThan(0);
+        softly.assertThat(service.getBoosters().stream().map(b -> getPath(b, 1))).containsOnly("spring-boot");
     }
 
     @Test
@@ -235,10 +187,9 @@ public class BoosterCatalogServiceTest {
     public void testBoosterContent() throws Exception {
         BoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();
-        Runtime springBoot = new Runtime("spring-boot");
 
         // Just get the first booster we can find
-        Optional<Booster> booster = service.getBooster(BoosterFilters.runtimes(springBoot));
+        Optional<Booster> booster = service.getBooster(runtimes("spring-boot"));
 
         softly.assertThat(booster.isPresent()).isTrue();
         
@@ -247,6 +198,27 @@ public class BoosterCatalogServiceTest {
         softly.assertThat(pomFile.isFile()).isTrue();
     }
 
+    public static Predicate<Booster> missions(String mission) {
+        return (Booster b) -> mission == null || mission.equals(getPath(b, 0));
+    }
+
+    public static Predicate<Booster> runtimes(String runtime) {
+        return (Booster b) -> runtime == null || runtime.equals(getPath(b, 1));
+    }
+
+    public static Predicate<Booster> versions(String version) {
+        return (Booster b) -> version == null || version.equals(getPath(b, 2));
+    }
+
+    private static String getPath(Booster b, int index) {
+        List<String> path = b.getMetadata("descriptor/path", Collections.emptyList());
+        if (index < 0 || index >= path.size()) {
+            return null;
+        } else {
+            return path.get(index);
+        }
+    }
+    
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
             Builder builder = new BoosterCatalogService.Builder();
