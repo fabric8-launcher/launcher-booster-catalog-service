@@ -35,8 +35,7 @@ public class BoosterCatalogServiceTest {
             .create();
 
     @Rule
-    public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty(LauncherConfiguration.PropertyName.LAUNCHER_GIT_HOST, "http://localhost:8765/")
-            .and(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
+    public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
@@ -255,8 +254,27 @@ public class BoosterCatalogServiceTest {
             builder.catalogRepository(repo);
             String ref = LauncherConfiguration.boosterCatalogRepositoryRef();
             builder.catalogRef(ref);
+            builder.transformer(new TestRepoUrlFixer("http://localhost:8765"));
             defaultService = builder.build();
         }
         return defaultService;
+    }
+    
+    private class TestRepoUrlFixer implements BoosterDataTransformer {
+        private final String fixedUrl;
+        
+        public TestRepoUrlFixer(String fixedUrl) {
+            this.fixedUrl = fixedUrl;
+        }
+
+        @Override
+        public Map<String, Object> transform(Map<String, Object> data) {
+            String gitRepo = (String)data.get("gitRepo");
+            if (gitRepo != null) {
+                gitRepo = gitRepo.replace("https://github.com", fixedUrl);
+                data.put("gitRepo", gitRepo);
+            }
+            return data;
+        }
     }
 }
