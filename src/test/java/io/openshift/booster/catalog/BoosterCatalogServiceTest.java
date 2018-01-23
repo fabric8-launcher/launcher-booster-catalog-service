@@ -241,10 +241,10 @@ public class BoosterCatalogServiceTest {
 
         @Override
         public Map<String, Object> transform(Map<String, Object> data) {
-            String gitRepo = (String)data.get("gitRepo");
+            String gitRepo = Booster.getDataValue(data, "source/git/url", null);
             if (gitRepo != null) {
                 gitRepo = gitRepo.replace("https://github.com", fixedUrl);
-                data.put("gitRepo", gitRepo);
+                Booster.setDataValue(data, "source/git/url", gitRepo);
             }
             return data;
         }

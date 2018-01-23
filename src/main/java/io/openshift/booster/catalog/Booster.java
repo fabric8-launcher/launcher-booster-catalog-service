@@ -157,7 +157,7 @@ public class Booster {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getDataValue(Map<String, Object> data, String key, T defaultValue) {
+    public static <T> T getDataValue(Map<String, Object> data, String key, T defaultValue) {
         String[] keys = key.split(Pattern.quote("/"));
         if (keys.length > 1) {
             Object item = getDataValue(data, keys[0], null);
@@ -169,6 +169,22 @@ public class Booster {
             }
         } else {
             return (T)data.getOrDefault(key, defaultValue);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void setDataValue(Map<String, Object> data, String key, Object value) {
+        String[] keys = key.split(Pattern.quote("/"));
+        if (keys.length > 1) {
+            Object item = getDataValue(data, keys[0], null);
+            if (!(item instanceof Map)) {
+                item = new LinkedHashMap<String, Object>();
+                data.put(keys[0], item);
+            }
+            String remainingKey = key.substring(keys[0].length() + 1);
+            setDataValue((Map<String, Object>)item, remainingKey, value);
+        } else {
+            data.put(key, value);
         }
     }
 
