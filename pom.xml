@@ -39,11 +39,10 @@
     </plugins>
   </build>
   <properties>
-    <snakeyaml.version>1.19</snakeyaml.version>
-    <json.version>1.0.4</json.version>
     <version.junit>4.12</version.junit>
     <version.assertj>3.8.0</version.assertj>
     <version.git.rules>0.0.6</version.git.rules>
+    <version.snakeyaml>1.19</version.snakeyaml>
     <version.system.rules>1.17.0</version.system.rules>
   </properties>
   <dependencies>
@@ -51,12 +50,7 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>${snakeyaml.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish</groupId>
-      <artifactId>javax.json</artifactId>
-      <version>${json.version}</version>
+      <version>${version.snakeyaml}</version>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
@@ -85,9 +79,9 @@
     </dependency>
   </dependencies>
   <scm>
-    <connection>scm:git:git://github.com/fabric8-launch/booster-catalog-service.git</connection>
-    <developerConnection>scm:git:git@github.com:fabric8-launch/booster-catalog-service.git</developerConnection>
-    <url>http://github.com/fabric8-launch/booster-catalog-service</url>
+    <connection>scm:git:git://github.com/fabric8-launcher/launcher-booster-catalog-service.git</connection>
+    <developerConnection>scm:git:git@github.com:fabric8-launcher/launcher-booster-catalog-service.git</developerConnection>
+    <url>http://github.com/fabric8-launcher/launcher-booster-catalog-service</url>
     <tag>HEAD</tag>
   </scm>
 </project>
