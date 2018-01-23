@@ -92,17 +92,17 @@ public class Booster {
     }
 
     /**
-     * @return the gitRepo
+     * @return the source/git/url
      */
     public String getGitRepo() {
-        return Objects.toString(data.get("gitRepo"), null);
+        return getDataValue(data, "source/git/url", null);
     }
 
     /**
-     * @return the gitRef
+     * @return the source/git/ref
      */
     public String getGitRef() {
-        return Objects.toString(data.get("gitRef"), null);
+        return getDataValue(data, "source/git/ref", null);
     }
 
     /**
@@ -155,17 +155,17 @@ public class Booster {
      * @return specific meta data key value or <code>defaultValue</code> if the key wasn't found
      */
     public <T> T getMetadata(String key, T defaultValue) {
-        return getMetadata(getMetadata(), key, defaultValue);
+        return getDataValue(getMetadata(), key, defaultValue);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getMetadata(Map<String, Object> data, String key, T defaultValue) {
+    private <T> T getDataValue(Map<String, Object> data, String key, T defaultValue) {
         String[] keys = key.split(Pattern.quote("/"));
         if (keys.length > 1) {
-            Object item = getMetadata(data, keys[0], null);
+            Object item = getDataValue(data, keys[0], null);
             if (item instanceof Map) {
                 String remainingKey = key.substring(keys[0].length() + 1);
-                return getMetadata((Map<String, Object>)item, remainingKey, defaultValue);
+                return getDataValue((Map<String, Object>)item, remainingKey, defaultValue);
             } else {
                 return defaultValue;
             }
