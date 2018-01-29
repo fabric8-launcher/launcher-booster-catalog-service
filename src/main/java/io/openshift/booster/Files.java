@@ -7,8 +7,6 @@
 
 package io.openshift.booster;
 
-import io.openshift.booster.catalog.BoosterCatalogService;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -17,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -38,12 +37,12 @@ public class Files {
      * @param os        the {@link OutputStream} which the zip operation will be written to
      * @throws IOException if any I/O error happens
      */
-    public static void zip(String root, final Path directory, OutputStream os) throws IOException {
+    public static void zip(String root, final Path directory, OutputStream os, Predicate<Path> filter) throws IOException {
         try (final ZipOutputStream zos = new ZipOutputStream(os)) {
             java.nio.file.Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (BoosterCatalogService.EXCLUDED_PROJECT_FILES.contains(file.toFile().getName())) {
+                    if (!filter.test(file)) {
                         return FileVisitResult.CONTINUE;
                     }
                     String entry = root + File.separator + directory.relativize(file).toString();
@@ -55,7 +54,7 @@ public class Files {
 
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    if (BoosterCatalogService.EXCLUDED_PROJECT_FILES.contains(dir.toFile().getName())) {
+                    if (!filter.test(dir)) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
                     String entry = root + File.separator + directory.relativize(dir).toString() + File.separator;

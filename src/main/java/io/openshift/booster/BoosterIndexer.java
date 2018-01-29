@@ -7,13 +7,13 @@
 
 package io.openshift.booster;
 
-import io.openshift.booster.catalog.BoosterCatalogService;
-import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
-
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import io.openshift.booster.catalog.BoosterCatalogService;
+import io.openshift.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 
 /**
  * Indexes a Booster catalog and adds all its contents to a ZIP file
@@ -34,7 +34,8 @@ class BoosterIndexer {
         build.index().get();
         build.prefetchBoosters().get();
         try (OutputStream os = Files.newOutputStream(targetZip)) {
-            io.openshift.booster.Files.zip("", targetDir, os);
+            io.openshift.booster.Files.zip("", targetDir, os,
+                                           (path) -> !BoosterCatalogService.EXCLUDED_PROJECT_FILES.contains(path.toFile().getName().toLowerCase()));
         }
     }
 
