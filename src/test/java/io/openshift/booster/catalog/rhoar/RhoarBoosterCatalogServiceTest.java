@@ -70,7 +70,7 @@ public class RhoarBoosterCatalogServiceTest {
         service.index().get();
         Runtime vertx = new Runtime("vert.x");
 
-        Collection<RhoarBooster> boosters = service.getBoosters(BoosterPredicates.runtimes(vertx));
+        Collection<RhoarBooster> boosters = service.getBoosters(BoosterPredicates.withRuntime(vertx));
 
         softly.assertThat(boosters.size()).isGreaterThan(0);
     }
@@ -81,7 +81,7 @@ public class RhoarBoosterCatalogServiceTest {
         service.index().get();
         Runtime vertx = new Runtime("vert.x");
 
-        Set<Mission> missions = service.getMissions(BoosterPredicates.runtimes(vertx));
+        Set<Mission> missions = service.getMissions(BoosterPredicates.withRuntime(vertx));
 
         softly.assertThat(missions.size()).isGreaterThan(0);
     }

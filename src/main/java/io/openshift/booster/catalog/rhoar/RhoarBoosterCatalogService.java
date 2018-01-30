@@ -25,9 +25,9 @@ import javax.json.JsonReader;
 import io.openshift.booster.catalog.AbstractBoosterCatalogService;
 import io.openshift.booster.catalog.BoosterFetcher;
 
-import static io.openshift.booster.catalog.rhoar.BoosterPredicates.missions;
-import static io.openshift.booster.catalog.rhoar.BoosterPredicates.runtimes;
-import static io.openshift.booster.catalog.rhoar.BoosterPredicates.versions;
+import static io.openshift.booster.catalog.rhoar.BoosterPredicates.withMission;
+import static io.openshift.booster.catalog.rhoar.BoosterPredicates.withRuntime;
+import static io.openshift.booster.catalog.rhoar.BoosterPredicates.withVersion;
 
 public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<RhoarBooster> implements RhoarBoosterCatalog {
 
@@ -74,14 +74,14 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
         if (mission == null || runtime == null) {
             return Collections.emptySet();
         }
-        return getVersions(missions(mission).and(runtimes(runtime)));
+        return getVersions(withMission(mission).and(withRuntime(runtime)));
     }
 
     @Override
     public Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime) {
         Objects.requireNonNull(mission, "Mission should not be null");
         Objects.requireNonNull(runtime, "Runtime should not be null");
-        return getBooster(missions(mission).and(runtimes(runtime)));
+        return getBooster(withMission(mission).and(withRuntime(runtime)));
     }
 
     @Override
@@ -90,9 +90,9 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
         Objects.requireNonNull(runtime, "Runtime should not be null");
         Objects.requireNonNull(version, "Version should not be null");
         return getPrefilteredBoosters()
-                .filter(missions(mission))
-                .filter(runtimes(runtime))
-                .filter(versions(version))
+                .filter(withMission(mission))
+                .filter(withRuntime(runtime))
+                .filter(withVersion(version))
                 .findAny();
     }
 
