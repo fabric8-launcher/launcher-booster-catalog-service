@@ -3,7 +3,6 @@ package io.openshift.booster.catalog.rhoar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -24,44 +23,50 @@ public abstract class BoosterPredicates {
     }
 
     public static Predicate<RhoarBooster> runsOn(String clusterType) {
-        return (RhoarBooster b) -> isSupported(b.getMetadata("runsOn"), clusterType);
+        return (RhoarBooster b) -> checkRunsOn(b.getMetadata("runsOn"), clusterType);
     }
 
     /**
-     * Check if a given metadata object supports the given value
-     *
-     * @param supportedTypes can be a List or any object (in this case toString() will be called)
-     * @param value          The value to compare with
-     * @return if the value is present in the given type
+     * Check if a given "metadata/runsOn" object supports the given cluster type
+     * @param supportedTypes Can be a single object or a List of objects
+     * @param clusterType The cluster type name to check against
+     * @return if the clusterType matches the supported types
      */
     @SuppressWarnings("unchecked")
-    public static boolean isSupported(Object supportedTypes, String value) {
-        if (value != null && supportedTypes != null) {
+    public static boolean checkRunsOn(Object supportedTypes, String clusterType) {
+        if (clusterType != null && supportedTypes != null) {
             // Make sure we have a list of strings
-            Set<String> types;
+            List<String> types;
             if (supportedTypes instanceof List) {
                 types = ((List<String>) supportedTypes)
                         .stream()
                         .map(Objects::toString)
-                        .collect(Collectors.toSet());
+                        .collect(Collectors.toList());
+            } else if (!supportedTypes.toString().isEmpty()) {
+                types = Collections.singletonList(supportedTypes.toString());
             } else {
-                types = Collections.singleton(supportedTypes.toString());
+                types = Collections.emptyList();
             }
 
-            for (String supportedType : types) {
-                if (supportedType.equalsIgnoreCase("all")
-                        || supportedType.equalsIgnoreCase("*")
-                        || supportedType.equalsIgnoreCase(value)) {
-                    return true;
-                } else if (supportedType.equalsIgnoreCase("none")
-                        || supportedType.equalsIgnoreCase("!*")
-                        || supportedType.equalsIgnoreCase("!" + value)) {
-                    return false;
+            if (!types.isEmpty()) {
+                boolean defaultResult = true;
+                for (String supportedType : types) {
+                    if (!supportedType.startsWith("!")) {
+                        defaultResult = false;
+                    }
+                    if (supportedType.equalsIgnoreCase("all")
+                            || supportedType.equalsIgnoreCase("*")
+                            || supportedType.equalsIgnoreCase(clusterType)) {
+                        return true;
+                    } else if (supportedType.equalsIgnoreCase("none")
+                            || supportedType.equalsIgnoreCase("!*")
+                            || supportedType.equalsIgnoreCase("!" + clusterType)) {
+                        return false;
+                    }
                 }
+                return defaultResult;
             }
-            return false;
-        } else {
-            return true;
         }
+        return true;
     }
 }
