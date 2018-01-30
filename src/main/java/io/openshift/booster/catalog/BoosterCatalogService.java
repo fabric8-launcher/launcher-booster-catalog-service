@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class BoosterCatalogService extends AbstractBoosterCatalogService<Booster> {
 
-    public BoosterCatalogService(Builder config) {
+    protected BoosterCatalogService(Builder config) {
         super(config);
     }
 
