@@ -37,38 +37,38 @@ public abstract class BoosterPredicates {
      * <code>none</code> will always return <code>true</code> and <code>false</code>
      * respectively when encountered.
      * @param supportedCategories Can be a single object or a List of objects
-     * @param category The cluster type name to check against
+     * @param category The category name to check against
      * @return if the category matches the supported categories or not
      */
     @SuppressWarnings("unchecked")
     public static boolean checkNegatableCategory(Object supportedCategories, String category) {
         if (category != null && supportedCategories != null) {
             // Make sure we have a list of strings
-            List<String> types;
+            List<String> categories;
             if (supportedCategories instanceof List) {
-                types = ((List<String>) supportedCategories)
+                categories = ((List<String>) supportedCategories)
                         .stream()
                         .map(Objects::toString)
                         .collect(Collectors.toList());
             } else if (!supportedCategories.toString().isEmpty()) {
-                types = Collections.singletonList(supportedCategories.toString());
+                categories = Collections.singletonList(supportedCategories.toString());
             } else {
-                types = Collections.emptyList();
+                categories = Collections.emptyList();
             }
 
-            if (!types.isEmpty()) {
+            if (!categories.isEmpty()) {
                 boolean defaultResult = true;
-                for (String supportedType : types) {
-                    if (!supportedType.startsWith("!")) {
+                for (String supportedCategory : categories) {
+                    if (!supportedCategory.startsWith("!")) {
                         defaultResult = false;
                     }
-                    if (supportedType.equalsIgnoreCase("all")
-                            || supportedType.equalsIgnoreCase("*")
-                            || supportedType.equalsIgnoreCase(category)) {
+                    if (supportedCategory.equalsIgnoreCase("all")
+                            || supportedCategory.equalsIgnoreCase("*")
+                            || supportedCategory.equalsIgnoreCase(category)) {
                         return true;
-                    } else if (supportedType.equalsIgnoreCase("none")
-                            || supportedType.equalsIgnoreCase("!*")
-                            || supportedType.equalsIgnoreCase("!" + category)) {
+                    } else if (supportedCategory.equalsIgnoreCase("none")
+                            || supportedCategory.equalsIgnoreCase("!*")
+                            || supportedCategory.equalsIgnoreCase("!" + category)) {
                         return false;
                     }
                 }
