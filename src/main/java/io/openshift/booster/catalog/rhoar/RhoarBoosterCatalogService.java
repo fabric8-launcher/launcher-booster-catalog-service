@@ -25,9 +25,9 @@ import javax.json.JsonReader;
 import io.openshift.booster.catalog.AbstractBoosterCatalogService;
 import io.openshift.booster.catalog.BoosterFetcher;
 
-import static io.openshift.booster.catalog.rhoar.BoosterFilters.missions;
-import static io.openshift.booster.catalog.rhoar.BoosterFilters.runtimes;
-import static io.openshift.booster.catalog.rhoar.BoosterFilters.versions;
+import static io.openshift.booster.catalog.rhoar.BoosterPredicates.missions;
+import static io.openshift.booster.catalog.rhoar.BoosterPredicates.runtimes;
+import static io.openshift.booster.catalog.rhoar.BoosterPredicates.versions;
 
 public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<RhoarBooster> implements RhoarBoosterCatalog {
 

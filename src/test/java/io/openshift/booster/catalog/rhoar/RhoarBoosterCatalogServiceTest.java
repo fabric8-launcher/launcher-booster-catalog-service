@@ -22,12 +22,6 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 
 import io.openshift.booster.catalog.LauncherConfiguration;
-import io.openshift.booster.catalog.rhoar.BoosterFilters;
-import io.openshift.booster.catalog.rhoar.Mission;
-import io.openshift.booster.catalog.rhoar.RhoarBooster;
-import io.openshift.booster.catalog.rhoar.RhoarBoosterCatalogService;
-import io.openshift.booster.catalog.rhoar.Runtime;
-import io.openshift.booster.catalog.rhoar.Version;
 
 public class RhoarBoosterCatalogServiceTest {
 
@@ -76,7 +70,7 @@ public class RhoarBoosterCatalogServiceTest {
         service.index().get();
         Runtime vertx = new Runtime("vert.x");
 
-        Collection<RhoarBooster> boosters = service.getBoosters(BoosterFilters.runtimes(vertx));
+        Collection<RhoarBooster> boosters = service.getBoosters(BoosterPredicates.runtimes(vertx));
 
         softly.assertThat(boosters.size()).isGreaterThan(0);
     }
@@ -87,7 +81,7 @@ public class RhoarBoosterCatalogServiceTest {
         service.index().get();
         Runtime vertx = new Runtime("vert.x");
 
-        Set<Mission> missions = service.getMissions(BoosterFilters.runtimes(vertx));
+        Set<Mission> missions = service.getMissions(BoosterPredicates.runtimes(vertx));
 
         softly.assertThat(missions.size()).isGreaterThan(0);
     }
