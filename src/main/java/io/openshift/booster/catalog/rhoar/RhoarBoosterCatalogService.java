@@ -1,9 +1,5 @@
 package io.openshift.booster.catalog.rhoar;
 
-import static io.openshift.booster.catalog.rhoar.BoosterFilters.missions;
-import static io.openshift.booster.catalog.rhoar.BoosterFilters.runtimes;
-import static io.openshift.booster.catalog.rhoar.BoosterFilters.versions;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,6 +25,10 @@ import javax.json.JsonReader;
 import io.openshift.booster.catalog.AbstractBoosterCatalogService;
 import io.openshift.booster.catalog.BoosterFetcher;
 
+import static io.openshift.booster.catalog.rhoar.BoosterFilters.missions;
+import static io.openshift.booster.catalog.rhoar.BoosterFilters.runtimes;
+import static io.openshift.booster.catalog.rhoar.BoosterFilters.versions;
+
 public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<RhoarBooster> implements RhoarBoosterCatalog {
 
     private static final String METADATA_FILE = "metadata.json";
@@ -43,7 +43,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     protected RhoarBooster newBooster(Map<String, Object> data, BoosterFetcher boosterFetcher) {
         return new RhoarBooster(data, boosterFetcher);
     }
-    
+
     @Override
     public Set<Mission> getMissions() {
         return toMissions(getPrefilteredBoosters());
@@ -118,29 +118,27 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     @Override
     protected void indexBoosters(final Path catalogPath, final Set<RhoarBooster> boosters) throws IOException {
         super.indexBoosters(catalogPath, boosters);
-        
+
         // Update the boosters with the proper info for missions, runtimes and versions
         Map<String, Mission> missions = new HashMap<>();
         Map<String, Runtime> runtimes = new HashMap<>();
-        
+
         // Read the metadata for missions and runtimes
         Path metadataFile = catalogPath.resolve(METADATA_FILE);
         if (Files.exists(metadataFile)) {
             processMetadata(metadataFile, missions, runtimes);
         }
-        
+
         for (RhoarBooster booster : boosters) {
-            List<String> path = booster.getMetadata("descriptor/path");
-            if (path != null && !path.isEmpty()) {
-                if (path.size() >= 1) {
-                    booster.setMission(missions.computeIfAbsent(path.get(0), Mission::new));
-                    if (path.size() >= 2) {
-                        booster.setRuntime(runtimes.computeIfAbsent(path.get(1), Runtime::new));
-                        if (path.size() >= 3) {
-                            String versionId = path.get(2);
-                            String versionName = booster.getMetadata("version/name", versionId);
-                            booster.setVersion(new Version(versionId, versionName));
-                        }
+            List<String> path = booster.getMetadata("descriptor/path", Collections.emptyList());
+            if (path.size() >= 1) {
+                booster.setMission(missions.computeIfAbsent(path.get(0), Mission::new));
+                if (path.size() >= 2) {
+                    booster.setRuntime(runtimes.computeIfAbsent(path.get(1), Runtime::new));
+                    if (path.size() >= 3) {
+                        String versionId = path.get(2);
+                        String versionName = booster.getMetadata("version/name", versionId);
+                        booster.setVersion(new Version(versionId, versionName));
                     }
                 }
             }
@@ -155,7 +153,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
         logger.info(() -> "Reading metadata at " + metadataFile + " ...");
 
         try (BufferedReader reader = Files.newBufferedReader(metadataFile);
-                JsonReader jsonReader = Json.createReader(reader)) {
+             JsonReader jsonReader = Json.createReader(reader)) {
             JsonObject index = jsonReader.readObject();
             index.getJsonArray("missions").stream().map(JsonObject.class::cast)
                     .map(e -> new Mission(e.getString("id"), e.getString("name"), e.getString("description", null)))
@@ -168,7 +166,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
             logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
         }
     }
-    
+
     public static class Builder extends AbstractBuilder<RhoarBooster, RhoarBoosterCatalogService> {
         @Override
         public RhoarBoosterCatalogService build() {
