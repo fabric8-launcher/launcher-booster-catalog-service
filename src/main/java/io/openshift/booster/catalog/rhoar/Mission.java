@@ -12,15 +12,16 @@ package io.openshift.booster.catalog.rhoar;
  */
 public class Mission implements Comparable<Mission> {
     public Mission(String id) {
-        this(id, id, null);
+        this(id, id, null, false);
     }
 
-    public Mission(String id, String name, String description) {
+    public Mission(String id, String name, String description, boolean suggested) {
         assert id != null : "Mission Id cannot be null";
         assert name != null : "Mission Name cannot be null";
         this.id = id;
         this.name = name;
         this.description = description;
+        this.suggested = suggested;
     }
 
     private final String id;
@@ -28,6 +29,8 @@ public class Mission implements Comparable<Mission> {
     private final String name;
 
     private final String description;
+    
+    private final boolean suggested;
 
     /**
      * This method is needed so the Web UI can know what's the internal ID used
@@ -55,6 +58,13 @@ public class Mission implements Comparable<Mission> {
      */
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * @return get suggested
+     */
+    public boolean isSuggested() {
+        return suggested;
     }
 
     @Override
@@ -86,6 +96,6 @@ public class Mission implements Comparable<Mission> {
 
     @Override
     public String toString() {
-        return "Mission [id=" + id + ", name=" + name + ", description=" + description + "]";
+        return "Mission [id=" + id + ", name=" + name + ", description=" + description + ", suggested=" + suggested + "]";
     }
 }

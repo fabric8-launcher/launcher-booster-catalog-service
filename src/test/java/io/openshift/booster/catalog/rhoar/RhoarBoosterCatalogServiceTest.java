@@ -52,6 +52,8 @@ public class RhoarBoosterCatalogServiceTest {
         softly.assertThat(runtimes).hasSize(3);
         softly.assertThat(runtimes.get("wildfly-swarm").getIcon()).isNotEmpty();
         softly.assertThat(missions.get("configmap").getDescription()).isNotEmpty();
+        softly.assertThat(missions.get("rest-http").isSuggested()).isTrue();
+        softly.assertThat(missions.get("configmap").isSuggested()).isFalse();
     }
 
     @Test

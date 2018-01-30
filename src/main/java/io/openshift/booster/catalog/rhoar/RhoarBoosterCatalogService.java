@@ -156,7 +156,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
              JsonReader jsonReader = Json.createReader(reader)) {
             JsonObject index = jsonReader.readObject();
             index.getJsonArray("missions").stream().map(JsonObject.class::cast)
-                    .map(e -> new Mission(e.getString("id"), e.getString("name"), e.getString("description", null)))
+                    .map(e -> new Mission(e.getString("id"), e.getString("name"), e.getString("description", null), e.getBoolean("suggested", false)))
                     .forEach(m -> missions.put(m.getId(), m));
 
             index.getJsonArray("runtimes").stream().map(JsonObject.class::cast)

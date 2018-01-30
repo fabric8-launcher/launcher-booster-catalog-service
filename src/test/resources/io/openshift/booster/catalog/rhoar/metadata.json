@@ -15,7 +15,8 @@
     },
     {
       "id": "rest-http",
-      "name": "REST API Level 0"
+      "name": "REST API Level 0",
+      "suggested": true
     },
     {
       "id": "rest-http-secured",
