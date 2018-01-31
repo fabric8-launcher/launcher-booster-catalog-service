@@ -126,7 +126,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
         }
 
         for (RhoarBooster booster : boosters) {
-            List<String> path = booster.getMetadata("descriptor/path", Collections.emptyList());
+            List<String> path = booster.getDescriptor().path;
             if (path.size() >= 1) {
                 booster.setMission(missions.computeIfAbsent(path.get(0), Mission::new));
                 if (path.size() >= 2) {

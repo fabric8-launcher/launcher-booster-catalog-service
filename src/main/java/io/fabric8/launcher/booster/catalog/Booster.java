@@ -103,6 +103,28 @@ public class Booster {
         return getDataValue(data, "source/git/ref", null);
     }
 
+    public static class Descriptor {
+        public final String name;
+        public final List<String> path;
+
+        public Descriptor(String name, List<String> path) {
+            this.name = name;
+            this.path = path;
+        }
+    }
+
+    /**
+     * Returns a {@link Descriptor} object containing the name
+     * and path elements of the descriptor file that was used
+     * to create this Booster
+     * @return a {@link Descriptor} object
+     */
+    public Descriptor getDescriptor() {
+        String name = getMetadata("descriptor/name", "");
+        List<String> path = getMetadata("descriptor/path", Collections.emptyList());
+        return new Descriptor(name, path);
+    }
+
     /**
      * @return the environments
      */

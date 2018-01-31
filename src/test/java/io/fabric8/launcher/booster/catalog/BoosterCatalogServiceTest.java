@@ -212,7 +212,7 @@ public class BoosterCatalogServiceTest {
     }
 
     private static String getPath(Booster b, int index) {
-        List<String> path = b.getMetadata("descriptor/path", Collections.emptyList());
+        List<String> path = b.getDescriptor().path;
         if (index < 0 || index >= path.size()) {
             return null;
         } else {
