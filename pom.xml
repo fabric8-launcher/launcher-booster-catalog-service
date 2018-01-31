@@ -5,7 +5,7 @@
     <artifactId>jboss-parent</artifactId>
     <version>25</version>
   </parent>
-  <groupId>io.openshift</groupId>
+  <groupId>io.fabric8.launcher</groupId>
   <artifactId>booster-catalog-service</artifactId>
   <version>20-SNAPSHOT</version>
   <licenses>
