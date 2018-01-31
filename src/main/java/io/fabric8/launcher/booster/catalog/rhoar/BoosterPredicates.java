@@ -1,5 +1,6 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -10,15 +11,15 @@ public abstract class BoosterPredicates {
     private BoosterPredicates() {
     }
 
-    public static Predicate<RhoarBooster> withRuntime(io.fabric8.launcher.booster.catalog.rhoar.Runtime runtime) {
+    public static Predicate<RhoarBooster> withRuntime(@Nullable Runtime runtime) {
         return (RhoarBooster b) -> runtime == null || runtime.equals(b.getRuntime());
     }
 
-    public static Predicate<RhoarBooster> withMission(Mission mission) {
+    public static Predicate<RhoarBooster> withMission(@Nullable Mission mission) {
         return (RhoarBooster b) -> mission == null || mission.equals(b.getMission());
     }
 
-    public static Predicate<RhoarBooster> withVersion(Version version) {
+    public static Predicate<RhoarBooster> withVersion(@Nullable Version version) {
         return (RhoarBooster b) -> version == null || version.equals(b.getVersion());
     }
 
@@ -42,26 +43,23 @@ public abstract class BoosterPredicates {
      */
     @SuppressWarnings("unchecked")
     public static boolean checkNegatableCategory(List<String> supportedCategories, String category) {
-        if (category != null && supportedCategories != null) {
-            if (!supportedCategories.isEmpty()) {
-                boolean defaultResult = true;
-                for (String supportedCategory : supportedCategories) {
-                    if (!supportedCategory.startsWith("!")) {
-                        defaultResult = false;
-                    }
-                    if (supportedCategory.equalsIgnoreCase("all")
-                            || supportedCategory.equalsIgnoreCase("*")
-                            || supportedCategory.equalsIgnoreCase(category)) {
-                        return true;
-                    } else if (supportedCategory.equalsIgnoreCase("none")
-                            || supportedCategory.equalsIgnoreCase("!*")
-                            || supportedCategory.equalsIgnoreCase("!" + category)) {
-                        return false;
-                    }
+        boolean defaultResult = true;
+        if (!supportedCategories.isEmpty()) {
+            for (String supportedCategory : supportedCategories) {
+                if (!supportedCategory.startsWith("!")) {
+                    defaultResult = false;
                 }
-                return defaultResult;
+                if (supportedCategory.equalsIgnoreCase("all")
+                        || supportedCategory.equalsIgnoreCase("*")
+                        || supportedCategory.equalsIgnoreCase(category)) {
+                    return true;
+                } else if (supportedCategory.equalsIgnoreCase("none")
+                        || supportedCategory.equalsIgnoreCase("!*")
+                        || supportedCategory.equalsIgnoreCase("!" + category)) {
+                    return false;
+                }
             }
         }
-        return true;
+        return defaultResult;
     }
 }

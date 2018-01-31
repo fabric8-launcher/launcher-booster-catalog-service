@@ -9,6 +9,7 @@ package io.fabric8.launcher.booster.catalog.spi;
 
 import io.fabric8.launcher.booster.catalog.Booster;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +27,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
      * @param catalogRepositoryURI
      * @param catalogRef
      */
-    public NativeGitBoosterCatalogPathProvider(String catalogRepositoryURI, String catalogRef, Path rootDir) {
+    public NativeGitBoosterCatalogPathProvider(String catalogRepositoryURI, String catalogRef, @Nullable Path rootDir) {
         super();
         this.catalogRepositoryURI = catalogRepositoryURI;
         this.catalogRef = catalogRef;
@@ -39,6 +40,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
 
     private final String catalogRef;
 
+    @Nullable
     private final Path rootDir;
 
     @Override
@@ -70,19 +72,21 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
     public Path createBoosterContentPath(Booster booster) throws IOException {
         int exitCode;
         try {
+            Path contentPath = booster.getContentPath();
+            assert(contentPath != null);
             ProcessBuilder builder = new ProcessBuilder()
                     .command("git", "clone", booster.getGitRepo(),
                              "--branch", booster.getGitRef(),
                              "--recursive",
                              "--depth=1",
-                             booster.getContentPath().toString())
+                            contentPath.toString())
                     .inheritIO();
             logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
             exitCode = builder.start().waitFor();
             assert exitCode == 0 : "Process returned exit code: " + exitCode;
             builder = new ProcessBuilder()
                     .command("git", "checkout", booster.getGitRef(), "--quiet")
-                    .directory(booster.getContentPath().toFile())
+                    .directory(contentPath.toFile())
                     .inheritIO();
             logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
             exitCode = builder.start().waitFor();

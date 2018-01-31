@@ -7,6 +7,7 @@
 
 package io.fabric8.launcher.booster;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
     private final Predicate<Path> filter;
 
+    @Nullable
     private Path sourcePath;
 
     @Override
@@ -50,7 +52,7 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
     @Override
     public FileVisitResult visitFile(final Path file,
                                      final BasicFileAttributes attrs) throws IOException {
-        if (filter.test(file)) {
+        if (sourcePath != null && filter.test(file)) {
             Path target = targetPath.resolve(sourcePath.relativize(file));
             java.nio.file.Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
         }

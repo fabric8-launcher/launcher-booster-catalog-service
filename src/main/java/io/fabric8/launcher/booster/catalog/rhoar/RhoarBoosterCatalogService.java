@@ -51,12 +51,12 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     }
 
     @Override
-    public Set<io.fabric8.launcher.booster.catalog.rhoar.Runtime> getRuntimes() {
+    public Set<Runtime> getRuntimes() {
         return toRuntimes(getPrefilteredBoosters());
     }
 
     @Override
-    public Set<io.fabric8.launcher.booster.catalog.rhoar.Runtime> getRuntimes(Predicate<RhoarBooster> filter) {
+    public Set<Runtime> getRuntimes(Predicate<RhoarBooster> filter) {
         return toRuntimes(getPrefilteredBoosters().filter(filter));
     }
 
@@ -66,25 +66,17 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     }
 
     @Override
-    public Set<Version> getVersions(Mission mission, io.fabric8.launcher.booster.catalog.rhoar.Runtime runtime) {
-        if (mission == null || runtime == null) {
-            return Collections.emptySet();
-        }
+    public Set<Version> getVersions(Mission mission, Runtime runtime) {
         return getVersions(BoosterPredicates.withMission(mission).and(BoosterPredicates.withRuntime(runtime)));
     }
 
     @Override
-    public Optional<RhoarBooster> getBooster(Mission mission, io.fabric8.launcher.booster.catalog.rhoar.Runtime runtime) {
-        Objects.requireNonNull(mission, "Mission should not be null");
-        Objects.requireNonNull(runtime, "Runtime should not be null");
+    public Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime) {
         return getBooster(BoosterPredicates.withMission(mission).and(BoosterPredicates.withRuntime(runtime)));
     }
 
     @Override
-    public Optional<RhoarBooster> getBooster(Mission mission, io.fabric8.launcher.booster.catalog.rhoar.Runtime runtime, Version version) {
-        Objects.requireNonNull(mission, "Mission should not be null");
-        Objects.requireNonNull(runtime, "Runtime should not be null");
-        Objects.requireNonNull(version, "Version should not be null");
+    public Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime, Version version) {
         return getPrefilteredBoosters()
                 .filter(BoosterPredicates.withMission(mission))
                 .filter(BoosterPredicates.withRuntime(runtime))
@@ -92,7 +84,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                 .findAny();
     }
 
-    private Set<io.fabric8.launcher.booster.catalog.rhoar.Runtime> toRuntimes(Stream<RhoarBooster> bs) {
+    private Set<Runtime> toRuntimes(Stream<RhoarBooster> bs) {
         return bs
                 .map(RhoarBooster::getRuntime)
                 .collect(Collectors.toCollection(TreeSet::new));
@@ -117,7 +109,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
 
         // Update the boosters with the proper info for missions, runtimes and versions
         Map<String, Mission> missions = new HashMap<>();
-        Map<String, io.fabric8.launcher.booster.catalog.rhoar.Runtime> runtimes = new HashMap<>();
+        Map<String, Runtime> runtimes = new HashMap<>();
 
         // Read the metadata for missions and runtimes
         Path metadataFile = catalogPath.resolve(METADATA_FILE);
@@ -130,10 +122,11 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
             if (path.size() >= 1) {
                 booster.setMission(missions.computeIfAbsent(path.get(0), Mission::new));
                 if (path.size() >= 2) {
-                    booster.setRuntime(runtimes.computeIfAbsent(path.get(1), io.fabric8.launcher.booster.catalog.rhoar.Runtime::new));
+                    booster.setRuntime(runtimes.computeIfAbsent(path.get(1), Runtime::new));
                     if (path.size() >= 3) {
                         String versionId = path.get(2);
                         String versionName = booster.getMetadata("version/name", versionId);
+                        assert versionName != null;
                         booster.setVersion(new Version(versionId, versionName));
                     }
                 }
@@ -145,7 +138,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
      * Process the metadataFile and adds to the specified missions and runtimes
      * maps
      */
-    public void processMetadata(Path metadataFile, Map<String, Mission> missions, Map<String, io.fabric8.launcher.booster.catalog.rhoar.Runtime> runtimes) {
+    public void processMetadata(Path metadataFile, Map<String, Mission> missions, Map<String, Runtime> runtimes) {
         logger.info(() -> "Reading metadata at " + metadataFile + " ...");
 
         try (BufferedReader reader = Files.newBufferedReader(metadataFile);
@@ -156,7 +149,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                     .forEach(m -> missions.put(m.getId(), m));
 
             index.getJsonArray("runtimes").stream().map(JsonObject.class::cast)
-                    .map(e -> new io.fabric8.launcher.booster.catalog.rhoar.Runtime(e.getString("id"), e.getString("name"), e.getString("icon", null)))
+                    .map(e -> new Runtime(e.getString("id"), e.getString("name"), e.getString("icon", null)))
                     .forEach(r -> runtimes.put(r.getId(), r));
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
@@ -166,7 +159,6 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     public static class Builder extends AbstractBuilder<RhoarBooster, RhoarBoosterCatalogService> {
         @Override
         public RhoarBoosterCatalogService build() {
-            assert catalogRef != null : "Catalog Ref is required";
             return new RhoarBoosterCatalogService(this);
         }
     }

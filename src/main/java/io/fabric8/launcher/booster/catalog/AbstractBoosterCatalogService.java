@@ -44,6 +44,8 @@ import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider;
 import io.fabric8.launcher.booster.catalog.spi.LocalBoosterCatalogPathProvider;
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 
+import javax.annotation.Nullable;
+
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
  * marshalls into {@link Booster} objects.
@@ -92,34 +94,42 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
 
     private final Predicate<BOOSTER> indexFilter;
 
+    @Nullable
     private final BoosterCatalogListener listener;
 
+    @Nullable
     private final BoosterDataTransformer transformer;
 
+    @Nullable
     private final String environment;
 
     private final ExecutorService executor;
 
+    @Nullable
     private volatile CompletableFuture<Set<BOOSTER>> indexResult;
+
+    @Nullable
     private volatile CompletableFuture<Set<BOOSTER>> prefetchResult;
 
     /**
      * Indexes the existing YAML files provided by the {@link BoosterCatalogPathProvider} implementation
      */
     public synchronized CompletableFuture<Set<BOOSTER>> index() {
-        if (indexResult == null) {
-            indexResult = new CompletableFuture<Set<BOOSTER>>();
+        CompletableFuture<Set<BOOSTER>> ir = indexResult;
+        if (ir == null) {
+            indexResult = ir = new CompletableFuture<Set<BOOSTER>>();
+            final CompletableFuture<Set<BOOSTER>> finalir = ir;
             CompletableFuture.runAsync(() -> {
                 try {
                     boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
                     doIndex();
-                    indexResult.complete(boosters);
+                    finalir.complete(boosters);
                 } catch (Exception ex) {
-                    indexResult.completeExceptionally(ex);
+                    finalir.completeExceptionally(ex);
                 }
             }, executor);
         }
-        return indexResult;
+        return ir;
     }
 
     /**
@@ -127,21 +137,24 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
      * Attention: this won't do anything if indexing is already in progress
      */
     public synchronized CompletableFuture<Set<BOOSTER>> reindex() {
-        if (indexResult != null && indexResult.isDone()) {
+        final CompletableFuture<Set<BOOSTER>> ir = indexResult;
+        if (ir != null && ir.isDone()) {
             indexResult = null;
         }
         return index();
     }
     
     /**
-     * Pre-fetches the code for {@link Booster}s that were found when running {@link index}.
+     * Pre-fetches the code for {@link Booster}s that were found when running {@link #index}.
      * It's not necessary to run this because {@link Booster} code will be downloaded on
      * demand, but if you want to avoid any delays for the user you can run this method.
      */
     public synchronized CompletableFuture<Set<BOOSTER>> prefetchBoosters() {
         assert(indexResult != null);
-        if (prefetchResult == null) {
-            prefetchResult = new CompletableFuture<Set<BOOSTER>>();
+        CompletableFuture<Set<BOOSTER>> pr = prefetchResult;
+        if (pr == null) {
+            prefetchResult = pr = new CompletableFuture<Set<BOOSTER>>();
+            final CompletableFuture<Set<BOOSTER>> finalpr = pr;
             CompletableFuture.runAsync(() -> {
                 try {
                     logger.info(() -> "Pre-fetching boosters...");
@@ -155,14 +168,14 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                             logger.log(Level.SEVERE, "Error while fetching booster '" + b.getName() + "'", e);
                         }
                     }
-                    prefetchResult.complete(boosters);
+                    finalpr.complete(boosters);
                     logger.info(() -> "Finished prefetching boosters");
                 } catch (Exception ex) {
-                    prefetchResult.completeExceptionally(ex);
+                    finalpr.completeExceptionally(ex);
                 }
             }, executor);
         }
-        return prefetchResult;
+        return pr;
     }
 
     /**
@@ -173,7 +186,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         synchronized (booster) {
             CompletableFuture<Path> contentResult = new CompletableFuture<>();
             Path contentPath = booster.getContentPath();
-            if (Files.notExists(contentPath)) {
+            if (contentPath != null && Files.notExists(contentPath)) {
                 try {
                     Files.createDirectories(contentPath);
                     CompletableFuture.runAsync(() -> {
@@ -335,6 +348,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
      * @param file A YAML file from the booster-catalog repository
      * @return a {@link Booster} or null if the booster could not be read
      */
+    @Nullable
     protected BOOSTER indexBooster(BOOSTER common, String id, Path catalogPath, Path file, Path moduleDir) {
         logger.info(() -> "Indexing " + file + " ...");
         BOOSTER booster = readBooster(file);
@@ -361,8 +375,9 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         return booster;
     }
     
-    protected abstract BOOSTER newBooster(Map<String, Object> data, BoosterFetcher boosterFetcher);
+    protected abstract BOOSTER newBooster(@Nullable Map<String, Object> data, BoosterFetcher boosterFetcher);
 
+    @Nullable
     private BOOSTER readBooster(Path file) {
         Representer rep = new Representer();
         rep.getPropertyUtils().setSkipMissingProperties(true);
@@ -386,7 +401,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         return getPathList(boosterDir);
     }
 
-    private List<String> getPathList(Path path) {
+    private List<String> getPathList(@Nullable Path path) {
         if (path != null) {
             return StreamSupport.stream(path.spliterator(), false)
                     .map(Objects::toString)
@@ -407,18 +422,24 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
 
         protected String catalogRef = "master";
 
+        @Nullable
         protected Path rootDir;
 
+        @Nullable
         protected BoosterCatalogPathProvider pathProvider;
 
         protected Predicate<BOOSTER> filter = x -> true;
 
+        @Nullable
         protected BoosterCatalogListener listener;
 
+        @Nullable
         protected BoosterDataTransformer transformer;
 
+        @Nullable
         protected String environment;
-        
+
+        @Nullable
         protected ExecutorService executor;
 
         public AbstractBuilder<BOOSTER, CATALOG> catalogRef(String catalogRef) {
@@ -467,7 +488,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         }
 
         public abstract CATALOG build();
-        
+
         private BoosterCatalogPathProvider discoverCatalogProvider() {
             final BoosterCatalogPathProvider provider;
             if (LauncherConfiguration.ignoreLocalZip()) {

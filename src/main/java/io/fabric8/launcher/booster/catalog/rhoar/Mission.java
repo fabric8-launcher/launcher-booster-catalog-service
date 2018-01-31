@@ -7,6 +7,8 @@
 
 package io.fabric8.launcher.booster.catalog.rhoar;
 
+import javax.annotation.Nullable;
+
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
@@ -15,9 +17,7 @@ public class Mission implements Comparable<Mission> {
         this(id, id, null, false);
     }
 
-    public Mission(String id, String name, String description, boolean suggested) {
-        assert id != null : "Mission Id cannot be null";
-        assert name != null : "Mission Name cannot be null";
+    public Mission(String id, String name, @Nullable String description, boolean suggested) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -28,6 +28,7 @@ public class Mission implements Comparable<Mission> {
 
     private final String name;
 
+    @Nullable
     private final String description;
     
     private final boolean suggested;
@@ -56,6 +57,7 @@ public class Mission implements Comparable<Mission> {
     /**
      * @return get description
      */
+    @Nullable
     public String getDescription() {
         return description;
     }
@@ -76,12 +78,12 @@ public class Mission implements Comparable<Mission> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + id.hashCode();
         return result;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (this == obj)
             return true;
         if (obj == null)
@@ -89,9 +91,7 @@ public class Mission implements Comparable<Mission> {
         if (getClass() != obj.getClass())
             return false;
         Mission other = (Mission) obj;
-        if (id == null) {
-            return other.id == null;
-        } else return id.equals(other.id);
+        return id.equals(other.id);
     }
 
     @Override

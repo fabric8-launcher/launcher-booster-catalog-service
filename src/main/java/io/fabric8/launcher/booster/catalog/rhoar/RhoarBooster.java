@@ -9,9 +9,14 @@ import java.util.stream.Collectors;
 import io.fabric8.launcher.booster.catalog.BoosterFetcher;
 import io.fabric8.launcher.booster.catalog.Booster;
 
+import javax.annotation.Nullable;
+
 public class RhoarBooster extends Booster {
+    @Nullable
     private Mission mission;
-    private io.fabric8.launcher.booster.catalog.rhoar.Runtime runtime;
+    @Nullable
+    private Runtime runtime;
+    @Nullable
     private Version version;
 
     public List<String> getRunsOn() {
@@ -33,6 +38,7 @@ public class RhoarBooster extends Booster {
     /**
      * @return the mission
      */
+    @Nullable
     public Mission getMission() {
         return mission;
     }
@@ -47,20 +53,22 @@ public class RhoarBooster extends Booster {
     /**
      * @return the runtime
      */
-    public io.fabric8.launcher.booster.catalog.rhoar.Runtime getRuntime() {
+    @Nullable
+    public Runtime getRuntime() {
         return runtime;
     }
 
     /**
      * @param runtime the runtime to set
      */
-    public void setRuntime(io.fabric8.launcher.booster.catalog.rhoar.Runtime runtime) {
+    public void setRuntime(Runtime runtime) {
         this.runtime = runtime;
     }
 
     /**
      * @return the version
      */
+    @Nullable
     public Version getVersion() {
         return version;
     }

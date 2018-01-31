@@ -43,6 +43,7 @@
     <version.assertj>3.8.0</version.assertj>
     <version.git.rules>0.0.6</version.git.rules>
     <version.json>1.0.4</version.json>
+    <version.jsr305>3.0.2</version.jsr305>
     <version.snakeyaml>1.19</version.snakeyaml>
     <version.system.rules>1.17.0</version.system.rules>
   </properties>
@@ -57,6 +58,12 @@
       <groupId>org.glassfish</groupId>
       <artifactId>javax.json</artifactId>
       <version>${version.json}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${version.jsr305}</version>
+      <scope>provided</scope>
     </dependency>
     <!-- Test dependencies -->
     <dependency>

@@ -7,6 +7,7 @@
 
 package io.fabric8.launcher.booster.catalog;
 
+import javax.annotation.Nullable;
 import java.beans.Transient;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,12 +27,16 @@ import java.util.regex.Pattern;
  */
 public class Booster {
     private Map<String, Object> data;
+
     private final BoosterFetcher boosterFetcher;
 
+    @Nullable
     private String id;
-    
+
+    @Nullable
     private Path contentPath;
 
+    @Nullable
     private CompletableFuture<Path> contentResult = null;
     
     protected Booster(BoosterFetcher boosterFetcher) {
@@ -40,7 +45,7 @@ public class Booster {
         this.data.put("metadata", new LinkedHashMap<>());
     }
     
-    protected Booster(Map<String, Object> data, BoosterFetcher boosterFetcher) {
+    protected Booster(@Nullable Map<String, Object> data, BoosterFetcher boosterFetcher) {
         this(boosterFetcher);
         if (data != null) {
             mergeMaps(this.data, data);
@@ -50,6 +55,7 @@ public class Booster {
     /**
      * @return the id
      */
+    @Nullable
     public String getId() {
         return id;
     }
@@ -92,6 +98,7 @@ public class Booster {
     /**
      * @return the source/git/url
      */
+    @Nullable
     public String getGitRepo() {
         return getDataValue(data, "source/git/url", null);
     }
@@ -99,6 +106,7 @@ public class Booster {
     /**
      * @return the source/git/ref
      */
+    @Nullable
     public String getGitRef() {
         return getDataValue(data, "source/git/ref", null);
     }
@@ -164,8 +172,9 @@ public class Booster {
      * of a path where keys are separated by "/" to identify sub items
      * @return specific meta data key value or <code>null</code> if the key wasn't found
      */
+    @Nullable
     public <T> T getMetadata(String key) {
-        return getMetadata(key, null);
+        return getDataValue(getMetadata(), key, null);
     }
 
     /**
@@ -175,11 +184,14 @@ public class Booster {
      * @return specific meta data key value or <code>defaultValue</code> if the key wasn't found
      */
     public <T> T getMetadata(String key, T defaultValue) {
-        return getDataValue(getMetadata(), key, defaultValue);
+        T result = getDataValue(getMetadata(), key, defaultValue);
+        assert result != null;
+        return result;
     }
 
+    @Nullable
     @SuppressWarnings("unchecked")
-    public static <T> T getDataValue(Map<String, Object> data, String key, T defaultValue) {
+    public static <T> T getDataValue(Map<String, Object> data, String key, @Nullable T defaultValue) {
         String[] keys = key.split(Pattern.quote("/"));
         if (keys.length > 1) {
             Object item = getDataValue(data, keys[0], null);
@@ -213,7 +225,7 @@ public class Booster {
     /**
      * @return the contentPath
      */
-    @Transient
+    @Transient @Nullable
     public Path getContentPath() {
         return contentPath;
     }
@@ -229,10 +241,11 @@ public class Booster {
      * Clones a Booster repo and provides the path where to find it as a result
      */
     public synchronized CompletableFuture<Path> content() {
-        if (contentResult == null) {
-            contentResult = boosterFetcher.fetchBoosterContent(this);
+        CompletableFuture<Path> cr = contentResult;
+        if (cr == null) {
+            contentResult = cr = boosterFetcher.fetchBoosterContent(this);
         }
-        return contentResult;
+        return cr;
     }
 
     public Booster merged(Booster otherBooster) {
@@ -280,7 +293,7 @@ public class Booster {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (this == obj)
             return true;
         if (obj == null)

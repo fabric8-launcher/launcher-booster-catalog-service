@@ -22,6 +22,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 
+import javax.annotation.Nullable;
+
 public class RhoarBoosterCatalogServiceTest {
 
     @ClassRule
@@ -36,6 +38,7 @@ public class RhoarBoosterCatalogServiceTest {
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
 
+    @Nullable
     private static RhoarBoosterCatalogService defaultService;
 
     @Test
@@ -43,7 +46,7 @@ public class RhoarBoosterCatalogServiceTest {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
         Path metadataFile = Paths.get(getClass().getResource("metadata.json").toURI());
         Map<String, Mission> missions = new HashMap<>();
-        Map<String, io.fabric8.launcher.booster.catalog.rhoar.Runtime> runtimes = new HashMap<>();
+        Map<String, Runtime> runtimes = new HashMap<>();
 
         service.processMetadata(metadataFile, missions, runtimes);
 
@@ -60,7 +63,7 @@ public class RhoarBoosterCatalogServiceTest {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();
 
-        Set<Version> versions = service.getVersions(new Mission("rest-http"), new io.fabric8.launcher.booster.catalog.rhoar.Runtime("vert.x"));
+        Set<Version> versions = service.getVersions(new Mission("rest-http"), new Runtime("vert.x"));
 
         softly.assertThat(versions).hasSize(2);
     }
@@ -69,7 +72,7 @@ public class RhoarBoosterCatalogServiceTest {
     public void testGetBoosterRuntime() throws Exception {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();
-        io.fabric8.launcher.booster.catalog.rhoar.Runtime vertx = new io.fabric8.launcher.booster.catalog.rhoar.Runtime("vert.x");
+        Runtime vertx = new Runtime("vert.x");
 
         Collection<RhoarBooster> boosters = service.getBoosters(BoosterPredicates.withRuntime(vertx));
 
@@ -80,7 +83,7 @@ public class RhoarBoosterCatalogServiceTest {
     public void testGetMissionByRuntime() throws Exception {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();
-        io.fabric8.launcher.booster.catalog.rhoar.Runtime vertx = new io.fabric8.launcher.booster.catalog.rhoar.Runtime("vert.x");
+        Runtime vertx = new Runtime("vert.x");
 
         Set<Mission> missions = service.getMissions(BoosterPredicates.withRuntime(vertx));
 
@@ -92,18 +95,21 @@ public class RhoarBoosterCatalogServiceTest {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();
 
-        softly.assertThat(service.getRuntimes()).contains(new io.fabric8.launcher.booster.catalog.rhoar.Runtime("vert.x"));
+        softly.assertThat(service.getRuntimes()).contains(new Runtime("vert.x"));
     }
 
     @Test
     public void testFilter() throws Exception {
         RhoarBoosterCatalogService service = new RhoarBoosterCatalogService.Builder()
                 .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("vertx_two_versions")
-                .filter(b -> b.getRuntime().getId().equals("vert.x")).build();
+                .filter(b -> {
+                    Runtime r = b.getRuntime();
+                    return r != null && r.getId().equals("vert.x");
+                }).build();
 
         service.index().get();
 
-        softly.assertThat(service.getRuntimes()).containsOnly(new io.fabric8.launcher.booster.catalog.rhoar.Runtime("vert.x"));
+        softly.assertThat(service.getRuntimes()).containsOnly(new Runtime("vert.x"));
     }
 
     private RhoarBoosterCatalogService buildDefaultCatalogService() {

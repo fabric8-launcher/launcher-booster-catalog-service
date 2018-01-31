@@ -16,7 +16,6 @@ public class BoosterCatalogService extends AbstractBoosterCatalogService<Booster
     public static class Builder extends AbstractBuilder<Booster, BoosterCatalogService> {
         @Override
         public BoosterCatalogService build() {
-            assert catalogRef != null : "Catalog Ref is required";
             return new BoosterCatalogService(this);
         }
     }

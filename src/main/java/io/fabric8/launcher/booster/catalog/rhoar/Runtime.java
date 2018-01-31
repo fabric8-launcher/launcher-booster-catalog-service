@@ -7,6 +7,8 @@
 
 package io.fabric8.launcher.booster.catalog.rhoar;
 
+import javax.annotation.Nullable;
+
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
@@ -15,14 +17,13 @@ public class Runtime implements Comparable<Runtime> {
       this(id, id, null);
    }
 
-   public Runtime(String id, String name, String icon) {
-        assert id != null : "Runtime Id cannot be null";
-        assert name != null : "Runtime Name cannot be null";
+   public Runtime(String id, String name, @Nullable String icon) {
         this.id = id;
         this.name = name;
         this.icon = icon;
     }
 
+    @Nullable
     private final String icon;
 
     private final String id;
@@ -53,6 +54,7 @@ public class Runtime implements Comparable<Runtime> {
     /**
      * @return the icon
      */
+    @Nullable
     public String getIcon() {
         return icon;
     }
@@ -66,12 +68,12 @@ public class Runtime implements Comparable<Runtime> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + id.hashCode();
         return result;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (this == obj)
             return true;
         if (obj == null)
@@ -79,9 +81,7 @@ public class Runtime implements Comparable<Runtime> {
         if (getClass() != obj.getClass())
             return false;
         Runtime other = (Runtime) obj;
-        if (id == null) {
-            return other.id == null;
-        } else return id.equals(other.id);
+        return id.equals(other.id);
     }
 
     @Override
