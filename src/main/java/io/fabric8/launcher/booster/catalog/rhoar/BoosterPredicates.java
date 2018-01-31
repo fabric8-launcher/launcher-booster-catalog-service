@@ -23,7 +23,7 @@ public abstract class BoosterPredicates {
     }
 
     public static Predicate<RhoarBooster> withRunsOn(String clusterType) {
-        return (RhoarBooster b) -> checkNegatableCategory(b.getMetadata("runsOn"), clusterType);
+        return (RhoarBooster b) -> checkNegatableCategory(b.getRunsOn(), clusterType);
     }
 
     /**
@@ -41,24 +41,11 @@ public abstract class BoosterPredicates {
      * @return if the category matches the supported categories or not
      */
     @SuppressWarnings("unchecked")
-    public static boolean checkNegatableCategory(Object supportedCategories, String category) {
+    public static boolean checkNegatableCategory(List<String> supportedCategories, String category) {
         if (category != null && supportedCategories != null) {
-            // Make sure we have a list of strings
-            List<String> categories;
-            if (supportedCategories instanceof List) {
-                categories = ((List<String>) supportedCategories)
-                        .stream()
-                        .map(Objects::toString)
-                        .collect(Collectors.toList());
-            } else if (!supportedCategories.toString().isEmpty()) {
-                categories = Collections.singletonList(supportedCategories.toString());
-            } else {
-                categories = Collections.emptyList();
-            }
-
-            if (!categories.isEmpty()) {
+            if (!supportedCategories.isEmpty()) {
                 boolean defaultResult = true;
-                for (String supportedCategory : categories) {
+                for (String supportedCategory : supportedCategories) {
                     if (!supportedCategory.startsWith("!")) {
                         defaultResult = false;
                     }

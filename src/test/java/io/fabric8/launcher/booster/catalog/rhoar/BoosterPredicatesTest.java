@@ -14,17 +14,6 @@ public class BoosterPredicatesTest {
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
 
     @Test
-    public void testCheckNegatableCategorySimple() {
-        softly.assertThat(checkNegatableCategory("", "foobar")).isTrue();
-        softly.assertThat(checkNegatableCategory("all", "foobar")).isTrue();
-        softly.assertThat(checkNegatableCategory("none", "foobar")).isFalse();
-        softly.assertThat(checkNegatableCategory("foobar", "foobar")).isTrue();
-        softly.assertThat(checkNegatableCategory("!foobar", "foobar")).isFalse();
-        softly.assertThat(checkNegatableCategory("baz", "foobar")).isFalse();
-        softly.assertThat(checkNegatableCategory("!baz", "foobar")).isTrue();
-    }
-
-    @Test
     public void testCheckNegatableCategoryList() {
         softly.assertThat(checkNegatableCategory(asList(), "foobar")).isTrue();
         softly.assertThat(checkNegatableCategory(asList("all"), "foobar")).isTrue();

@@ -1,6 +1,10 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import io.fabric8.launcher.booster.catalog.BoosterFetcher;
 import io.fabric8.launcher.booster.catalog.Booster;
@@ -9,6 +13,22 @@ public class RhoarBooster extends Booster {
     private Mission mission;
     private io.fabric8.launcher.booster.catalog.rhoar.Runtime runtime;
     private Version version;
+
+    public List<String> getRunsOn() {
+        Object supportedClusters = getMetadata("runsOn");
+        List<String> clusters;
+        if (supportedClusters instanceof List) {
+            clusters = ((List<String>) supportedClusters)
+                    .stream()
+                    .map(Objects::toString)
+                    .collect(Collectors.toList());
+        } else if (!supportedClusters.toString().isEmpty()) {
+            clusters = Collections.singletonList(supportedClusters.toString());
+        } else {
+            clusters = Collections.emptyList();
+        }
+        return clusters;
+    }
 
     /**
      * @return the mission
