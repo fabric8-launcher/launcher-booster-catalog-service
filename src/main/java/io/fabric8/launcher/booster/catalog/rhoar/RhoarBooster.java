@@ -22,7 +22,7 @@ public class RhoarBooster extends Booster {
                     .stream()
                     .map(Objects::toString)
                     .collect(Collectors.toList());
-        } else if (!supportedClusters.toString().isEmpty()) {
+        } else if (supportedClusters != null && !supportedClusters.toString().isEmpty()) {
             clusters = Collections.singletonList(supportedClusters.toString());
         } else {
             clusters = Collections.emptyList();
