@@ -156,6 +156,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                         }
                     }
                     prefetchResult.complete(boosters);
+                    logger.info(() -> "Finished prefetching boosters");
                 } catch (Exception ex) {
                     prefetchResult.completeExceptionally(ex);
                 }
