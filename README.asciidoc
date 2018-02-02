@@ -1,3 +1,23 @@
-== booster-catalog-service
+= Booster Catalog Service
 
 This project contains the service classes for the booster-catalog repository 
+
+== Build and Run the Unit Tests
+
+* Execute:
+
+        $ mvn clean install
+
+== IDE Setup
+
+ * *Nullability (IntelliJ)* - To set up IntelliJ to properly handle `@Nonnull` and `@Nullable` annotations
+   you should go to the "Editor -> Inspections" in the "Settings" dialog and make the following
+   changes (leave the rest at their default values):
+   ** Mark "Suggest @Nullable annotation for methods..."
+   ** In "Configure annotations" make sure to select both "javax.annotation." types and click "OK"
+   ** Unmark "Don't report assertions with conditions..."
+ * *Immutables* - The set up your IDE for dealing with generated immutable classes see the
+   https://immutables.github.io/apt.html[online documentation]. You have to build the project at least
+   once for the classes to be generated or you will still get errors in the IDE.
+  
+   
