@@ -16,8 +16,23 @@ This project contains the service classes for the booster-catalog repository
    ** Mark "Suggest @Nullable annotation for methods..."
    ** In "Configure annotations" make sure to select both "javax.annotation." types and click "OK"
    ** Unmark "Don't report assertions with conditions..."
+   ** You can set the "Severity" to "Error" to better see what code is violating the nullability contracts,
+    but unfortunately that also flags some otherwise harmless code. Decide for yourself what you prefer.
  * *Immutables* - The set up your IDE for dealing with generated immutable classes see the
    https://immutables.github.io/apt.html[online documentation]. You have to build the project at least
    once for the classes to be generated or you will still get errors in the IDE.
   
+== Contributing Code
+
+* *Nullability* - Make sure that for each package you create you also add a `package-info.java` file
+with at least the following contents:
    
+       @javax.annotation.ParametersAreNonnullByDefault
+       @io.fabric8.launcher.booster.util.FieldsAreNonnullByDefault
+       @io.fabric8.launcher.booster.util.ReturnTypesAreNonnullByDefault
+       package name.of.your.package;
++
+You can use IntelliJ's "Analyze -> Infer Nullity" feature to check your code for places where you
+might need a `@Nullable` or `@Nonull` annotation.
++
+Try to use `@Nullable` only in those cases where you know you really need to use `null` values.
