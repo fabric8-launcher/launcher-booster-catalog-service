@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import javax.annotation.Nullable;
+
 import io.fabric8.launcher.booster.catalog.Booster;
 import io.fabric8.launcher.booster.catalog.BoosterCatalog;
 
@@ -34,7 +36,7 @@ public interface RhoarBoosterCatalog extends BoosterCatalog<RhoarBooster> {
      * @param runtime The {@link Runtime} belonging to the {@link Booster} object
      * @return an {@link Optional} for the given method parameters
      */
-    Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime, Version version);
+    Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime, @Nullable Version version);
 
     /**
      * @return an immutable {@link Set} of all {@link Mission} objects
