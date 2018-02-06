@@ -4,11 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -69,12 +67,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     public Set<Version> getVersions(Mission mission, Runtime runtime) {
         return getVersions(BoosterPredicates.withMission(mission).and(BoosterPredicates.withRuntime(runtime)));
     }
-
-    @Override
-    public Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime) {
-        return getBooster(BoosterPredicates.withMission(mission).and(BoosterPredicates.withRuntime(runtime)));
-    }
-
+    
     @Override
     public Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime, Version version) {
         return getPrefilteredBoosters()
