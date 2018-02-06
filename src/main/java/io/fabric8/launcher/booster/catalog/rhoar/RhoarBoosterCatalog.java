@@ -34,6 +34,7 @@ public interface RhoarBoosterCatalog extends BoosterCatalog<RhoarBooster> {
     /**
      * @param mission The {@link Mission} belonging to the {@link Booster} object
      * @param runtime The {@link Runtime} belonging to the {@link Booster} object
+     * @param version The {@link Version} belonging to the {@link Booster} object (can be null)
      * @return an {@link Optional} for the given method parameters
      */
     Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime, @Nullable Version version);
