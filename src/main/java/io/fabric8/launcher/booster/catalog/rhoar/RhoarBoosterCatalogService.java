@@ -142,7 +142,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                     .forEach(m -> missions.put(m.getId(), m));
 
             index.getJsonArray("runtimes").stream().map(JsonObject.class::cast)
-                    .map(e -> new Runtime(e.getString("id"), e.getString("name"), e.getString("icon", null)))
+                    .map(e -> new Runtime(e.getString("id"), e.getString("name"), e.getString("pipelinePlatform", null), e.getString("icon", null)))
                     .forEach(r -> runtimes.put(r.getId(), r));
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
