@@ -53,9 +53,12 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
             logger.info("Created " + catalogPath);
         }
         ProcessBuilder builder = new ProcessBuilder()
-                .command("git", "clone", catalogRepositoryURI, "--branch", catalogRef, "--recursive", "--depth=1",
-                         "--quiet",
-                         catalogPath.toString())
+                .command("git", "clone", catalogRepositoryURI,
+                        "--branch", catalogRef,
+                        "--recursive",
+                        "--depth=1",
+                        "--quiet",
+                        catalogPath.toString())
                 .inheritIO();
         logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
         try {
@@ -79,7 +82,8 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
                              "--branch", booster.getGitRef(),
                              "--recursive",
                              "--depth=1",
-                            contentPath.toString())
+                             "--quiet",
+                             contentPath.toString())
                     .inheritIO();
             logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
             exitCode = builder.start().waitFor();
