@@ -37,7 +37,7 @@ public class FilesTest {
     public void should_unzip_sample_booster_with_metadata() throws Exception {
         // when
         Files.unzip(catalogZip, targetDir);
-        final Path metadata = targetDir.resolve("metadata.json");
+        final Path metadata = targetDir.resolve("metadata.yaml");
 
         // then
         assertThat(metadata).exists();

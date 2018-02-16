@@ -44,7 +44,7 @@ public class RhoarBoosterCatalogServiceTest {
     @Test
     public void testProcessMetadata() throws Exception {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
-        Path metadataFile = Paths.get(getClass().getResource("metadata.json").toURI());
+        Path metadataFile = Paths.get(getClass().getResource("metadata.yaml").toURI());
         Map<String, Mission> missions = new HashMap<>();
         Map<String, Runtime> runtimes = new HashMap<>();
 

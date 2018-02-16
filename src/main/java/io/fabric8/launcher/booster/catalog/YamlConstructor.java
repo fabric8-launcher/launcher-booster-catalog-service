@@ -12,7 +12,7 @@ import org.yaml.snakeyaml.constructor.Constructor;
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-class YamlConstructor extends Constructor {
+public class YamlConstructor extends Constructor {
     @Override
     protected Class<?> getClassForName(String name) throws ClassNotFoundException {
         return Class.forName(name, true, getClass().getClassLoader());

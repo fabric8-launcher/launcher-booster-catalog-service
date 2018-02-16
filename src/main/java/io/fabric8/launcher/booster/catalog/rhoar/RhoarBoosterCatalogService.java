@@ -16,12 +16,11 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-
 import io.fabric8.launcher.booster.catalog.AbstractBoosterCatalogService;
 import io.fabric8.launcher.booster.catalog.BoosterFetcher;
+import io.fabric8.launcher.booster.catalog.YamlConstructor;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
 
 public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<RhoarBooster> implements RhoarBoosterCatalog {
 
@@ -131,20 +130,38 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
      * Process the metadataFile and adds to the specified missions and runtimes
      * maps
      */
+    @SuppressWarnings("unchecked")
     public void processMetadata(Path metadataFile, Map<String, Mission> missions, Map<String, Runtime> runtimes) {
         logger.info(() -> "Reading metadata at " + metadataFile + " ...");
 
-        try (BufferedReader reader = Files.newBufferedReader(metadataFile);
-             JsonReader jsonReader = Json.createReader(reader)) {
-            JsonObject index = jsonReader.readObject();
-            index.getJsonArray("missions").stream().map(JsonObject.class::cast)
-                    .map(e -> new Mission(e.getString("id"), e.getString("name"), e.getString("description", null), e.getBoolean("suggested", false)))
-                    .forEach(m -> missions.put(m.getId(), m));
+        Representer rep = new Representer();
+        rep.getPropertyUtils().setSkipMissingProperties(true);
+        Yaml yaml = new Yaml(new YamlConstructor(), rep);
+        try (BufferedReader reader = Files.newBufferedReader(metadataFile)) {
+            Map<String, Object> metadata = yaml.loadAs(reader, Map.class);
 
-            index.getJsonArray("runtimes").stream().map(JsonObject.class::cast)
-                    .map(e -> new Runtime(e.getString("id"), e.getString("name"), e.getString("pipelinePlatform", null), e.getString("icon", null)))
-                    .forEach(r -> runtimes.put(r.getId(), r));
-        } catch (IOException e) {
+            if (metadata.get("missions") instanceof List) {
+                List<Map<String, Object>> ms = (List<Map<String, Object>>)metadata.get("missions");
+                ms.stream()
+                        .map(e -> new Mission(
+                                (String)e.get("id"),
+                                (String)e.get("name"),
+                                (String)e.get("description"),
+                                (Boolean)e.getOrDefault("suggested", false)))
+                        .forEach(m -> missions.put(m.getId(), m));
+            }
+
+            if (metadata.get("runtimes") instanceof List) {
+                List<Map<String, Object>> rs = (List<Map<String, Object>>)metadata.get("runtimes");
+                rs.stream()
+                        .map(e -> new Runtime(
+                                (String)e.get("id"),
+                                (String)e.get("name"),
+                                (String)e.get("pipelinePlatform"),
+                                (String)e.get("icon")))
+                        .forEach(r -> runtimes.put(r.getId(), r));
+            }
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
         }
     }
