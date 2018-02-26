@@ -119,7 +119,9 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                         String versionId = path.get(2);
                         String versionName = booster.getMetadata("version/name", versionId);
                         assert versionName != null;
-                        booster.setVersion(new Version(versionId, versionName));
+                        String description = booster.getMetadata("version/description");
+                        boolean suggested = booster.getMetadata("version/suggested", false);
+                        booster.setVersion(new Version(versionId, versionName, description, suggested));
                     }
                 }
             }
@@ -158,7 +160,9 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                                 (String)e.get("id"),
                                 (String)e.get("name"),
                                 (String)e.get("pipelinePlatform"),
-                                (String)e.get("icon")))
+                                (String)e.get("icon"),
+                                (String)e.get("description"),
+                                (Boolean)e.getOrDefault("suggested", false)))
                         .forEach(r -> runtimes.put(r.getId(), r));
             }
         } catch (Exception e) {

@@ -17,14 +17,16 @@ public class Runtime implements Comparable<Runtime> {
     public static final String DEFAULT_PIPELINE_PLATFORM = "maven";
 
     public Runtime(String id) {
-      this(id, id, null, null);
+      this(id, id, null, null, null, false);
    }
 
-    public Runtime(String id, String name, @Nullable String pipelinePlatform, @Nullable String icon) {
+    public Runtime(String id, String name, @Nullable String pipelinePlatform, @Nullable String icon, @Nullable String description, boolean suggested) {
         this.id = id;
         this.name = name;
         this.pipelinePlatform = pipelinePlatform;
         this.icon = icon;
+        this.description = description;
+        this.suggested = suggested;
     }
 
     private final String id;
@@ -36,6 +38,11 @@ public class Runtime implements Comparable<Runtime> {
 
     @Nullable
     private final String icon;
+
+    @Nullable
+    private final String description;
+
+    private final boolean suggested;
 
     /**
      * This method is needed so the Web UI can know what's the internal ID used
@@ -70,6 +77,21 @@ public class Runtime implements Comparable<Runtime> {
         return icon;
     }
 
+    /**
+     * @return get description
+     */
+    @Nullable
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @return get suggested
+     */
+    public boolean isSuggested() {
+        return suggested;
+    }
+
     @Override
     public int compareTo(Runtime o) {
         return getName().compareTo(o.getName());
@@ -97,6 +119,6 @@ public class Runtime implements Comparable<Runtime> {
 
     @Override
     public String toString() {
-        return "Runtime [id=" + id + ", name=" + name + ", pipelinePlatform=" + pipelinePlatform + ", icon=" + icon + "]";
+        return "Runtime [id=" + id + ", name=" + name + ", pipelinePlatform=" + pipelinePlatform + ", icon=" + icon + ", description=" + description + ", suggested=" + suggested + "]";
     }
 }

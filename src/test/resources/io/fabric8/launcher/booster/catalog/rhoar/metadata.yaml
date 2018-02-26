@@ -17,6 +17,7 @@ runtimes:
 - id: wildfly-swarm
   name: WildFly Swarm
   pipelinePlatform: maven
+  description: This is a decription
   icon: data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'
     id='Layer_1' version='1' viewBox='0 0 128 128'%3E%3Cstyle%3E.st1{fill:%23f7931e}.st2{fill:%23585858}%3C/style%3E%3Cpath
     fill='%23333' d='M112.4 127.9H15.7c-8.6 0-15.6-7-15.6-15.6V15.6C.1 7 7.1 0 15.7
@@ -47,6 +48,7 @@ runtimes:
 - id: spring-boot
   name: Spring Boot
   pipelinePlatform: maven
+  suggested: true
   icon: data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'
     width='205.3' height='184.28'%3E%3Cpath fill='%2368bd45' d='M202.66 81.08l-40.43-70C158.72
     5 150.1 0 143.08 0H62.22c-7 0-15.64 5-19.15 11.06l-40.43 70c-3.52 6.08-3.52 16

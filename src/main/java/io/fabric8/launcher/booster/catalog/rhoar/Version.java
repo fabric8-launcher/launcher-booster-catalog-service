@@ -14,17 +14,24 @@ import javax.annotation.Nullable;
  */
 public class Version implements Comparable<Version> {
     public Version(String id) {
-        this(id, id);
+        this(id, id, null, false);
     }
 
-    public Version(String id, String name) {
+    public Version(String id, String name, @Nullable String description, boolean suggested) {
         this.id = id;
         this.name = name;
+        this.description = description;
+        this.suggested = suggested;
     }
 
     private final String id;
 
     private final String name;
+
+    @Nullable
+    private final String description;
+
+    private final boolean suggested;
 
     /**
      * This method is needed so the Web UI can know what's the internal ID used
@@ -45,6 +52,21 @@ public class Version implements Comparable<Version> {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return get description
+     */
+    @Nullable
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @return get suggested
+     */
+    public boolean isSuggested() {
+        return suggested;
     }
 
     @Override
