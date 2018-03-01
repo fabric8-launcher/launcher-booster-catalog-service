@@ -8,6 +8,9 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class is the base class for the types that we use to
@@ -15,15 +18,14 @@ import javax.annotation.Nullable;
  * and Versions.
  */
 public class CategoryBase implements Comparable<CategoryBase> {
-    public CategoryBase(String id) {
-        this(id, id, null, false);
-    }
 
-    public CategoryBase(String id, String name, @Nullable String description, boolean suggested) {
+    public static final String KEY_SUGGESTED = "suggested";
+
+    public CategoryBase(String id, String name, @Nullable String description, Map<String, Object> metadata) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.suggested = suggested;
+        this.metadata = Collections.unmodifiableMap(metadata);
     }
 
     private final String id;
@@ -32,8 +34,8 @@ public class CategoryBase implements Comparable<CategoryBase> {
 
     @Nullable
     private final String description;
-    
-    private final boolean suggested;
+
+    private final Map<String, Object> metadata;
 
     /**
      * This method is needed so the Web UI can know what's the internal ID used
@@ -65,10 +67,14 @@ public class CategoryBase implements Comparable<CategoryBase> {
     }
 
     /**
-     * @return get suggested
+     * @return get metadata
      */
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
     public boolean isSuggested() {
-        return suggested;
+        return (boolean)getMetadata().getOrDefault(KEY_SUGGESTED, false);
     }
 
     @Override
@@ -98,6 +104,6 @@ public class CategoryBase implements Comparable<CategoryBase> {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + " [id=" + id + ", name=" + name + ", description=" + description + ", suggested=" + suggested + "]";
+        return getClass().getSimpleName() + " [id=" + id + ", name=" + name + ", description=" + description + ", metadata=" + metadata + "]";
     }
 }

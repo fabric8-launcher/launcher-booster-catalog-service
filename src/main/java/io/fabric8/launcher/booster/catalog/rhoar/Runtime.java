@@ -8,6 +8,9 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * This type is used to group boosters into "Runtimes",
@@ -16,27 +19,20 @@ import javax.annotation.Nullable;
  */
 public class Runtime extends CategoryBase {
 
+    public static final String KEY_PIPELINE_PLATFORM = "pipelinePlatform";
     public static final String DEFAULT_PIPELINE_PLATFORM = "maven";
 
     public Runtime(String id) {
-      this(id, id, null, null, null, false);
+      this(id, id, null, Collections.emptyMap(), null);
    }
 
-    public Runtime(String id, String name, @Nullable String pipelinePlatform, @Nullable String icon, @Nullable String description, boolean suggested) {
-        super(id, name, description, suggested);
-        this.pipelinePlatform = pipelinePlatform;
+    public Runtime(String id, String name, @Nullable String description, Map<String, Object> metadata, @Nullable String icon) {
+        super(id, name, description, metadata);
         this.icon = icon;
     }
 
     @Nullable
-    private final String pipelinePlatform;
-
-    @Nullable
     private final String icon;
-
-    public String getPipelinePlatform() {
-        return pipelinePlatform != null ? pipelinePlatform : DEFAULT_PIPELINE_PLATFORM;
-    }
 
     /**
      * @return the icon
@@ -44,5 +40,9 @@ public class Runtime extends CategoryBase {
     @Nullable
     public String getIcon() {
         return icon;
+    }
+
+    public String getPipelinePlatform() {
+        return Objects.toString(getMetadata().getOrDefault(KEY_PIPELINE_PLATFORM, DEFAULT_PIPELINE_PLATFORM));
     }
 }

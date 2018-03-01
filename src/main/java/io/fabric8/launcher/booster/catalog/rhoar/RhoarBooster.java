@@ -19,20 +19,12 @@ public class RhoarBooster extends Booster {
     @Nullable
     private Version version;
 
-    public List<String> getRunsOn() {
-        Object supportedClusters = getMetadata("runsOn");
-        List<String> clusters;
-        if (supportedClusters instanceof List) {
-            clusters = ((List<String>) supportedClusters)
-                    .stream()
-                    .map(Objects::toString)
-                    .collect(Collectors.toList());
-        } else if (supportedClusters != null && !supportedClusters.toString().isEmpty()) {
-            clusters = Collections.singletonList(supportedClusters.toString());
-        } else {
-            clusters = Collections.emptyList();
-        }
-        return clusters;
+    protected RhoarBooster(BoosterFetcher boosterFetcher) {
+        super(boosterFetcher);
+    }
+
+    protected RhoarBooster(@Nullable Map<String, Object> data, BoosterFetcher boosterFetcher) {
+        super(data, boosterFetcher);
     }
 
     /**
@@ -80,14 +72,6 @@ public class RhoarBooster extends Booster {
         this.version = version;
     }
 
-    protected RhoarBooster(BoosterFetcher boosterFetcher) {
-        super(boosterFetcher);
-    }
-
-    protected RhoarBooster(Map<String, Object> data, BoosterFetcher boosterFetcher) {
-        super(data, boosterFetcher);
-    }
-
     protected RhoarBooster newBooster(BoosterFetcher boosterFetcher) {
         return new RhoarBooster(boosterFetcher);
     }
@@ -99,5 +83,21 @@ public class RhoarBooster extends Booster {
         if (booster.version != null) version = booster.version;
         return this;
     }
-    
+
+    public List<String> getRunsOn() {
+        Object supportedClusters = getMetadata("runsOn");
+        List<String> clusters;
+        if (supportedClusters instanceof List) {
+            clusters = ((List<String>) supportedClusters)
+                    .stream()
+                    .map(Objects::toString)
+                    .collect(Collectors.toList());
+        } else if (supportedClusters != null && !supportedClusters.toString().isEmpty()) {
+            clusters = Collections.singletonList(supportedClusters.toString());
+        } else {
+            clusters = Collections.emptyList();
+        }
+        return clusters;
+    }
+
 }

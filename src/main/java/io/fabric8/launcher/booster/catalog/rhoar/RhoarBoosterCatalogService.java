@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,8 @@ import io.fabric8.launcher.booster.catalog.YamlConstructor;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
 
+import javax.annotation.Nullable;
+
 public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<RhoarBooster> implements RhoarBoosterCatalog {
 
     private static final String METADATA_FILE = "metadata.json";
@@ -33,7 +36,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     }
 
     @Override
-    protected RhoarBooster newBooster(Map<String, Object> data, BoosterFetcher boosterFetcher) {
+    protected RhoarBooster newBooster(@Nullable Map<String, Object> data, BoosterFetcher boosterFetcher) {
         return new RhoarBooster(data, boosterFetcher);
     }
 
@@ -120,8 +123,8 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                         String versionName = booster.getMetadata("version/name", versionId);
                         assert versionName != null;
                         String description = booster.getMetadata("version/description");
-                        boolean suggested = booster.getMetadata("version/suggested", false);
-                        booster.setVersion(new Version(versionId, versionName, description, suggested));
+                        Map<String, Object> metadata = booster.getMetadata("version/metadata", Collections.emptyMap());
+                        booster.setVersion(new Version(versionId, versionName, description, metadata));
                     }
                 }
             }
@@ -149,7 +152,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                                 (String)e.get("id"),
                                 (String)e.get("name"),
                                 (String)e.get("description"),
-                                (Boolean)e.getOrDefault("suggested", false)))
+                                (Map<String, Object>)e.getOrDefault("metadata", Collections.emptyMap())))
                         .forEach(m -> missions.put(m.getId(), m));
             }
 
@@ -159,10 +162,9 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                         .map(e -> new Runtime(
                                 (String)e.get("id"),
                                 (String)e.get("name"),
-                                (String)e.get("pipelinePlatform"),
-                                (String)e.get("icon"),
                                 (String)e.get("description"),
-                                (Boolean)e.getOrDefault("suggested", false)))
+                                (Map<String, Object>)e.getOrDefault("metadata", Collections.emptyMap()),
+                                (String)e.get("icon")))
                         .forEach(r -> runtimes.put(r.getId(), r));
             }
         } catch (Exception e) {

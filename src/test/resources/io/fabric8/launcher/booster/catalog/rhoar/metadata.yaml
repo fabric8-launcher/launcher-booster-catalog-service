@@ -8,7 +8,8 @@ missions:
   name: Health Check
 - id: rest-http
   name: REST API Level 0
-  suggested: true
+  metadata:
+    suggested: true
 - id: rest-http-secured
   name: Secured
 - id: circuit-breaker
@@ -16,8 +17,9 @@ missions:
 runtimes:
 - id: wildfly-swarm
   name: WildFly Swarm
-  pipelinePlatform: maven
   description: This is a decription
+  metadata:
+    pipelinePlatform: maven
   icon: data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'
     id='Layer_1' version='1' viewBox='0 0 128 128'%3E%3Cstyle%3E.st1{fill:%23f7931e}.st2{fill:%23585858}%3C/style%3E%3Cpath
     fill='%23333' d='M112.4 127.9H15.7c-8.6 0-15.6-7-15.6-15.6V15.6C.1 7 7.1 0 15.7
@@ -36,7 +38,8 @@ runtimes:
     0l-2.4-1.2-.8-4.8-.2-1.5.1-.1 1.6.8 1.7.9c.1.1.3.1.4 0l1.7-.9 1.6-.8.1.1z' class='st2'/%3E%3C/svg%3E
 - id: vert.x
   name: Eclipse Vert.x
-  pipelinePlatform: maven
+  metadata:
+    pipelinePlatform: maven
   icon: data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'
     viewBox='0 0 640 280'%3E%3Cpath fill='%23022B37' d='M107 170.8L67.7 72H46.9L100
     204h13.9L167 72h-20.4zm64 33.2h80v-20h-61v-37h60v-19h-60V91h61V72h-80zm180.1-90.7c0-21-14.4-42.3-43.1-42.3h-48v133h19V91h29.1c16.1
@@ -47,8 +50,9 @@ runtimes:
     50.9c2 4.2 3.1 8.9 3.1 13.8v1H499l95.2-132h-16.8zm-19.7 81.5l-20.1 27.9 16.5 22.6h40.2c-9.6-13.7-24-33.3-36.6-50.5z'/%3E%3C/svg%3E
 - id: spring-boot
   name: Spring Boot
-  pipelinePlatform: maven
-  suggested: true
+  metadata:
+    pipelinePlatform: maven
+    suggested: true
   icon: data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'
     width='205.3' height='184.28'%3E%3Cpath fill='%2368bd45' d='M202.66 81.08l-40.43-70C158.72
     5 150.1 0 143.08 0H62.22c-7 0-15.64 5-19.15 11.06l-40.43 70c-3.52 6.08-3.52 16
@@ -59,7 +63,8 @@ runtimes:
     0 0 1-33.51 102z'/%3E%3C/svg%3E
 - id: nodejs
   name: Node.js
-  pipelinePlatform: node
+  metadata:
+    pipelinePlatform: node
   icon: data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'
     width='800' height='800'%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Cpath d='M0 600h600V0H0z'/%3E%3C/clipPath%3E%3CclipPath
     id='b'%3E%3Cpath d='M239.032 373.393l-42.134-24.315a5.085 5.085 0 0 1-2.545-4.407v-48.666c0-1.818.969-3.497

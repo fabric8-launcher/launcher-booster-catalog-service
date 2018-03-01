@@ -8,6 +8,8 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * This type is used to group boosters into "Missions",
@@ -16,10 +18,10 @@ import javax.annotation.Nullable;
  */
 public class Mission extends CategoryBase {
     public Mission(String id) {
-        this(id, id, null, false);
+        this(id, id, null, Collections.emptyMap());
     }
 
-    public Mission(String id, String name, @Nullable String description, boolean suggested) {
-        super(id, name, description, suggested);
+    public Mission(String id, String name, @Nullable String description, Map<String, Object> metadata) {
+        super(id, name, description, metadata);
     }
 }
