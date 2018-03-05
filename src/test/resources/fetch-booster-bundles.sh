@@ -14,7 +14,7 @@ done
 git bundle create booster-catalog.bundle --all
 cp booster-catalog.bundle ${TEST_DIR}
 
-for repo in $(cat $(find . -type f -name '*.yaml') | grep url | sed -e 's/^[ \t]*//' | cut -f2 -d' '); do
+for repo in $(tail -n +1 $(find . -type f -name '*.yaml') | grep url | sed -e 's/^[ \t]*//' | cut -f2 -d' '); do
     cd ${BOOSTER_TMP_DIR}
     mkdir -p repos
     cd repos
