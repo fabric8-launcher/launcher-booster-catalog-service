@@ -88,13 +88,6 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
             logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
             exitCode = builder.start().waitFor();
             assert exitCode == 0 : "Process returned exit code: " + exitCode;
-            builder = new ProcessBuilder()
-                    .command("git", "checkout", booster.getGitRef(), "--quiet")
-                    .directory(contentPath.toFile())
-                    .inheritIO();
-            logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
-            exitCode = builder.start().waitFor();
-            assert exitCode == 0 : "Process returned exit code: " + exitCode;
         } catch (InterruptedException e) {
             logger.log(Level.WARNING, "Interrupted booster fetching process");
             throw new IOException("Interrupted", e);
