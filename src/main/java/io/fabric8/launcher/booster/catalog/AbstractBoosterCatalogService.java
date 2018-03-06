@@ -193,11 +193,11 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                         try {
                             provider.createBoosterContentPath(booster);
                             contentResult.complete(contentPath);
-                        } catch (Exception ex) {
+                        } catch (Throwable ex) {
                             contentResult.completeExceptionally(ex);
                         }
                     }, executor);
-                } catch (IOException ex) {
+                } catch (Throwable ex) {
                     contentResult.completeExceptionally(ex);
                 }
             } else {
