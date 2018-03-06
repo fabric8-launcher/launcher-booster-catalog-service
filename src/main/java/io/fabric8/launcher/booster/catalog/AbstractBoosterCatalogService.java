@@ -419,7 +419,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
 
         protected String catalogRepositoryURI = LauncherConfiguration.boosterCatalogRepositoryURI();
 
-        protected String catalogRef = "master";
+        protected String catalogRef = LauncherConfiguration.boosterCatalogRepositoryRef();
 
         @Nullable
         protected Path rootDir;
