@@ -252,26 +252,13 @@ public class Booster {
     }
 
     /**
-     * @return the contentPath
-     */
-    @Transient @Nullable
-    public Path getContentPath() {
-        return contentPath;
-    }
-
-    /**
-     * @param contentPath the contentPath to set
-     */
-    public void setContentPath(Path contentPath) {
-        this.contentPath = contentPath;
-    }
-
-    /**
-     * Clones a Booster repo and provides the path where to find it as a result
+     * Clones a Booster repo and provides the path where to find it as a result.
+     * Will automatically retry on the next call if the result of a previous
+     * call terminated with an exception.
      */
     public synchronized CompletableFuture<Path> content() {
         CompletableFuture<Path> cr = contentResult;
-        if (cr == null) {
+        if (cr == null || cr.isCompletedExceptionally()) {
             contentResult = cr = boosterFetcher.fetchBoosterContent(this);
         }
         return cr;
