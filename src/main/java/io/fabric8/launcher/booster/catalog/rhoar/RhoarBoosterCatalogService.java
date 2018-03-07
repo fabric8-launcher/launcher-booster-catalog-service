@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,8 +19,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.fabric8.launcher.booster.catalog.AbstractBoosterCatalogService;
+import io.fabric8.launcher.booster.catalog.Booster;
+import io.fabric8.launcher.booster.catalog.BoosterCatalogService;
+import io.fabric8.launcher.booster.catalog.BoosterDataTransformer;
 import io.fabric8.launcher.booster.catalog.BoosterFetcher;
 import io.fabric8.launcher.booster.catalog.YamlConstructor;
+import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogListener;
+import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
 
@@ -173,6 +179,51 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     }
 
     public static class Builder extends AbstractBuilder<RhoarBooster, RhoarBoosterCatalogService> {
+        @Override
+        public Builder catalogRef(String catalogRef) {
+            return (Builder)super.catalogRef(catalogRef);
+        }
+
+        @Override
+        public Builder catalogRepository(String catalogRepositoryURI) {
+            return (Builder)super.catalogRepository(catalogRepositoryURI);
+        }
+
+        @Override
+        public Builder pathProvider(BoosterCatalogPathProvider pathProvider) {
+            return (Builder)super.pathProvider(pathProvider);
+        }
+
+        @Override
+        public Builder filter(Predicate<RhoarBooster> filter) {
+            return (Builder)super.filter(filter);
+        }
+
+        @Override
+        public Builder listener(BoosterCatalogListener listener) {
+            return (Builder)super.listener(listener);
+        }
+
+        @Override
+        public Builder transformer(BoosterDataTransformer transformer) {
+            return (Builder)super.transformer(transformer);
+        }
+
+        @Override
+        public Builder environment(String environment) {
+            return (Builder)super.environment(environment);
+        }
+
+        @Override
+        public Builder executor(ExecutorService executor) {
+            return (Builder)super.executor(executor);
+        }
+
+        @Override
+        public Builder rootDir(Path root) {
+            return (Builder)super.rootDir(root);
+        }
+
         @Override
         public RhoarBoosterCatalogService build() {
             return new RhoarBoosterCatalogService(this);
