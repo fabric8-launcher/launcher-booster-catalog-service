@@ -112,38 +112,52 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
     private volatile CompletableFuture<Set<BOOSTER>> prefetchResult;
 
     /**
-     * Indexes the existing YAML files provided by the {@link BoosterCatalogPathProvider} implementation
+     * Indexes the existing YAML files provided by the {@link BoosterCatalogPathProvider} implementation.
+     * Running this method multiple times has no effect. To cause a re-index call <code>reindex()</code>
      */
-    public synchronized CompletableFuture<Set<BOOSTER>> index() {
-        CompletableFuture<Set<BOOSTER>> ir = indexResult;
-        if (ir == null) {
-            indexResult = ir = new CompletableFuture<Set<BOOSTER>>();
-            final CompletableFuture<Set<BOOSTER>> finalir = ir;
-            CompletableFuture.runAsync(() -> {
-                try {
-                    boosters = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
-                    doIndex();
-                    finalir.complete(boosters);
-                } catch (Exception ex) {
-                    finalir.completeExceptionally(ex);
-                }
-            }, executor);
-        }
-        return ir;
+    public CompletableFuture<Set<BOOSTER>> index() {
+        return index(false);
     }
 
     /**
      * Re-runs the indexing of the catalog and the boosters
      * Attention: this won't do anything if indexing is already in progress
      */
-    public synchronized CompletableFuture<Set<BOOSTER>> reindex() {
-        final CompletableFuture<Set<BOOSTER>> ir = indexResult;
-        if (ir != null && ir.isDone()) {
-            indexResult = null;
-        }
-        return index();
+    public CompletableFuture<Set<BOOSTER>> reindex() {
+        return index(true);
     }
-    
+
+    private synchronized CompletableFuture<Set<BOOSTER>> index(boolean reindex) {
+        CompletableFuture<Set<BOOSTER>> ir = indexResult;
+        if ((!reindex && ir == null) || (reindex && ir != null && ir.isDone())) {
+            indexResult = ir = new CompletableFuture<Set<BOOSTER>>();
+            final CompletableFuture<Set<BOOSTER>> finalir = ir;
+            CompletableFuture.runAsync(() -> {
+                try {
+                    Set<BOOSTER> bs = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
+                    if (!reindex) {
+                        // The first time we immediately set the global set of boosters to be the
+                        // newly created empty set. This way users can see the list grow while it's
+                        // being populated.
+                        boosters = bs;
+                    }
+                    doIndex(bs);
+                    if (reindex) {
+                        // For re-indexing we set the global list of boosters at the end of the
+                        // indexing process. This way users keep seeing the full existing list
+                        // until re-indexing has terminated.
+                        boosters = bs;
+                    }
+                    finalir.complete(bs);
+                } catch (Exception ex) {
+                    finalir.completeExceptionally(ex);
+                }
+            }, executor);
+        }
+        assert(ir != null);
+        return ir;
+    }
+
     /**
      * Pre-fetches the code for {@link Booster}s that were found when running {@link #index}.
      * It's not necessary to run this because {@link Booster} code will be downloaded on
@@ -254,7 +268,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                 .collect(Collectors.toSet());
     }
 
-    private void doIndex() throws Exception {
+    private void doIndex(final Set<BOOSTER> boosters) throws Exception {
         try {
             Path catalogPath = provider.createCatalogPath();
             indexBoosters(catalogPath, boosters);

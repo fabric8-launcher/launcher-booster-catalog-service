@@ -64,6 +64,26 @@ public class BoosterCatalogServiceTest {
     }
 
     @Test
+    public void testReindex() throws Exception {
+        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef()).build();
+        softly.assertThat(service.getBoosters()).isEmpty();
+
+        service.index().get();
+
+        Optional<Booster> booster1 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
+        assert(booster1.isPresent());
+        Optional<Booster> booster2 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
+        assert(booster2.isPresent());
+        assert(booster1.get() == booster2.get());
+
+        service.reindex().get();
+
+        Optional<Booster> booster3 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
+        assert(booster3.isPresent());
+        assert(booster1.get() != booster3.get());
+    }
+
+    @Test
     public void testCommonFiles() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
                 .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("common_test")
