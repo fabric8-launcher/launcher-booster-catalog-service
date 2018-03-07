@@ -51,7 +51,21 @@ public class Booster {
             mergeMaps(this.data, data);
         }
     }
-    
+
+    /**
+     * @return the data
+     */
+    public Map<String, Object> getData() {
+        return Collections.unmodifiableMap(data);
+    }
+
+    /**
+     * @return the boosterFetcher
+     */
+    public BoosterFetcher getBoosterFetcher() {
+        return boosterFetcher;
+    }
+
     /**
      * @return the id
      */
@@ -63,8 +77,23 @@ public class Booster {
     /**
      * @param id the id to set
      */
-    public void setId(String id) {
+    public void setId(@Nullable String id) {
         this.id = id;
+    }
+
+    /**
+     * @return the contentPath
+     */
+    @Transient @Nullable
+    public Path getContentPath() {
+        return contentPath;
+    }
+
+    /**
+     * @param contentPath the contentPath to set
+     */
+    public void setContentPath(@Nullable Path contentPath) {
+        this.contentPath = contentPath;
     }
 
     /**
@@ -249,11 +278,11 @@ public class Booster {
     }
 
     public Booster merged(Booster otherBooster) {
-        Booster mergedBooster = newBooster(boosterFetcher);
+        Booster mergedBooster = newBooster();
         return mergedBooster.merge(this).merge(otherBooster);
     }
     
-    protected Booster newBooster(BoosterFetcher boosterFetcher2) {
+    protected Booster newBooster() {
         return new Booster(boosterFetcher);
     }
     
@@ -265,7 +294,7 @@ public class Booster {
     }
     
     @SuppressWarnings("unchecked")
-    private Map<String, Object> mergeMaps(Map<String, Object> to, Map<String, Object> from) {
+    public static Map<String, Object> mergeMaps(Map<String, Object> to, Map<String, Object> from) {
         for (String key : from.keySet()) {
             Object item = from.get(key);
             if (item instanceof Map) {

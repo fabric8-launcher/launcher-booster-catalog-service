@@ -72,15 +72,20 @@ public class RhoarBooster extends Booster {
         this.version = version;
     }
 
-    protected RhoarBooster newBooster(BoosterFetcher boosterFetcher) {
-        return new RhoarBooster(boosterFetcher);
+    @Override
+    protected RhoarBooster newBooster() {
+        return new RhoarBooster(getBoosterFetcher());
     }
-    
-    protected RhoarBooster merge(RhoarBooster booster) {
+
+    @Override
+    protected RhoarBooster merge(Booster booster) {
         super.merge(booster);
-        if (booster.mission != null) mission = booster.mission;
-        if (booster.runtime != null) runtime = booster.runtime;
-        if (booster.version != null) version = booster.version;
+        if (booster instanceof RhoarBooster) {
+            RhoarBooster rb = (RhoarBooster)booster;
+            if (rb.mission != null) mission = rb.mission;
+            if (rb.runtime != null) runtime = rb.runtime;
+            if (rb.version != null) version = rb.version;
+        }
         return this;
     }
 
