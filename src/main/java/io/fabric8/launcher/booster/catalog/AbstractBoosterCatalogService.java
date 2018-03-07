@@ -153,7 +153,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         assert(indexResult != null);
         CompletableFuture<Set<BOOSTER>> pr = prefetchResult;
         if (pr == null) {
-            prefetchResult = pr = new CompletableFuture<Set<BOOSTER>>();
+            prefetchResult = pr = new CompletableFuture<>();
             final CompletableFuture<Set<BOOSTER>> finalpr = pr;
             CompletableFuture.runAsync(() -> {
                 try {
@@ -324,7 +324,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                             }
                         }
                         boosters.add(b);
-                    };
+                    }
                 }
             }
         } catch (IOException ex) {
@@ -366,7 +366,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
             //      descriptor:
             //        name: booster.yaml
             //        path: [http, vertx, community]
-            Map<String, Object> descriptor = new LinkedHashMap<String, Object>();
+            Map<String, Object> descriptor = new LinkedHashMap<>();
             descriptor.put("name", file.getFileName().toString());
             descriptor.put("path", getDescriptorPathList(file, catalogPath));
             booster.getMetadata().put("descriptor", descriptor);
