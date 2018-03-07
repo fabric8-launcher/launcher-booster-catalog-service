@@ -8,14 +8,20 @@
 package io.fabric8.launcher.booster.catalog;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 
+import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider;
+import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
 import org.junit.ClassRule;
@@ -204,6 +210,33 @@ public class BoosterCatalogServiceTest {
         softly.assertThat(pomFile.isFile()).isTrue();
     }
 
+    @Test
+    public void testBoosterFetchRecovery() throws Exception {
+        UnreliablePathProvider unreliableProvider = new UnreliablePathProvider();
+        BoosterCatalogService service = new BoosterCatalogService.Builder()
+                .transformer(new TestRepoUrlFixer("http://localhost:8765"))
+                .pathProvider(unreliableProvider)
+                .build();
+        service.index().get();
+
+        // Just get the first booster we can find
+        Optional<Booster> booster = service.getBooster(runtimes("spring-boot"));
+
+        assert(booster.isPresent());
+        // First we test a failing condition
+        try {
+            booster.get().content().get();
+        } catch (Exception e) {
+            softly.assertThat(e).hasMessageContaining("Process returned exit code");
+        }
+        // Now we reset the fail status
+        unreliableProvider.fail = false;
+        // And now we test if the service can recover from the previous error
+        File boosterFolder = booster.get().content().get().toFile();
+        File pomFile = new File(boosterFolder, "pom.xml");
+        softly.assertThat(pomFile.isFile()).isTrue();
+    }
+
     public static Predicate<Booster> missions(@Nullable String mission) {
         return (Booster b) -> mission == null || mission.equals(getPath(b, 0));
     }
@@ -224,13 +257,9 @@ public class BoosterCatalogServiceTest {
     
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
-            Builder builder = new BoosterCatalogService.Builder();
-            String repo = LauncherConfiguration.boosterCatalogRepositoryURI();
-            builder.catalogRepository(repo);
-            String ref = LauncherConfiguration.boosterCatalogRepositoryRef();
-            builder.catalogRef(ref);
-            builder.transformer(new TestRepoUrlFixer("http://localhost:8765"));
-            defaultService = builder.build();
+            defaultService = new Builder()
+                    .transformer(new TestRepoUrlFixer("http://localhost:8765"))
+                    .build();
         }
         return defaultService;
     }
@@ -250,6 +279,28 @@ public class BoosterCatalogServiceTest {
                 Booster.setDataValue(data, "source/git/url", gitRepo);
             }
             return data;
+        }
+    }
+
+    private static class UnreliablePathProvider extends NativeGitBoosterCatalogPathProvider {
+        public boolean fail = true;
+
+        public UnreliablePathProvider() {
+            super(LauncherConfiguration.boosterCatalogRepositoryURI(), LauncherConfiguration.boosterCatalogRepositoryRef(), null);
+        }
+
+        @Override
+        public Path createBoosterContentPath(Booster booster) throws IOException {
+            if (fail) {
+                Map<String, Object> wrongData = new HashMap<>();
+                Booster.mergeMaps(wrongData, booster.getData());
+                Booster.setDataValue(wrongData, "source/git/ref", "dummy_branch_name_sure_to_not_exist_FUbar0123456789XyZZZZzzz");
+                Booster wrongBooster = new Booster(wrongData, booster.getBoosterFetcher());
+                wrongBooster.setId(booster.getId());
+                wrongBooster.setContentPath(booster.getContentPath());
+                booster = wrongBooster;
+            }
+            return super.createBoosterContentPath(booster);
         }
     }
 }
