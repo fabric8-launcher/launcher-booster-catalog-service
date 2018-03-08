@@ -34,6 +34,7 @@ import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
 import javax.annotation.Nullable;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BoosterCatalogServiceTest {
 
@@ -243,18 +244,15 @@ public class BoosterCatalogServiceTest {
         Optional<Booster> booster = service.getBooster(runtimes("spring-boot"));
 
         assert(booster.isPresent());
+
         // First we test a failing condition
-        try {
-            booster.get().content().get();
-        } catch (Exception e) {
-            softly.assertThat(e).hasMessageContaining("Process returned exit code");
-        }
+        assertThatThrownBy(()->booster.get().content().get()).hasMessageContaining("Fail flag is true");
+
         // Now we reset the fail status
         unreliableProvider.fail = false;
         // And now we test if the service can recover from the previous error
-        File boosterFolder = booster.get().content().get().toFile();
-        File pomFile = new File(boosterFolder, "pom.xml");
-        softly.assertThat(pomFile.isFile()).isTrue();
+        Path boosterFolder = booster.get().content().get();
+        softly.assertThat(boosterFolder.resolve("pom.xml")).isRegularFile();
     }
 
     public static Predicate<Booster> missions(@Nullable String mission) {
@@ -312,13 +310,7 @@ public class BoosterCatalogServiceTest {
         @Override
         public Path createBoosterContentPath(Booster booster) throws IOException {
             if (fail) {
-                Map<String, Object> wrongData = new HashMap<>();
-                Booster.mergeMaps(wrongData, booster.getData());
-                Booster.setDataValue(wrongData, "source/git/ref", "dummy_branch_name_sure_to_not_exist_FUbar0123456789XyZZZZzzz");
-                Booster wrongBooster = new Booster(wrongData, booster.getBoosterFetcher());
-                wrongBooster.setId(booster.getId());
-                wrongBooster.setContentPath(booster.getContentPath());
-                booster = wrongBooster;
+                throw new IOException("Fail flag is true");
             }
             return super.createBoosterContentPath(booster);
         }

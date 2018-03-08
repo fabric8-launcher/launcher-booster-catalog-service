@@ -200,7 +200,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         synchronized (booster) {
             CompletableFuture<Path> contentResult = new CompletableFuture<>();
             Path contentPath = booster.getContentPath();
-            if (contentPath != null && Files.notExists(contentPath)) {
+            if (contentPath != null) {
                 try {
                     Files.createDirectories(contentPath);
                     CompletableFuture.runAsync(() -> {
