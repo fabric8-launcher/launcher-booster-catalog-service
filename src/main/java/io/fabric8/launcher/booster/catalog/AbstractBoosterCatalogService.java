@@ -8,7 +8,6 @@
 package io.fabric8.launcher.booster.catalog;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -17,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,18 +31,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+
+import javax.annotation.Nullable;
 
 import io.fabric8.launcher.booster.CopyFileVisitor;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
-
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogListener;
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider;
 import io.fabric8.launcher.booster.catalog.spi.LocalBoosterCatalogPathProvider;
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
-
-import javax.annotation.Nullable;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
 
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
@@ -154,7 +150,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                 }
             }, executor);
         }
-        assert(ir != null);
+        assert (ir != null);
         return ir;
     }
 
@@ -164,7 +160,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
      * demand, but if you want to avoid any delays for the user you can run this method.
      */
     public synchronized CompletableFuture<Set<BOOSTER>> prefetchBoosters() {
-        assert(indexResult != null);
+        assert (indexResult != null);
         CompletableFuture<Set<BOOSTER>> pr = prefetchResult;
         if (pr == null) {
             prefetchResult = pr = new CompletableFuture<>();
@@ -230,8 +226,8 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         try {
             Path modulePath = booster.content().get();
             return Files.walkFileTree(modulePath,
-                    new CopyFileVisitor(projectRoot,
-                                        (p) -> !EXCLUDED_PROJECT_FILES.contains(p.toFile().getName().toLowerCase())));
+                                      new CopyFileVisitor(projectRoot,
+                                                          (p) -> !EXCLUDED_PROJECT_FILES.contains(p.toFile().getName().toLowerCase())));
         } catch (InterruptedException | ExecutionException ex) {
             throw new IOException("Unable to copy Booster", ex);
         }
@@ -302,15 +298,14 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         }
 
         try {
-            File file = path.toFile();
-            if (file.isDirectory()) {
+            if (Files.isDirectory(path)) {
                 // We check if a file named `common.yaml` exists and if so
                 // we merge it's data with the `commonBooster` before passing
                 // that on to `indexPath()`
-                File common = new File(path.toFile(), COMMON_YAML_FILE);
+                Path common = path.resolve(COMMON_YAML_FILE);
                 final BOOSTER activeCommonBooster;
-                if (common.isFile()) {
-                    BOOSTER localCommonBooster = readBooster(common.toPath());
+                if (Files.isRegularFile(common)) {
+                    BOOSTER localCommonBooster = readBooster(common);
                     if (localCommonBooster != null) {
                         activeCommonBooster = (BOOSTER) commonBooster.merged(localCommonBooster);
                     } else {
@@ -322,8 +317,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
 
                 Files.list(path).forEach(subpath -> indexPath(catalogPath, subpath, activeCommonBooster, boosters));
             } else {
-                File ioFile = path.toFile();
-                String fileName = ioFile.getName().toLowerCase();
+                String fileName = path.getFileName().toString().toLowerCase();
                 // Skip any file that starts with "."
                 if (!fileName.startsWith(".") && (fileName.endsWith(".yaml") || fileName.endsWith(".yml"))) {
                     String id = makeBoosterId(catalogPath, path);
