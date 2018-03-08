@@ -18,9 +18,6 @@ This project contains the service classes for the booster-catalog repository
    ** Unmark "Don't report assertions with conditions..."
    ** You can set the "Severity" to "Error" to better see what code is violating the nullability contracts,
     but unfortunately that also flags some otherwise harmless code. Decide for yourself what you prefer.
- * *Immutables* - The set up your IDE for dealing with generated immutable classes see the
-   https://immutables.github.io/apt.html[online documentation]. You have to build the project at least
-   once for the classes to be generated or you will still get errors in the IDE.
   
 == Contributing Code
 
