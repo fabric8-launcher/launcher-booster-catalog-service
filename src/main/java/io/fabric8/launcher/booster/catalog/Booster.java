@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * A quickstart representation
@@ -26,6 +28,10 @@ import java.util.regex.Pattern;
  * @author <a href="mailto:tschotan@redhat.com">Tako Schotanus</a>
  */
 public class Booster {
+    public static final Descriptor EMPTY_DESCRIPTOR = new Descriptor("", Collections.emptyList());
+
+    private static final String KEY_METADATA = "metadata";
+
     private Map<String, Object> data;
 
     private final BoosterFetcher boosterFetcher;
@@ -36,13 +42,14 @@ public class Booster {
     @Nullable
     private Path contentPath;
 
+    private Descriptor descriptor = EMPTY_DESCRIPTOR;
+
     @Nullable
     private CompletableFuture<Path> contentResult = null;
-    
+
     protected Booster(BoosterFetcher boosterFetcher) {
         this.data = new LinkedHashMap<>();
         this.boosterFetcher = boosterFetcher;
-        this.data.put("metadata", new LinkedHashMap<>());
     }
     
     protected Booster(@Nullable Map<String, Object> data, BoosterFetcher boosterFetcher) {
@@ -77,7 +84,7 @@ public class Booster {
     /**
      * @param id the id to set
      */
-    public void setId(@Nullable String id) {
+    protected void setId(@Nullable String id) {
         this.id = id;
     }
 
@@ -92,7 +99,7 @@ public class Booster {
     /**
      * @param contentPath the contentPath to set
      */
-    public void setContentPath(@Nullable Path contentPath) {
+    protected void setContentPath(@Nullable Path contentPath) {
         this.contentPath = contentPath;
     }
 
@@ -113,7 +120,7 @@ public class Booster {
     /**
      * @param description the description to set
      */
-    public void setDescription(String description) {
+    protected void setDescription(String description) {
         data.put("description", description);
     }
     
@@ -148,6 +155,11 @@ public class Booster {
             this.name = name;
             this.path = path;
         }
+
+        @Override
+        public String toString() {
+            return "Descriptor(path=" + path + ", name=" + name + ")";
+        }
     }
 
     /**
@@ -156,12 +168,29 @@ public class Booster {
      * to create this Booster
      * @return a {@link Descriptor} object
      */
+    @Transient
     public Descriptor getDescriptor() {
-        String name = getMetadata("descriptor/name", "");
-        List<String> path = getMetadata("descriptor/path", Collections.emptyList());
-        return new Descriptor(name, path);
+        return descriptor;
     }
 
+    protected void setDescriptor(Descriptor descriptor) {
+        this.descriptor = descriptor;
+    }
+
+    protected void setDescriptorFromPath(Path relativeBoosterPath) {
+        Path boosterDir = relativeBoosterPath.getParent();
+        setDescriptor(new Descriptor(relativeBoosterPath.getFileName().toString(), getPathList(boosterDir)));
+    }
+
+    private List<String> getPathList(@Nullable Path path) {
+        if (path != null) {
+            return StreamSupport.stream(path.spliterator(), false)
+                    .map(Objects::toString)
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
+    }
     /**
      * @return the environments
      */
@@ -193,7 +222,7 @@ public class Booster {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getMetadata() {
-        return (Map<String, Object>)data.get("metadata");
+        return data.containsKey(KEY_METADATA) ? Collections.unmodifiableMap((Map<String, Object>)data.get(KEY_METADATA)) : Collections.emptyMap();
     }
 
     /**
@@ -277,6 +306,7 @@ public class Booster {
         mergeMaps(data, booster.data);
         if (booster.id != null) id = booster.id;
         if (booster.contentPath != null) contentPath = booster.contentPath;
+        if (booster.descriptor != EMPTY_DESCRIPTOR) descriptor = booster.descriptor;
         return this;
     }
     

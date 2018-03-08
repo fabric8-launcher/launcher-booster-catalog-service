@@ -370,20 +370,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
             // Booster ID = filename without extension
             booster.setId(id);
             booster.setContentPath(moduleDir);
-            
-            // We set some useful values in the "metadata" section:
-            
-            // Information about the booster descriptor, eg if the booster descriptor
-            // file was named "http/vertx/community/booster.yaml" the following will
-            // be added to the metadata section:
-            //    metadata:
-            //      descriptor:
-            //        name: booster.yaml
-            //        path: [http, vertx, community]
-            Map<String, Object> descriptor = new LinkedHashMap<>();
-            descriptor.put("name", file.getFileName().toString());
-            descriptor.put("path", getDescriptorPathList(file, catalogPath));
-            booster.getMetadata().put("descriptor", descriptor);
+            booster.setDescriptorFromPath(catalogPath.relativize(file));
         }
         return booster;
     }
@@ -408,22 +395,6 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         }
     }
 
-    private List<String> getDescriptorPathList(Path boosterPath, Path catalogPath) {
-        Path relativePath = catalogPath.relativize(boosterPath);
-        Path boosterDir = relativePath.getParent();
-        return getPathList(boosterDir);
-    }
-
-    private List<String> getPathList(@Nullable Path path) {
-        if (path != null) {
-            return StreamSupport.stream(path.spliterator(), false)
-                    .map(Objects::toString)
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
-    }
-    
     /**
      * {@link BoosterCatalogService} Builder class
      *
