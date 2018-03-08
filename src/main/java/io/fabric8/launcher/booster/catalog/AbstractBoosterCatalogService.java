@@ -83,7 +83,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
     }
 
     private static final String CLONED_BOOSTERS_DIR = ".boosters";
-    
+
     private static final String COMMON_YAML_FILE = "common.yaml";
 
     private static final Logger logger = Logger.getLogger(AbstractBoosterCatalogService.class.getName());
@@ -200,7 +200,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         synchronized (booster) {
             CompletableFuture<Path> contentResult = new CompletableFuture<>();
             Path contentPath = booster.getContentPath();
-            if (contentPath != null) {
+            if (contentPath != null && Files.notExists(contentPath)) {
                 try {
                     Files.createDirectories(contentPath);
                     CompletableFuture.runAsync(() -> {
@@ -208,6 +208,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                             provider.createBoosterContentPath(booster);
                             contentResult.complete(contentPath);
                         } catch (Throwable ex) {
+                            io.fabric8.launcher.booster.Files.deleteRecursively(contentPath);
                             contentResult.completeExceptionally(ex);
                         }
                     }, executor);
@@ -257,7 +258,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
     public Collection<BOOSTER> getBoosters() {
         return toBoosters(getPrefilteredBoosters());
     }
-    
+
     @Override
     public Collection<BOOSTER> getBoosters(Predicate<BOOSTER> filter) {
         return toBoosters(getPrefilteredBoosters().filter(filter));
@@ -281,7 +282,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
 
     protected void indexBoosters(final Path catalogPath, final Set<BOOSTER> boosters) throws IOException {
         indexPath(catalogPath, catalogPath, newBooster(null, this), boosters);
-        
+
         // Notify the listener of all the boosters that were added
         // (this excludes ignored boosters and those filtered by the global indexFilter)
         if (listener != null) {
@@ -293,13 +294,13 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         if (Thread.interrupted()) {
             throw new RuntimeException("Interrupted");
         }
-        
+
         // We skip anything starting with "." and "common.yaml" files
         if (path.startsWith(".")
                 || COMMON_YAML_FILE.equals(path.getFileName().toString())) {
             return;
         }
-        
+
         try {
             File file = path.toFile();
             if (file.isDirectory()) {
@@ -318,7 +319,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                 } else {
                     activeCommonBooster = commonBooster;
                 }
-                
+
                 Files.list(path).forEach(subpath -> indexPath(catalogPath, subpath, activeCommonBooster, boosters));
             } else {
                 File ioFile = path.toFile();
@@ -345,7 +346,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
             throw new RuntimeException(ex);
         }
     }
-    
+
     // We take the relative path of the booster name, remove the file extension
     // and turn any path symbols into underscores to create a unique booster id.
     // Eg. "http-crud/vertx/booster.yaml" becomes "http-crud_vertx_booster"
@@ -354,7 +355,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         String pathString = io.fabric8.launcher.booster.Files.removeFileExtension(relativePath.toString().toLowerCase());
         return pathString.replace('/', '_').replace('\\', '_');
     }
-    
+
     /**
      * Takes a YAML file from the repository and indexes it
      *
@@ -374,7 +375,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         }
         return booster;
     }
-    
+
     protected abstract BOOSTER newBooster(@Nullable Map<String, Object> data, BoosterFetcher boosterFetcher);
 
     @Nullable
