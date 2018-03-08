@@ -167,7 +167,7 @@ public class Booster {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getEnvironments() {
-        return (Map<String, Object>)data.getOrDefault("environments", Collections.emptyMap());
+        return (Map<String, Object>)data.getOrDefault("environment", Collections.emptyMap());
     }
 
     /**
