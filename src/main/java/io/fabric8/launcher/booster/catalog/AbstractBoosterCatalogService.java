@@ -9,6 +9,7 @@ package io.fabric8.launcher.booster.catalog;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -126,9 +127,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
     private synchronized CompletableFuture<Set<BOOSTER>> index(boolean reindex) {
         CompletableFuture<Set<BOOSTER>> ir = indexResult;
         if ((!reindex && ir == null) || (reindex && ir != null && ir.isDone())) {
-            indexResult = ir = new CompletableFuture<Set<BOOSTER>>();
-            final CompletableFuture<Set<BOOSTER>> finalir = ir;
-            CompletableFuture.runAsync(() -> {
+            indexResult = ir = CompletableFuture.supplyAsync(() -> {
                 try {
                     Set<BOOSTER> bs = new ConcurrentSkipListSet<>(Comparator.comparing(Booster::getId));
                     if (!reindex) {
@@ -144,9 +143,9 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                         // until re-indexing has terminated.
                         boosters = bs;
                     }
-                    finalir.complete(bs);
-                } catch (Exception ex) {
-                    finalir.completeExceptionally(ex);
+                    return bs;
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
                 }
             }, executor);
         }
@@ -163,26 +162,20 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         assert (indexResult != null);
         CompletableFuture<Set<BOOSTER>> pr = prefetchResult;
         if (pr == null) {
-            prefetchResult = pr = new CompletableFuture<>();
-            final CompletableFuture<Set<BOOSTER>> finalpr = pr;
-            CompletableFuture.runAsync(() -> {
-                try {
-                    logger.info(() -> "Pre-fetching boosters...");
-                    for (Booster b : boosters) {
-                        try {
-                            b.content().get();
-                        } catch (InterruptedException e) {
-                            break;
-                        } catch (Exception e) {
-                            // We ignore errors and go on to fetch the next Booster
-                            logger.log(Level.SEVERE, "Error while fetching booster '" + b.getName() + "'", e);
-                        }
+            prefetchResult = pr = CompletableFuture.supplyAsync(() -> {
+                logger.info(() -> "Pre-fetching boosters...");
+                for (Booster b : boosters) {
+                    try {
+                        b.content().get();
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        // We ignore errors and go on to fetch the next Booster
+                        logger.log(Level.SEVERE, "Error while fetching booster '" + b.getName() + "'", e);
                     }
-                    finalpr.complete(boosters);
-                    logger.info(() -> "Finished prefetching boosters");
-                } catch (Exception ex) {
-                    finalpr.completeExceptionally(ex);
                 }
+                logger.info(() -> "Finished prefetching boosters");
+                return boosters;
             }, executor);
         }
         return pr;
@@ -197,20 +190,16 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
             CompletableFuture<Path> contentResult = new CompletableFuture<>();
             Path contentPath = booster.getContentPath();
             if (contentPath != null && Files.notExists(contentPath)) {
-                try {
-                    Files.createDirectories(contentPath);
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            provider.createBoosterContentPath(booster);
-                            contentResult.complete(contentPath);
-                        } catch (Throwable ex) {
-                            io.fabric8.launcher.booster.Files.deleteRecursively(contentPath);
-                            contentResult.completeExceptionally(ex);
-                        }
-                    }, executor);
-                } catch (Throwable ex) {
-                    contentResult.completeExceptionally(ex);
-                }
+                contentResult = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        Files.createDirectories(contentPath);
+                        provider.createBoosterContentPath(booster);
+                        return contentPath;
+                    } catch (Throwable ex) {
+                        io.fabric8.launcher.booster.Files.deleteRecursively(contentPath);
+                        throw new RuntimeException(ex);
+                    }
+                }, executor);
             } else {
                 contentResult.complete(contentPath);
             }
@@ -265,12 +254,12 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                 .collect(Collectors.toSet());
     }
 
-    private void doIndex(final Set<BOOSTER> boosters) throws Exception {
+    private void doIndex(final Set<BOOSTER> boosters) throws IOException {
         try {
             Path catalogPath = provider.createCatalogPath();
             indexBoosters(catalogPath, boosters);
             logger.info(() -> "Finished content indexing");
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.log(Level.SEVERE, "Error while indexing", e);
             throw e;
         }
