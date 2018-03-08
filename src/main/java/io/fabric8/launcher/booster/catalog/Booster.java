@@ -160,6 +160,13 @@ public class Booster {
     }
 
     /**
+     * @return the data
+     */
+    public Map<String, Object> getData() {
+        return Collections.unmodifiableMap(data);
+    }
+
+    /**
      * @return the metadata
      */
     @SuppressWarnings("unchecked")
