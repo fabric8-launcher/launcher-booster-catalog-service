@@ -203,18 +203,18 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
             if (contentPath != null && Files.notExists(contentPath)) {
                 try {
                     Files.createDirectories(contentPath);
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            provider.createBoosterContentPath(booster);
-                            contentResult.complete(contentPath);
-                        } catch (Throwable ex) {
-                            io.fabric8.launcher.booster.Files.deleteRecursively(contentPath);
-                            contentResult.completeExceptionally(ex);
-                        }
-                    }, executor);
                 } catch (Throwable ex) {
                     contentResult.completeExceptionally(ex);
                 }
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        provider.createBoosterContentPath(booster);
+                        contentResult.complete(contentPath);
+                    } catch (Throwable ex) {
+                        io.fabric8.launcher.booster.Files.deleteRecursively(contentPath);
+                        contentResult.completeExceptionally(ex);
+                    }
+                }, executor);
             } else {
                 contentResult.complete(contentPath);
             }
