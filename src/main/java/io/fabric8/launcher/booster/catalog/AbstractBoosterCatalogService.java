@@ -280,9 +280,8 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
             throw new RuntimeException("Interrupted");
         }
 
-        // We skip anything starting with "." and "common.yaml" files
-        if (path.startsWith(".")
-                || COMMON_YAML_FILE.equals(path.getFileName().toString())) {
+        // We skip anything starting with "."
+        if (path.startsWith(".")) {
             return;
         }
 
@@ -307,8 +306,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                 Files.list(path).forEach(subpath -> indexPath(catalogPath, subpath, activeCommonBooster, boosters));
             } else {
                 String fileName = path.getFileName().toString().toLowerCase();
-                // Skip any file that starts with "."
-                if (!fileName.startsWith(".") && (fileName.endsWith(".yaml") || fileName.endsWith(".yml"))) {
+                if ((fileName.endsWith("booster.yaml") || fileName.endsWith("booster.yml"))) {
                     String id = makeBoosterId(catalogPath, path);
                     Path moduleRoot = catalogPath.resolve(CLONED_BOOSTERS_DIR);
                     Path modulePath = moduleRoot.resolve(id);
