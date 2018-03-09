@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 
 public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<RhoarBooster> implements RhoarBoosterCatalog {
 
-    private static final String METADATA_FILE = "metadata.json";
+    private static final String METADATA_FILE = "metadata.yaml";
 
     private static final Logger logger = Logger.getLogger(RhoarBoosterCatalogService.class.getName());
 
@@ -120,19 +120,17 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
 
         for (RhoarBooster booster : boosters) {
             List<String> path = booster.getDescriptor().path;
-            if (path.size() >= 1) {
-                booster.setMission(missions.computeIfAbsent(path.get(0), Mission::new));
-                if (path.size() >= 2) {
-                    booster.setRuntime(runtimes.computeIfAbsent(path.get(1), Runtime::new));
-                    if (path.size() >= 3) {
-                        String versionId = path.get(2);
-                        String versionName = booster.getMetadata("version/name", versionId);
-                        assert versionName != null;
-                        String description = booster.getMetadata("version/description");
-                        Map<String, Object> metadata = booster.getMetadata("version/metadata", Collections.emptyMap());
-                        booster.setVersion(new Version(versionId, versionName, description, metadata));
-                    }
-                }
+            if (path.size() >= 3) {
+                booster.setRuntime(runtimes.computeIfAbsent(path.get(0), Runtime::new));
+
+                String versionId = path.get(1);
+                String versionName = booster.getMetadata("version/name", versionId);
+                assert versionName != null;
+                String description = booster.getMetadata("version/description");
+                Map<String, Object> metadata = booster.getMetadata("version/metadata", Collections.emptyMap());
+                booster.setVersion(new Version(versionId, versionName, description, metadata));
+
+                booster.setMission(missions.computeIfAbsent(path.get(2), Mission::new));
             }
         }
     }
