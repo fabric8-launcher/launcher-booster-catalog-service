@@ -84,6 +84,14 @@ public class RhoarBoosterCatalogServiceTest {
     }
 
     @Test
+    public void testGetMissions() throws Exception {
+        RhoarBoosterCatalogService service = buildDefaultCatalogService();
+        service.index().get();
+
+        softly.assertThat(service.getMissions()).contains(new Mission("rest-http"));
+    }
+
+    @Test
     public void testGetMissionByRuntime() throws Exception {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
         service.index().get();
@@ -100,6 +108,18 @@ public class RhoarBoosterCatalogServiceTest {
         service.index().get();
 
         softly.assertThat(service.getRuntimes()).contains(new Runtime("vert.x"));
+    }
+
+    @Test
+    public void testGetRuntimeByMission() throws Exception {
+        RhoarBoosterCatalogService service = buildDefaultCatalogService();
+        service.index().get();
+
+        Mission resthttp = new Mission("rest-http");
+
+        Set<Runtime> runtimes = service.getRuntimes(BoosterPredicates.withMission(resthttp));
+
+        softly.assertThat(runtimes.size()).isGreaterThan(0);
     }
 
     @Test

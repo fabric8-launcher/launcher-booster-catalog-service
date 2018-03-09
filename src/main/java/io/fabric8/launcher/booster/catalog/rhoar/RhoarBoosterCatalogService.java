@@ -87,12 +87,14 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
 
     private Set<Runtime> toRuntimes(Stream<RhoarBooster> bs) {
         return bs
+                .filter(b -> b.getRuntime() != null)
                 .map(RhoarBooster::getRuntime)
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
     private Set<Mission> toMissions(Stream<RhoarBooster> bs) {
         return bs
+                .filter(b -> b.getMission() != null)
                 .map(RhoarBooster::getMission)
                 .collect(Collectors.toCollection(TreeSet::new));
     }
