@@ -198,12 +198,12 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testFilter() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef())
-                .filter(b -> getPath(b, 1).equals("spring-boot")).build();
+                .filter(b -> getPath(b, 0).equals("spring-boot")).build();
 
         service.index().get();
 
         softly.assertThat(service.getBoosters().size()).isGreaterThan(0);
-        softly.assertThat(service.getBoosters().stream().map(b -> getPath(b, 1))).containsOnly("spring-boot");
+        softly.assertThat(service.getBoosters().stream().map(b -> getPath(b, 0))).containsOnly("spring-boot");
     }
 
     @Test
@@ -256,15 +256,15 @@ public class BoosterCatalogServiceTest {
     }
 
     public static Predicate<Booster> missions(@Nullable String mission) {
-        return (Booster b) -> mission == null || mission.equals(getPath(b, 0));
+        return (Booster b) -> mission == null || mission.equals(getPath(b, 2));
     }
 
     public static Predicate<Booster> runtimes(@Nullable String runtime) {
-        return (Booster b) -> runtime == null || runtime.equals(getPath(b, 1));
+        return (Booster b) -> runtime == null || runtime.equals(getPath(b, 0));
     }
 
     public static Predicate<Booster> versions(@Nullable String version) {
-        return (Booster b) -> version == null || version.equals(getPath(b, 2));
+        return (Booster b) -> version == null || version.equals(getPath(b, 1));
     }
 
     private static String getPath(Booster b, int index) {
