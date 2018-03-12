@@ -16,7 +16,7 @@ import java.util.Map;
  * where a mission is a certain feature or idea that the
  * booster tries to explain or teach
  */
-public class Mission extends CategoryBase {
+public class Mission extends AbstractCategory {
     public Mission(String id) {
         this(id, id, null, Collections.emptyMap());
     }

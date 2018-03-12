@@ -17,7 +17,7 @@ import java.util.Objects;
  * where a runtime is the technology that is used to
  * to develop and execute the booster's code
  */
-public class Runtime extends CategoryBase {
+public class Runtime extends AbstractCategory {
 
     public static final String KEY_PIPELINE_PLATFORM = "pipelinePlatform";
     public static final String DEFAULT_PIPELINE_PLATFORM = "maven";

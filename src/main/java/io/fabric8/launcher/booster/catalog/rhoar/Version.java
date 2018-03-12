@@ -17,7 +17,7 @@ import java.util.Map;
  * A version determines which specific implementation of a runtime
  * should be used for the booster
  */
-public class Version extends CategoryBase {
+public class Version extends AbstractCategory {
     public Version(String id) {
         this(id, id, null, Collections.emptyMap());
     }

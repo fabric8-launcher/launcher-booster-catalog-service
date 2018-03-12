@@ -10,18 +10,17 @@ package io.fabric8.launcher.booster.catalog.rhoar;
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * This class is the base class for the types that we use to
  * divide the boosters into the categories: Missions, Runtimes
  * and Versions.
  */
-public class CategoryBase implements Comparable<CategoryBase> {
+public abstract class AbstractCategory implements Comparable<AbstractCategory> {
 
     public static final String KEY_SUGGESTED = "suggested";
 
-    public CategoryBase(String id, String name, @Nullable String description, Map<String, Object> metadata) {
+    public AbstractCategory(String id, String name, @Nullable String description, Map<String, Object> metadata) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -78,7 +77,7 @@ public class CategoryBase implements Comparable<CategoryBase> {
     }
 
     @Override
-    public int compareTo(CategoryBase o) {
+    public int compareTo(AbstractCategory o) {
         return getName().compareTo(o.getName());
     }
 
@@ -98,7 +97,7 @@ public class CategoryBase implements Comparable<CategoryBase> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        CategoryBase other = (CategoryBase) obj;
+        AbstractCategory other = (AbstractCategory) obj;
         return id.equals(other.id);
     }
 
