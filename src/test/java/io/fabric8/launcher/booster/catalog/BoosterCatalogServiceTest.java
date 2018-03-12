@@ -7,20 +7,7 @@
 
 package io.fabric8.launcher.booster.catalog;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
-
-import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider;
+import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
@@ -29,11 +16,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 
-import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
-
 import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BoosterCatalogServiceTest {
@@ -72,16 +67,21 @@ public class BoosterCatalogServiceTest {
         service.index().get();
 
         Optional<Booster> booster1 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-        assert(booster1.isPresent());
-        Optional<Booster> booster2 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-        assert(booster2.isPresent());
-        assert(booster1.get() == booster2.get());
+        softly.assertThat(booster1).hasValueSatisfying(b1 -> {
+            Optional<Booster> booster2 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
+            softly.assertThat(booster2).hasValueSatisfying(b2 -> {
+                softly.assertThat(b2).isSameAs(b1);
+            });
 
-        service.reindex().get();
+            assertThatCode(() -> {
+                service.reindex().get();
+            }).doesNotThrowAnyException();
 
-        Optional<Booster> booster3 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-        assert(booster3.isPresent());
-        assert(booster1.get() != booster3.get());
+            Optional<Booster> booster3 = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
+            softly.assertThat(booster3).hasValueSatisfying(b3 -> {
+                softly.assertThat(b3).isNotSameAs(b1);
+            });
+        });
     }
 
     @Test
@@ -93,11 +93,12 @@ public class BoosterCatalogServiceTest {
 
         Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
 
-        assert(booster.isPresent());
-        softly.assertThat(booster.get().<Boolean>getMetadata("root")).isEqualTo(true);
-        softly.assertThat(booster.get().<String>getMetadata("mymission")).isEqualTo("rest-http");
-        softly.assertThat(booster.get().<String>getMetadata("myruntime")).isEqualTo("vertx");
-        softly.assertThat(booster.get().<String>getMetadata("myversion")).isEqualTo("community");
+        softly.assertThat(booster).hasValueSatisfying(b -> {
+            softly.assertThat(b.<Boolean>getMetadata("root")).isEqualTo(true);
+            softly.assertThat(b.<String>getMetadata("mymission")).isEqualTo("rest-http");
+            softly.assertThat(b.<String>getMetadata("myruntime")).isEqualTo("vertx");
+            softly.assertThat(b.<String>getMetadata("myversion")).isEqualTo("community");
+        });
     }
 
     @Test
@@ -109,12 +110,13 @@ public class BoosterCatalogServiceTest {
 
         Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
 
-        assert(booster.isPresent());
-        softly.assertThat(booster.get().<Integer>getMetadata("sub/foo")).isEqualTo(3);
-        softly.assertThat(booster.get().<Integer>getMetadata("sub/bar")).isEqualTo(5);
-        softly.assertThat(booster.get().<Integer>getMetadata("sub/baz")).isEqualTo(4);
-        softly.assertThat(booster.get().<Integer>getMetadata("sub/bam")).isEqualTo(7);
-        softly.assertThat(booster.get().<Integer>getMetadata("sub/fox")).isEqualTo(8);
+        softly.assertThat(booster).hasValueSatisfying(b -> {
+            softly.assertThat(b.<Integer>getMetadata("sub/foo")).isEqualTo(3);
+            softly.assertThat(b.<Integer>getMetadata("sub/bar")).isEqualTo(5);
+            softly.assertThat(b.<Integer>getMetadata("sub/baz")).isEqualTo(4);
+            softly.assertThat(b.<Integer>getMetadata("sub/bam")).isEqualTo(7);
+            softly.assertThat(b.<Integer>getMetadata("sub/fox")).isEqualTo(8);
+        });
     }
 
     @Test
@@ -140,14 +142,15 @@ public class BoosterCatalogServiceTest {
 
         softly.assertThat(booster.isPresent()).isTrue();
 
-        assert(booster.isPresent());
-        softly.assertThat(booster.get().getName()).isEqualTo("default-name");
-        softly.assertThat(booster.get().getGitRef()).isEqualTo("master");
+        softly.assertThat(booster).hasValueSatisfying(b -> {
+            softly.assertThat(b.getName()).isEqualTo("default-name");
+            softly.assertThat(b.getGitRef()).isEqualTo("master");
 
-        Booster envBooster = booster.get().forEnvironment("production");
-        softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
-        softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
-        softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(3);
+            Booster envBooster = b.forEnvironment("production");
+            softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
+            softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
+            softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(3);
+        });
     }
 
     @Test
@@ -159,12 +162,11 @@ public class BoosterCatalogServiceTest {
         service.index().get();
 
         Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-
-        assert(booster.isPresent());
-        Booster envBooster = booster.get();
-        softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
-        softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
-        softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(3);
+        softly.assertThat(booster).hasValueSatisfying(b -> {
+            softly.assertThat(b.getName()).isEqualTo("prod-name");
+            softly.assertThat(b.getGitRef()).isEqualTo("v13");
+            softly.assertThat(b.<Integer>getMetadata("foo")).isEqualTo(3);
+        });
     }
 
     @Test
@@ -176,13 +178,12 @@ public class BoosterCatalogServiceTest {
         service.index().get();
 
         Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-
-        assert(booster.isPresent());
-        Booster envBooster = booster.get();
-        softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
-        softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
-        softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(4);
-        softly.assertThat(envBooster.<Boolean>getMetadata("bar")).isTrue();
+        softly.assertThat(booster).hasValueSatisfying(b -> {
+            softly.assertThat(b.getName()).isEqualTo("prod-name");
+            softly.assertThat(b.getGitRef()).isEqualTo("v13");
+            softly.assertThat(b.<Integer>getMetadata("foo")).isEqualTo(4);
+            softly.assertThat(b.<Boolean>getMetadata("bar")).isTrue();
+        });
     }
 
     @Test
@@ -224,11 +225,13 @@ public class BoosterCatalogServiceTest {
 
         // Just get the first booster we can find
         Optional<Booster> booster = service.getBooster(runtimes("spring-boot"));
-
-        assert(booster.isPresent());
-        File boosterFolder = booster.get().content().get().toFile();
-        File pomFile = new File(boosterFolder, "pom.xml");
-        softly.assertThat(pomFile.isFile()).isTrue();
+        softly.assertThat(booster).hasValueSatisfying(b -> {
+            assertThatCode(() -> {
+                File boosterFolder = b.content().get().toFile();
+                File pomFile = new File(boosterFolder, "pom.xml");
+                softly.assertThat(pomFile.isFile()).isTrue();
+            }).doesNotThrowAnyException();
+        });
     }
 
     @Test
@@ -242,17 +245,19 @@ public class BoosterCatalogServiceTest {
 
         // Just get the first booster we can find
         Optional<Booster> booster = service.getBooster(runtimes("spring-boot"));
+        softly.assertThat(booster).hasValueSatisfying(b -> {
+            // First we test a failing condition
+            assertThatThrownBy(() -> b.content().get()).hasMessageContaining("Fail flag is true");
 
-        assert(booster.isPresent());
+            // Now we reset the fail status
+            unreliableProvider.fail = false;
 
-        // First we test a failing condition
-        assertThatThrownBy(()->booster.get().content().get()).hasMessageContaining("Fail flag is true");
-
-        // Now we reset the fail status
-        unreliableProvider.fail = false;
-        // And now we test if the service can recover from the previous error
-        Path boosterFolder = booster.get().content().get();
-        softly.assertThat(boosterFolder.resolve("pom.xml")).isRegularFile();
+            assertThatCode(() -> {
+                // And now we test if the service can recover from the previous error
+                Path boosterFolder = b.content().get();
+                softly.assertThat(boosterFolder.resolve("pom.xml")).isRegularFile();
+            }).doesNotThrowAnyException();
+        });
     }
 
     public static Predicate<Booster> missions(@Nullable String mission) {
