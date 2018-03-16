@@ -51,12 +51,14 @@ public class RhoarBoosterCatalogServiceTest {
         service.processMetadata(metadataFile, missions, runtimes);
 
         softly.assertThat(missions).hasSize(6);
-        softly.assertThat(runtimes).hasSize(4);
+        softly.assertThat(runtimes).hasSize(5);
         softly.assertThat(runtimes.get("wildfly-swarm").getDescription()).isNotEmpty();
         softly.assertThat(runtimes.get("wildfly-swarm").getIcon()).isNotEmpty();
         softly.assertThat(runtimes.get("wildfly-swarm").getPipelinePlatform()).isEqualTo("maven");
         softly.assertThat(runtimes.get("wildfly-swarm").isSuggested()).isFalse();
         softly.assertThat(runtimes.get("spring-boot").isSuggested()).isTrue();
+        softly.assertThat(runtimes.get("vert.x").getVersions()).hasSize(2);
+        softly.assertThat(runtimes.get("vert.x").getVersions()).hasEntrySatisfying("community", v -> softly.assertThat(v.getName()).isEqualTo("3.5.0.Final (Community)"));
         softly.assertThat(missions.get("configmap").getDescription()).isNotEmpty();
         softly.assertThat(missions.get("rest-http").isSuggested()).isTrue();
         softly.assertThat(missions.get("configmap").isSuggested()).isFalse();
