@@ -123,16 +123,26 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
         for (RhoarBooster booster : boosters) {
             List<String> path = booster.getDescriptor().path;
             if (path.size() >= 3) {
-                booster.setRuntime(runtimes.computeIfAbsent(path.get(0), Runtime::new));
+                Runtime r = runtimes.get(path.get(0));
+                if (r == null) {
+                    r = new Runtime(path.get(0));
+                    logger.log(Level.WARNING, "Runtime '{0}' not found in metadata", r.getId());
+                }
+                booster.setRuntime(r);
 
-                String versionId = path.get(1);
-                String versionName = booster.getMetadata("version/name", versionId);
-                assert versionName != null;
-                String description = booster.getMetadata("version/description");
-                Map<String, Object> metadata = booster.getMetadata("version/metadata", Collections.emptyMap());
-                booster.setVersion(new Version(versionId, versionName, description, metadata));
+                Version v = r.getVersions().get(path.get(1));
+                if (v == null) {
+                    v = new Version(path.get(1));
+                    logger.log(Level.WARNING, "Version '{0}' not found in Runtime '{1}' metadata", new Object[] { v.getId(), r.getId() });
+                }
+                booster.setVersion(v);
 
-                booster.setMission(missions.computeIfAbsent(path.get(2), Mission::new));
+                Mission m = missions.get(path.get(2));
+                if (m == null) {
+                    m = new Mission(path.get(2));
+                    logger.log(Level.WARNING, "Mission '{0}' not found in metadata", m.getId());
+                }
+                booster.setMission(m);
             }
         }
     }
@@ -170,11 +180,29 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                                 (String)e.get("name"),
                                 (String)e.get("description"),
                                 (Map<String, Object>)e.getOrDefault("metadata", Collections.emptyMap()),
-                                (String)e.get("icon")))
+                                (String)e.get("icon"),
+                                getMetadataVersions(e.get("versions"))))
                         .forEach(r -> runtimes.put(r.getId(), r));
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while processing metadata " + metadataFile, e);
+        }
+    }
+
+    private Map<String,Version> getMetadataVersions(Object versionsList) {
+        if (versionsList instanceof List) {
+            HashMap<String, Version> versions = new HashMap<>();
+            List<Map<String, Object>> vs = (List<Map<String, Object>>)versionsList;
+            vs.stream()
+                    .map(e -> new Version(
+                            (String)e.get("id"),
+                            (String)e.get("name"),
+                            (String)e.get("description"),
+                            (Map<String, Object>)e.getOrDefault("metadata", Collections.emptyMap())))
+                    .forEach(v -> versions.put(v.getId(), v));
+            return versions;
+        } else {
+            return Collections.emptyMap();
         }
     }
 

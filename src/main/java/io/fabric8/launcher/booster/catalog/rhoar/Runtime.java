@@ -23,16 +23,19 @@ public class Runtime extends AbstractCategory {
     public static final String DEFAULT_PIPELINE_PLATFORM = "maven";
 
     public Runtime(String id) {
-      this(id, id, null, Collections.emptyMap(), null);
+      this(id, id, null, Collections.emptyMap(), null, Collections.emptyMap());
    }
 
-    public Runtime(String id, String name, @Nullable String description, Map<String, Object> metadata, @Nullable String icon) {
+    public Runtime(String id, String name, @Nullable String description, Map<String, Object> metadata, @Nullable String icon, Map<String, Version> versions) {
         super(id, name, description, metadata);
         this.icon = icon;
+        this.versions = versions;
     }
 
     @Nullable
     private final String icon;
+
+    private Map<String, Version> versions;
 
     /**
      * @return the icon
@@ -40,6 +43,13 @@ public class Runtime extends AbstractCategory {
     @Nullable
     public String getIcon() {
         return icon;
+    }
+
+    /**
+     * @return the versions
+     */
+    public Map<String, Version> getVersions() {
+        return versions;
     }
 
     public String getPipelinePlatform() {
