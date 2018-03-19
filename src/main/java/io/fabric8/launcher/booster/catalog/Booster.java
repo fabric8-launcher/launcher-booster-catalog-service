@@ -229,7 +229,17 @@ public class Booster {
         Map<String, Object> env = (Map<String, Object>)getEnvironments().get(environmentName);
         if (env != null && !env.isEmpty()) {
             Booster envBooster = new Booster(env, boosterFetcher);
-            return merged(envBooster);
+            Booster mergedBooster = merged(envBooster);
+            // Set the "applied environment" so we can distinguish it from the original
+            mergedBooster.setAppliedEnvironment(environmentName);
+            // Make sure the id and content path are unique for this new booster
+            mergedBooster.setId(mergedBooster.getId() + "_" + environmentName);
+            Path contentPath = mergedBooster.getContentPath();
+            if (contentPath != null) {
+                contentPath = contentPath.getParent().resolve(contentPath.getFileName().toString() + "_" + environmentName);
+                mergedBooster.setContentPath(contentPath);
+            }
+            return mergedBooster;
         } else {
             return this;
         }
