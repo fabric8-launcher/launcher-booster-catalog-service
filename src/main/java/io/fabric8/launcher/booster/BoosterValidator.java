@@ -57,20 +57,23 @@ class BoosterValidator {
         System.out.println("Fetching boosters...");
         AtomicInteger errcnt = new AtomicInteger(0);
         ArrayList<CompletableFuture<Path>> futures = new ArrayList<>();
-        for (Booster b : boosters) {
-            futures.add(b.content().whenComplete((path, throwable) -> {
-                if (throwable != null) {
-                    System.err.println("ERROR: Couldn't fetch Booster " + b.getId());
-                    errcnt.incrementAndGet();
-                } else {
-                    System.out.println("Fetched " + b.getId() + " (" + b.getName() + ")");
-                    if (!validOpenshiftYamlFiles(b, path)) {
+        for (Booster metab : boosters) {
+            for (String env : metab.getEnvironments().keySet()) {
+                Booster b = metab.forEnvironment(env);
+                futures.add(b.content().whenComplete((path, throwable) -> {
+                    if (throwable != null) {
+                        System.err.println("ERROR: Couldn't fetch Booster " + b.getId());
                         errcnt.incrementAndGet();
+                    } else {
+                        System.out.println("Fetched " + b.getId() + " (" + b.getName() + " for " + env + ")");
+                        if (!validOpenshiftYamlFiles(b, path)) {
+                            errcnt.incrementAndGet();
+                        }
+                        System.out.flush();
+                        System.err.flush();
                     }
-                    System.out.flush();
-                    System.err.flush();
-                }
-            }));
+                }));
+            }
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
