@@ -307,10 +307,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
             } else {
                 String fileName = path.getFileName().toString().toLowerCase();
                 if ((fileName.endsWith("booster.yaml") || fileName.endsWith("booster.yml"))) {
-                    String id = makeBoosterId(catalogPath, path);
-                    Path moduleRoot = catalogPath.resolve(CLONED_BOOSTERS_DIR);
-                    Path modulePath = moduleRoot.resolve(id);
-                    BOOSTER b = indexBooster(commonBooster, id, catalogPath, path, modulePath);
+                    BOOSTER b = indexBooster(commonBooster, catalogPath, path);
                     if (b != null) {
                         // Check if we should get a specific environment
                         if (environment != null && !environment.isEmpty()) {
@@ -344,14 +341,16 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
      * @return a {@link Booster} or null if the booster could not be read
      */
     @Nullable
-    protected BOOSTER indexBooster(BOOSTER common, String id, Path catalogPath, Path file, Path moduleDir) {
+    protected BOOSTER indexBooster(BOOSTER common, Path catalogPath, Path file) {
         logger.info(() -> "Indexing " + file + " ...");
         BOOSTER booster = readBooster(file);
         if (booster != null) {
             booster = (BOOSTER) common.merged(booster);
-            // Booster ID = filename without extension
+            String id = makeBoosterId(catalogPath, file);
             booster.setId(id);
-            booster.setContentPath(moduleDir);
+            Path moduleRoot = catalogPath.resolve(CLONED_BOOSTERS_DIR);
+            Path modulePath = moduleRoot.resolve(id);
+            booster.setContentPath(modulePath);
             booster.setDescriptorFromPath(catalogPath.relativize(file));
         }
         return booster;
