@@ -42,6 +42,9 @@ public class Booster {
     @Nullable
     private Path contentPath;
 
+    @Nullable
+    private String appliedEnvironment;
+
     private Descriptor descriptor = EMPTY_DESCRIPTOR;
 
     @Nullable
@@ -101,6 +104,21 @@ public class Booster {
      */
     protected void setContentPath(@Nullable Path contentPath) {
         this.contentPath = contentPath;
+    }
+
+    /**
+     * @return the appliedEnvironment
+     */
+    @Transient @Nullable
+    public String getAppliedEnvironment() {
+        return appliedEnvironment;
+    }
+
+    /**
+     * @param appliedEnvironment the appliedEnvironment to set
+     */
+    protected void setAppliedEnvironment(String appliedEnvironment) {
+        this.appliedEnvironment = appliedEnvironment;
     }
 
     /**
