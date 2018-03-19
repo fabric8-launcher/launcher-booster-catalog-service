@@ -58,6 +58,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
                         "--recursive",
                         "--depth=1",
                         "--quiet",
+                        "-c", "advice.detachedHead=false",
                         catalogPath.toString())
                 .inheritIO();
         logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
@@ -83,6 +84,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
                              "--recursive",
                              "--depth=1",
                              "--quiet",
+                             "-c", "advice.detachedHead=false",
                              contentPath.toString())
                     .inheritIO();
             logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
