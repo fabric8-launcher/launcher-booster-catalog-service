@@ -1,11 +1,9 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
-import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 public abstract class BoosterPredicates {
     private BoosterPredicates() {
@@ -23,8 +21,9 @@ public abstract class BoosterPredicates {
         return (RhoarBooster b) -> version == null || version.equals(b.getVersion());
     }
 
-    public static Predicate<RhoarBooster> withRunsOn(String clusterType) {
-        return (RhoarBooster b) -> checkNegatableCategory(b.getRunsOn(), clusterType);
+    public static Predicate<RhoarBooster> withRunsOn(@Nullable String clusterType) {
+        return (RhoarBooster b) -> clusterType == null || clusterType.isEmpty() ||
+                checkNegatableCategory(b.getRunsOn(), clusterType);
     }
 
     /**
@@ -32,13 +31,14 @@ public abstract class BoosterPredicates {
      * The supported categories are either a single object or a list of objects.
      * The given category is checked against the supported categories one by one.
      * If the category name matches the supported one exactly <code>true</code> is
-     * returned. The supported category can also start with a <code>!</code> 
+     * returned. The supported category can also start with a <code>!</code>
      * indicating a the result should be negated. In that case <code>false</code>
      * is returned. The special supported categories <code>all</code> and
      * <code>none</code> will always return <code>true</code> and <code>false</code>
      * respectively when encountered.
+     *
      * @param supportedCategories Can be a single object or a List of objects
-     * @param category The category name to check against
+     * @param category            The category name to check against
      * @return if the category matches the supported categories or not
      */
     @SuppressWarnings("unchecked")
