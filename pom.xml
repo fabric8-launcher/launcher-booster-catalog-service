@@ -40,7 +40,7 @@
   </build>
   <properties>
     <version.junit>4.12</version.junit>
-    <version.assertj>3.8.0</version.assertj>
+    <version.assertj>3.9.1</version.assertj>
     <version.git.rules>0.0.6</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
     <version.snakeyaml>1.19</version.snakeyaml>
