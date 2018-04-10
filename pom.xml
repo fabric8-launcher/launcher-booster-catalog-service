@@ -44,7 +44,7 @@
     <version.git.rules>0.0.6</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
     <version.snakeyaml>1.19</version.snakeyaml>
-    <version.system.rules>1.17.0</version.system.rules>
+    <version.system.rules>1.17.1</version.system.rules>
   </properties>
   <dependencies>
     <!-- Compile-time dependency -->
