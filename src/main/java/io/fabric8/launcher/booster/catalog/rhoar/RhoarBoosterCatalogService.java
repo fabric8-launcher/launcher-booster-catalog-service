@@ -18,9 +18,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 import io.fabric8.launcher.booster.catalog.AbstractBoosterCatalogService;
-import io.fabric8.launcher.booster.catalog.Booster;
-import io.fabric8.launcher.booster.catalog.BoosterCatalogService;
 import io.fabric8.launcher.booster.catalog.BoosterDataTransformer;
 import io.fabric8.launcher.booster.catalog.BoosterFetcher;
 import io.fabric8.launcher.booster.catalog.YamlConstructor;
@@ -28,8 +28,6 @@ import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogListener;
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
-
-import javax.annotation.Nullable;
 
 public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<RhoarBooster> implements RhoarBoosterCatalog {
 
@@ -75,7 +73,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     public Set<Version> getVersions(Mission mission, Runtime runtime) {
         return getVersions(BoosterPredicates.withMission(mission).and(BoosterPredicates.withRuntime(runtime)));
     }
-    
+
     @Override
     public Optional<RhoarBooster> getBooster(Mission mission, Runtime runtime, Version version) {
         return getPrefilteredBoosters()
@@ -133,7 +131,7 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
                 Version v = r.getVersions().get(path.get(1));
                 if (v == null) {
                     v = new Version(path.get(1));
-                    logger.log(Level.WARNING, "Version '{0}' not found in Runtime '{1}' metadata", new Object[] { v.getId(), r.getId() });
+                    logger.log(Level.WARNING, "Version '{0}' not found in Runtime '{1}' metadata", new Object[]{v.getId(), r.getId()});
                 }
                 booster.setVersion(v);
 
@@ -162,25 +160,25 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
             Map<String, Object> metadata = yaml.loadAs(reader, Map.class);
 
             if (metadata.get("missions") instanceof List) {
-                List<Map<String, Object>> ms = (List<Map<String, Object>>)metadata.get("missions");
+                List<Map<String, Object>> ms = (List<Map<String, Object>>) metadata.get("missions");
                 ms.stream()
                         .map(e -> new Mission(
-                                (String)e.get("id"),
-                                (String)e.get("name"),
-                                (String)e.get("description"),
-                                (Map<String, Object>)e.getOrDefault("metadata", Collections.emptyMap())))
+                                (String) e.get("id"),
+                                (String) e.get("name"),
+                                (String) e.get("description"),
+                                (Map<String, Object>) e.getOrDefault("metadata", Collections.emptyMap())))
                         .forEach(m -> missions.put(m.getId(), m));
             }
 
             if (metadata.get("runtimes") instanceof List) {
-                List<Map<String, Object>> rs = (List<Map<String, Object>>)metadata.get("runtimes");
+                List<Map<String, Object>> rs = (List<Map<String, Object>>) metadata.get("runtimes");
                 rs.stream()
                         .map(e -> new Runtime(
-                                (String)e.get("id"),
-                                (String)e.get("name"),
-                                (String)e.get("description"),
-                                (Map<String, Object>)e.getOrDefault("metadata", Collections.emptyMap()),
-                                (String)e.get("icon"),
+                                (String) e.get("id"),
+                                (String) e.get("name"),
+                                (String) e.get("description"),
+                                (Map<String, Object>) e.getOrDefault("metadata", Collections.emptyMap()),
+                                (String) e.get("icon"),
                                 getMetadataVersions(e.get("versions"))))
                         .forEach(r -> runtimes.put(r.getId(), r));
             }
@@ -189,16 +187,17 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
         }
     }
 
-    private Map<String,Version> getMetadataVersions(Object versionsList) {
+    @SuppressWarnings("unchecked")
+    private Map<String, Version> getMetadataVersions(Object versionsList) {
         if (versionsList instanceof List) {
-            HashMap<String, Version> versions = new HashMap<>();
-            List<Map<String, Object>> vs = (List<Map<String, Object>>)versionsList;
+            Map<String, Version> versions = new HashMap<>();
+            List<Map<String, Object>> vs = (List<Map<String, Object>>) versionsList;
             vs.stream()
                     .map(e -> new Version(
-                            (String)e.get("id"),
-                            (String)e.get("name"),
-                            (String)e.get("description"),
-                            (Map<String, Object>)e.getOrDefault("metadata", Collections.emptyMap())))
+                            (String) e.get("id"),
+                            (String) e.get("name"),
+                            (String) e.get("description"),
+                            (Map<String, Object>) e.getOrDefault("metadata", Collections.emptyMap())))
                     .forEach(v -> versions.put(v.getId(), v));
             return versions;
         } else {
@@ -209,47 +208,47 @@ public class RhoarBoosterCatalogService extends AbstractBoosterCatalogService<Rh
     public static class Builder extends AbstractBuilder<RhoarBooster, RhoarBoosterCatalogService> {
         @Override
         public Builder catalogRef(String catalogRef) {
-            return (Builder)super.catalogRef(catalogRef);
+            return (Builder) super.catalogRef(catalogRef);
         }
 
         @Override
         public Builder catalogRepository(String catalogRepositoryURI) {
-            return (Builder)super.catalogRepository(catalogRepositoryURI);
+            return (Builder) super.catalogRepository(catalogRepositoryURI);
         }
 
         @Override
         public Builder pathProvider(BoosterCatalogPathProvider pathProvider) {
-            return (Builder)super.pathProvider(pathProvider);
+            return (Builder) super.pathProvider(pathProvider);
         }
 
         @Override
         public Builder filter(Predicate<RhoarBooster> filter) {
-            return (Builder)super.filter(filter);
+            return (Builder) super.filter(filter);
         }
 
         @Override
         public Builder listener(BoosterCatalogListener listener) {
-            return (Builder)super.listener(listener);
+            return (Builder) super.listener(listener);
         }
 
         @Override
         public Builder transformer(BoosterDataTransformer transformer) {
-            return (Builder)super.transformer(transformer);
+            return (Builder) super.transformer(transformer);
         }
 
         @Override
         public Builder environment(String environment) {
-            return (Builder)super.environment(environment);
+            return (Builder) super.environment(environment);
         }
 
         @Override
         public Builder executor(ExecutorService executor) {
-            return (Builder)super.executor(executor);
+            return (Builder) super.executor(executor);
         }
 
         @Override
         public Builder rootDir(Path root) {
-            return (Builder)super.rootDir(root);
+            return (Builder) super.rootDir(root);
         }
 
         @Override

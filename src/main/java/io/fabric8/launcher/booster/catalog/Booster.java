@@ -7,7 +7,6 @@
 
 package io.fabric8.launcher.booster.catalog;
 
-import javax.annotation.Nullable;
 import java.beans.Transient;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -20,6 +19,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import javax.annotation.Nullable;
 
 /**
  * A quickstart representation
@@ -54,7 +55,7 @@ public class Booster {
         this.data = new LinkedHashMap<>();
         this.boosterFetcher = boosterFetcher;
     }
-    
+
     protected Booster(@Nullable Map<String, Object> data, BoosterFetcher boosterFetcher) {
         this(boosterFetcher);
         if (data != null) {
@@ -94,7 +95,8 @@ public class Booster {
     /**
      * @return the contentPath
      */
-    @Transient @Nullable
+    @Transient
+    @Nullable
     public Path getContentPath() {
         return contentPath;
     }
@@ -109,7 +111,8 @@ public class Booster {
     /**
      * @return the appliedEnvironment
      */
-    @Transient @Nullable
+    @Transient
+    @Nullable
     public String getAppliedEnvironment() {
         return appliedEnvironment;
     }
@@ -141,7 +144,7 @@ public class Booster {
     protected void setDescription(String description) {
         data.put("description", description);
     }
-    
+
     /**
      * @return a boolean indicating if the booster should be ignored or not
      */
@@ -167,6 +170,7 @@ public class Booster {
 
     public static class Descriptor {
         public final String name;
+
         public final List<String> path;
 
         public Descriptor(String name, List<String> path) {
@@ -184,6 +188,7 @@ public class Booster {
      * Returns a {@link Descriptor} object containing the name
      * and path elements of the descriptor file that was used
      * to create this Booster
+     *
      * @return a {@link Descriptor} object
      */
     @Transient
@@ -209,24 +214,26 @@ public class Booster {
             return Collections.emptyList();
         }
     }
+
     /**
      * @return the environments
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getEnvironments() {
-        return (Map<String, Object>)data.getOrDefault("environment", Collections.emptyMap());
+        return (Map<String, Object>) data.getOrDefault("environment", Collections.emptyMap());
     }
 
     /**
      * This method returns a version of this Booster configured specifically
      * for the indicated environment. If the environment doesn't exist or it
      * doesn't contain any information the current Booster is returned.
-     * @param  environmentName The name of the environment
+     *
+     * @param environmentName The name of the environment
      * @return the current Booster configured for the specified environment
      */
     @SuppressWarnings("unchecked")
     public Booster forEnvironment(String environmentName) {
-        Map<String, Object> env = (Map<String, Object>)getEnvironments().get(environmentName);
+        Map<String, Object> env = (Map<String, Object>) getEnvironments().get(environmentName);
         if (env != null && !env.isEmpty()) {
             Booster envBooster = new Booster(env, boosterFetcher);
             Booster mergedBooster = merged(envBooster);
@@ -250,12 +257,12 @@ public class Booster {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getMetadata() {
-        return data.containsKey(KEY_METADATA) ? Collections.unmodifiableMap((Map<String, Object>)data.get(KEY_METADATA)) : Collections.emptyMap();
+        return data.containsKey(KEY_METADATA) ? Collections.unmodifiableMap((Map<String, Object>) data.get(KEY_METADATA)) : Collections.emptyMap();
     }
 
     /**
      * @param key the key to look up in the booster's meta data section. Can take the form
-     * of a path where keys are separated by "/" to identify sub items
+     *            of a path where keys are separated by "/" to identify sub items
      * @return specific meta data key value or <code>null</code> if the key wasn't found
      */
     @Nullable
@@ -264,8 +271,8 @@ public class Booster {
     }
 
     /**
-     * @param key the key to look up in the booster's meta data section. Can take the form
-     * of a path where keys are separated by "/" to identify sub items
+     * @param key          the key to look up in the booster's meta data section. Can take the form
+     *                     of a path where keys are separated by "/" to identify sub items
      * @param defaultValue the value to return if the key isn't found
      * @return specific meta data key value or <code>defaultValue</code> if the key wasn't found
      */
@@ -283,12 +290,12 @@ public class Booster {
             Object item = getDataValue(data, keys[0], null);
             if (item instanceof Map) {
                 String remainingKey = key.substring(keys[0].length() + 1);
-                return getDataValue((Map<String, Object>)item, remainingKey, defaultValue);
+                return getDataValue((Map<String, Object>) item, remainingKey, defaultValue);
             } else {
                 return defaultValue;
             }
         } else {
-            return (T)data.getOrDefault(key, defaultValue);
+            return (T) data.getOrDefault(key, defaultValue);
         }
     }
 
@@ -302,7 +309,7 @@ public class Booster {
                 data.put(keys[0], item);
             }
             String remainingKey = key.substring(keys[0].length() + 1);
-            setDataValue((Map<String, Object>)item, remainingKey, value);
+            setDataValue((Map<String, Object>) item, remainingKey, value);
         } else {
             data.put(key, value);
         }
@@ -325,11 +332,11 @@ public class Booster {
         Booster mergedBooster = newBooster();
         return mergedBooster.merge(this).merge(otherBooster);
     }
-    
+
     protected Booster newBooster() {
         return new Booster(boosterFetcher);
     }
-    
+
     protected Booster merge(Booster booster) {
         mergeMaps(data, booster.data);
         if (booster.id != null) id = booster.id;
@@ -337,27 +344,28 @@ public class Booster {
         if (booster.descriptor != EMPTY_DESCRIPTOR) descriptor = booster.descriptor;
         return this;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static Map<String, Object> mergeMaps(Map<String, Object> to, Map<String, Object> from) {
         for (String key : from.keySet()) {
             Object item = from.get(key);
             if (item instanceof Map) {
                 Map<String, Object> to2 = new LinkedHashMap<>();
-                Map<String, Object> from2 = (Map<String, Object>)item;
+                Map<String, Object> from2 = (Map<String, Object>) item;
                 if (to.containsKey(key) && to.get(key) instanceof Map) {
-                    mergeMaps(to2, (Map<String, Object>)to.get(key));
+
+                    mergeMaps(to2, (Map<String, Object>) to.get(key));
                 }
                 to.put(key, mergeMaps(to2, from2));
             } else if (item instanceof List) {
-                to.put(key, new ArrayList<Object>((List<Object>)item));
+                to.put(key, new ArrayList<>((List<Object>) item));
             } else {
                 to.put(key, item);
             }
         }
         return to;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -383,7 +391,7 @@ public class Booster {
     @Override
     public String toString() {
         return "Booster [id=" + id + ", gitRepo=" + getGitRepo() + ", gitRef=" + getGitRef()
-                + ", name=" + getName() + ", description=" + getDescription() + ", contentPath="+ contentPath
+                + ", name=" + getName() + ", description=" + getDescription() + ", contentPath=" + contentPath
                 + ", metadata=" + getMetadata() + ", environments=" + getEnvironments() + "]";
     }
 }

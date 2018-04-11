@@ -275,6 +275,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void indexPath(final Path catalogPath, final Path path, final BOOSTER commonBooster, final Set<BOOSTER> boosters) {
         if (Thread.interrupted()) {
             throw new RuntimeException("Interrupted");
@@ -341,6 +342,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
      * @return a {@link Booster} or null if the booster could not be read
      */
     @Nullable
+    @SuppressWarnings("unchecked")
     protected BOOSTER indexBooster(BOOSTER common, Path catalogPath, Path file) {
         logger.info(() -> "Indexing " + file + " ...");
         BOOSTER booster = readBooster(file);

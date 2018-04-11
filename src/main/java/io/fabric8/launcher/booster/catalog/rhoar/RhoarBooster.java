@@ -6,16 +6,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import io.fabric8.launcher.booster.catalog.BoosterFetcher;
-import io.fabric8.launcher.booster.catalog.Booster;
-
 import javax.annotation.Nullable;
+
+import io.fabric8.launcher.booster.catalog.Booster;
+import io.fabric8.launcher.booster.catalog.BoosterFetcher;
 
 public class RhoarBooster extends Booster {
     @Nullable
     private Mission mission;
+
     @Nullable
     private Runtime runtime;
+
     @Nullable
     private Version version;
 
@@ -81,7 +83,7 @@ public class RhoarBooster extends Booster {
     protected RhoarBooster merge(Booster booster) {
         super.merge(booster);
         if (booster instanceof RhoarBooster) {
-            RhoarBooster rb = (RhoarBooster)booster;
+            RhoarBooster rb = (RhoarBooster) booster;
             if (rb.mission != null) mission = rb.mission;
             if (rb.runtime != null) runtime = rb.runtime;
             if (rb.version != null) version = rb.version;
@@ -93,8 +95,9 @@ public class RhoarBooster extends Booster {
         Object supportedClusters = getMetadata("runsOn");
         List<String> clusters;
         if (supportedClusters instanceof List) {
-            clusters = ((List<String>) supportedClusters)
-                    .stream()
+            @SuppressWarnings("unchecked")
+            List<String> list = (List<String>) supportedClusters;
+            clusters = list.stream()
                     .map(Objects::toString)
                     .collect(Collectors.toList());
         } else if (supportedClusters != null && !supportedClusters.toString().isEmpty()) {
