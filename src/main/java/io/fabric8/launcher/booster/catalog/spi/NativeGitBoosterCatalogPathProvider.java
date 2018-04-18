@@ -52,49 +52,41 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
             catalogPath = Files.createTempDirectory("booster-catalog");
             logger.info("Created " + catalogPath);
         }
-        ProcessBuilder builder = new ProcessBuilder()
-                .command("git", "clone", catalogRepositoryURI,
-                        "--branch", catalogRef,
-                        "--recursive",
-                        "--depth=1",
-                        "--quiet",
-                        "-c", "advice.detachedHead=false",
-                        catalogPath.toString())
-                .inheritIO();
-        logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
-        try {
-            int exitCode = builder.start().waitFor();
-            assert exitCode == 0 : "Process returned exit code: " + exitCode;
-        } catch (InterruptedException e) {
-            logger.log(Level.WARNING, "Interrupted indexing process");
-            throw new IOException("Interrupted", e);
-        }
-        return catalogPath;
+        return cloneRepository(catalogRepositoryURI, catalogRef, catalogPath);
     }
 
     @Override
     public Path createBoosterContentPath(Booster booster) throws IOException {
+        String gitRepo = booster.getGitRepo();
+        String gitRef = booster.getGitRef();
+        Path targetPath = booster.getContentPath();
+        assert(gitRepo != null);
+        assert(gitRef != null);
+        assert(targetPath != null);
+        return cloneRepository(gitRepo, gitRef, targetPath);
+    }
+
+    private Path cloneRepository(String repo, String ref, Path targetPath) throws IOException {
+        assert(targetPath != null);
         int exitCode;
         try {
-            Path contentPath = booster.getContentPath();
-            assert(contentPath != null);
             ProcessBuilder builder = new ProcessBuilder()
-                    .command("git", "clone", booster.getGitRepo(),
-                             "--branch", booster.getGitRef(),
-                             "--recursive",
-                             "--depth=1",
-                             "--quiet",
-                             "-c", "advice.detachedHead=false",
-                             contentPath.toString())
+                    .command("git", "clone", repo,
+                            "--branch", ref,
+                            "--recursive",
+                            "--depth=1",
+                            "--quiet",
+                            "-c", "advice.detachedHead=false",
+                            targetPath.toString())
                     .inheritIO();
             logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
             exitCode = builder.start().waitFor();
             assert exitCode == 0 : "Process returned exit code: " + exitCode;
         } catch (InterruptedException e) {
-            logger.log(Level.WARNING, "Interrupted booster fetching process");
+            logger.log(Level.WARNING, "Interrupted cloning process");
             throw new IOException("Interrupted", e);
         }
-        return booster.getContentPath();
+        return targetPath;
     }
 
 }
