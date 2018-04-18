@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 import io.fabric8.launcher.booster.CopyFileVisitor;
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogListener;
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider;
-import io.fabric8.launcher.booster.catalog.spi.LocalBoosterCatalogPathProvider;
+import io.fabric8.launcher.booster.catalog.spi.ZipBoosterCatalogPathProvider;
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
@@ -464,7 +464,7 @@ public abstract class AbstractBoosterCatalogService<BOOSTER extends Booster> imp
                 URL resource = getClass().getClassLoader()
                         .getResource(String.format("/booster-catalog-%s.zip", catalogRef));
                 if (resource != null) {
-                    provider = new LocalBoosterCatalogPathProvider(resource);
+                    provider = new ZipBoosterCatalogPathProvider(resource);
                 } else {
                     // Resource not found, fallback to original Git resolution
                     provider = new NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir);

@@ -19,12 +19,12 @@ import java.util.logging.Logger;
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class LocalBoosterCatalogPathProvider implements BoosterCatalogPathProvider {
-    public LocalBoosterCatalogPathProvider(URL catalogZip) {
+public class ZipBoosterCatalogPathProvider implements BoosterCatalogPathProvider {
+    public ZipBoosterCatalogPathProvider(URL catalogZip) {
         this.catalogZipURL = catalogZip;
     }
 
-    private static final Logger logger = Logger.getLogger(LocalBoosterCatalogPathProvider.class.getName());
+    private static final Logger logger = Logger.getLogger(ZipBoosterCatalogPathProvider.class.getName());
 
     private final URL catalogZipURL;
 
