@@ -43,7 +43,7 @@
     <version.assertj>3.9.1</version.assertj>
     <version.git.rules>0.0.10</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
-    <version.snakeyaml>1.20</version.snakeyaml>
+    <version.snakeyaml>1.21</version.snakeyaml>
     <version.system.rules>1.17.1</version.system.rules>
 
     <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
