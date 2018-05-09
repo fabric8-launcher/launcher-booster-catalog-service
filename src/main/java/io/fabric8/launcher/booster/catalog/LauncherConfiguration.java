@@ -28,6 +28,19 @@ public class LauncherConfiguration {
     }
 
     private static String getEnvVarOrSysProp(String name, String defaultValue) {
-        return System.getProperty(name, System.getenv().getOrDefault(name, defaultValue));
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("env var or sysprop name is required");
+        }
+        if (defaultValue == null || defaultValue.isEmpty()) {
+            throw new IllegalArgumentException("default value for " + name + " is required");
+        }
+        String value = System.getProperty(name);
+        if (value == null || value.isEmpty()) {
+            value = System.getenv(name);
+        }
+        if (value != null && value.isEmpty()) {
+            value = null;
+        }
+        return value != null ? value : defaultValue;
     }
 }
