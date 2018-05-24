@@ -91,21 +91,68 @@ public class RhoarBooster extends Booster {
         return this;
     }
 
-    public List<String> getRunsOn() {
-        Object supportedClusters = getMetadata("runsOn");
+    public boolean runsOn(@Nullable String clusterType) {
+        return clusterType == null || clusterType.isEmpty() ||
+                checkCategory(toList(getMetadata("runsOn")), clusterType);
+    }
+
+    /**
+     * Takes an object that is either null, a single value or a list
+     * of values and makes sure that the result is always a list
+     * @param data An object
+     * @return A list of values
+     */
+    public static List<String> toList(@Nullable Object data) {
         List<String> clusters;
-        if (supportedClusters instanceof List) {
+        if (data instanceof List) {
             @SuppressWarnings("unchecked")
-            List<String> list = (List<String>) supportedClusters;
+            List<String> list = (List<String>) data;
             clusters = list.stream()
                     .map(Objects::toString)
                     .collect(Collectors.toList());
-        } else if (supportedClusters != null && !supportedClusters.toString().isEmpty()) {
-            clusters = Collections.singletonList(supportedClusters.toString());
+        } else if (data != null && !data.toString().isEmpty()) {
+            clusters = Collections.singletonList(data.toString());
         } else {
             clusters = Collections.emptyList();
         }
         return clusters;
+    }
+
+    /**
+     * Check a category name against supported categories.
+     * The supported categories are either a single object or a list of objects.
+     * The given category is checked against the supported categories one by one.
+     * If the category name matches the supported one exactly <code>true</code> is
+     * returned. The supported category can also start with a <code>!</code>
+     * indicating a the result should be negated. In that case <code>false</code>
+     * is returned. The special supported categories <code>all</code> and
+     * <code>none</code> will always return <code>true</code> and <code>false</code>
+     * respectively when encountered.
+     *
+     * @param supportedCategories Can be a single object or a List of objects
+     * @param category            The category name to check against
+     * @return if the category matches the supported categories or not
+     */
+    @SuppressWarnings("unchecked")
+    public static boolean checkCategory(List<String> supportedCategories, String category) {
+        boolean defaultResult = true;
+        if (!supportedCategories.isEmpty()) {
+            for (String supportedCategory : supportedCategories) {
+                if (!supportedCategory.startsWith("!")) {
+                    defaultResult = false;
+                }
+                if (supportedCategory.equalsIgnoreCase("all")
+                        || supportedCategory.equalsIgnoreCase("*")
+                        || supportedCategory.equalsIgnoreCase(category)) {
+                    return true;
+                } else if (supportedCategory.equalsIgnoreCase("none")
+                        || supportedCategory.equalsIgnoreCase("!*")
+                        || supportedCategory.equalsIgnoreCase("!" + category)) {
+                    return false;
+                }
+            }
+        }
+        return defaultResult;
     }
 
 }
