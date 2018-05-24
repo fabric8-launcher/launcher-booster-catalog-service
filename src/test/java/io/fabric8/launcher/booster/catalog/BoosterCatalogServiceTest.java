@@ -27,7 +27,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,9 +38,6 @@ public class BoosterCatalogServiceTest {
             .fromBundle("gastaldi-booster-catalog", "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
             .usingPort(8765)
             .create();
-
-    @ClassRule
-    public static final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
