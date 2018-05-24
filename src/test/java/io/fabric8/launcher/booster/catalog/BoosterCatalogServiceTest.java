@@ -23,10 +23,11 @@ import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ProvideSystemProperty;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,19 +36,24 @@ public class BoosterCatalogServiceTest {
 
     @ClassRule
     public static GitServer gitServer = GitServer.bundlesFromDirectory("repos/boosters")
-            .fromBundle("gastaldi-booster-catalog","repos/custom-catalogs/gastaldi-booster-catalog.bundle")
+            .fromBundle("gastaldi-booster-catalog", "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
             .usingPort(8765)
             .create();
 
-    @Rule
-    public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/")
-            .and(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF, "master");
+    @ClassRule
+    public static final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
 
     @Nullable
     private static BoosterCatalogService defaultService;
+
+    @BeforeClass
+    public static void setUpSystemProperties() {
+        System.setProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
+        System.setProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF, "master");
+    }
 
     @Test
     public void testIndex() throws Exception {
@@ -277,7 +283,7 @@ public class BoosterCatalogServiceTest {
         assert (index >= 0 && index < path.size());
         return path.get(index);
     }
-    
+
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
             defaultService = new Builder()
@@ -286,10 +292,10 @@ public class BoosterCatalogServiceTest {
         }
         return defaultService;
     }
-    
+
     private class TestRepoUrlFixer implements BoosterDataTransformer {
         private final String fixedUrl;
-        
+
         public TestRepoUrlFixer(String fixedUrl) {
             this.fixedUrl = fixedUrl;
         }
