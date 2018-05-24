@@ -257,7 +257,10 @@ public class Booster {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getMetadata() {
-        return data.containsKey(KEY_METADATA) ? Collections.unmodifiableMap((Map<String, Object>) data.get(KEY_METADATA)) : Collections.emptyMap();
+        Map<String, Object> metadata = (Map<String, Object>) data.get(KEY_METADATA);
+        return metadata != null ?
+                Collections.unmodifiableMap(metadata) :
+                Collections.emptyMap();
     }
 
     /**

@@ -7,16 +7,6 @@
 
 package io.fabric8.launcher.booster.catalog;
 
-import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
-import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
-import org.arquillian.smart.testing.rules.git.server.GitServer;
-import org.assertj.core.api.JUnitSoftAssertions;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.ProvideSystemProperty;
-
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,8 +15,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+
+import javax.annotation.Nullable;
+
+import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
+import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
+import org.arquillian.smart.testing.rules.git.server.GitServer;
+import org.assertj.core.api.JUnitSoftAssertions;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +41,7 @@ public class BoosterCatalogServiceTest {
 
     @Rule
     public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/")
-                        .and(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF, "master");
+            .and(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF, "master");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
