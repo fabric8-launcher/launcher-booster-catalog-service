@@ -14,32 +14,34 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import io.fabric8.launcher.booster.catalog.LauncherConfiguration;
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ProvideSystemProperty;
-
-import javax.annotation.Nullable;
 
 public class RhoarBoosterCatalogServiceTest {
 
     @ClassRule
     public static GitServer gitServer = GitServer
-            .fromBundle("gastaldi-booster-catalog","repos/custom-catalogs/gastaldi-booster-catalog.bundle")
+            .fromBundle("gastaldi-booster-catalog", "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
             .usingPort(8765)
             .create();
-
-    @Rule
-    public final ProvideSystemProperty launcherProperties = new ProvideSystemProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
 
     @Nullable
     private static RhoarBoosterCatalogService defaultService;
+
+    @BeforeClass
+    public static void setSystemProperties() {
+        System.setProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
+    }
 
     @Test
     public void testProcessMetadata() throws Exception {
