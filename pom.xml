@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.jboss</groupId>
@@ -8,7 +7,7 @@
   </parent>
   <groupId>io.fabric8.launcher</groupId>
   <artifactId>booster-catalog-service</artifactId>
-  <version>34-SNAPSHOT</version>
+  <version>34</version>
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
@@ -92,6 +91,6 @@
     <connection>scm:git:git://github.com/fabric8-launcher/launcher-booster-catalog-service.git</connection>
     <developerConnection>scm:git:git@github.com:fabric8-launcher/launcher-booster-catalog-service.git</developerConnection>
     <url>http://github.com/fabric8-launcher/launcher-booster-catalog-service</url>
-    <tag>HEAD</tag>
+    <tag>v34</tag>
   </scm>
 </project>
