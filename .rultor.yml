@@ -1,0 +1,12 @@
+docker:
+  image: "maven:3-jdk-8"
+decrypt:
+  settings.xml: "repo/settings.xml.asc"
+  pubring.gpg: "repo/pubring.gpg.asc"
+  secring.gpg: "repo/secring.gpg.asc"
+release:
+  commanders:
+    - gastaldi
+  script: |
+    mvn -B release:prepare release:perform -DreleaseVersion=${tag} -Dtag=v${tag} -Plauncher-booster-catalog-service --settings ../settings.xml
+
