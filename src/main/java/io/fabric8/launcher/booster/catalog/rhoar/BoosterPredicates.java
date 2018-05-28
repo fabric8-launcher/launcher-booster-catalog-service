@@ -1,8 +1,6 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
-import java.util.function.Predicate;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.commons.beanutils.PropertyUtils;
 
 import javax.annotation.Nullable;
 import javax.script.Compilable;
@@ -12,6 +10,18 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 public abstract class BoosterPredicates {
     private static final Logger log = Logger.getLogger(BoosterPredicates.class.getName());
@@ -61,5 +71,30 @@ public abstract class BoosterPredicates {
         }
         return (result instanceof Boolean) ? ((Boolean) result).booleanValue() :
                 Boolean.valueOf(String.valueOf(result));
+    }
+
+    public static Predicate<RhoarBooster> withParameters(Map<String, List<String>> parameters) {
+        Predicate<RhoarBooster> p = b -> true;
+        for (Map.Entry<String, List<String>> entry : parameters.entrySet()) {
+            String path = entry.getKey();
+            List<String> values = entry.getValue();
+            String expectedValue = !values.get(0).isEmpty() ? values.get(0) : "true";
+            p = p.and(b -> expectedValue.equals(getValueByPath(b, path)));
+        }
+        return p;
+    }
+
+    @Nullable
+    private static String getValueByPath(RhoarBooster b, String path) {
+        Object target = b;
+        String parts[] = path.split("\\.");
+        for (String part : parts) {
+            try {
+                target = PropertyUtils.getProperty(target, part);
+            } catch (Exception e) {
+                return "false";
+            }
+        }
+        return target != null ? target.toString() : "false";
     }
 }

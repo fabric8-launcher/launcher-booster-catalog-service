@@ -51,6 +51,7 @@
     <version.git.rules>0.0.10</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
     <version.snakeyaml>1.21</version.snakeyaml>
+    <version.beanutils>1.9.3</version.beanutils>
 
     <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
   </properties>
@@ -66,6 +67,11 @@
       <artifactId>jsr305</artifactId>
       <version>${version.jsr305}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-beanutils</groupId>
+      <artifactId>commons-beanutils</artifactId>
+      <version>${version.beanutils}</version>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
