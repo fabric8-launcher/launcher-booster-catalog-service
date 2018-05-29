@@ -81,7 +81,9 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
                     .inheritIO();
             logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
             exitCode = builder.start().waitFor();
-            assert exitCode == 0 : "Process returned exit code: " + exitCode;
+            if (exitCode != 0) {
+                throw new IllegalStateException("Process returned exit code: " + exitCode);
+            }
         } catch (InterruptedException e) {
             logger.log(Level.WARNING, "Interrupted cloning process");
             throw new IOException("Interrupted", e);
