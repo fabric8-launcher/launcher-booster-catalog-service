@@ -15,10 +15,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +64,9 @@ class BoosterValidator {
                         errcnt.incrementAndGet();
                     } else {
                         System.out.println("Fetched " + b.getId() + " (" + b.getName() + " for " + env + ")");
+                        if (!validateBoosterData(b, path, b.getData())) {
+                            errcnt.incrementAndGet();
+                        }
                         if (!validOpenshiftYamlFiles(b, path)) {
                             errcnt.incrementAndGet();
                         }
@@ -108,4 +109,34 @@ class BoosterValidator {
         return valid.get();
     }
 
+    private static boolean validateBoosterData(Booster booster, Path path, Map data) {
+        boolean valid = true;
+        Set<Map.Entry> entries = data.entrySet();
+        for (Map.Entry entry : entries) {
+            String key = entry.getKey().toString();
+            if (key.contains(" ")) {
+                System.err.println("    ERROR: Parse error in " + booster.getId() + " - " + path.relativize(path) + ": Keys should not contain spaces: '" + key + "'");
+                valid = false;
+            }
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                valid = valid && validateBoosterData(booster, path, (Map)value);
+            } else if (value instanceof Iterable) {
+                valid = valid && validateBoosterData(booster, path, (Iterable)value);
+            }
+        }
+        return valid;
+    }
+
+    private static boolean validateBoosterData(Booster booster, Path path, Iterable data) {
+        boolean valid = true;
+        for (Object value : data) {
+            if (value instanceof Map) {
+                valid = valid && validateBoosterData(booster, path, (Map)value);
+            } else if (value instanceof Iterable) {
+                valid = valid && validateBoosterData(booster, path, (Iterable)value);
+            }
+        }
+        return valid;
+    }
 }
