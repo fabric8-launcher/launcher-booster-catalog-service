@@ -71,6 +71,13 @@ public class Booster {
     }
 
     /**
+     * @return the booster's data in easily exportable format
+     */
+    public Map<String, Object> getExportableData() {
+        return getData();
+    }
+
+    /**
      * @return the boosterFetcher
      */
     public BoosterFetcher getBoosterFetcher() {

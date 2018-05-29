@@ -1,6 +1,7 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -74,6 +75,18 @@ public class RhoarBooster extends Booster {
         this.version = version;
     }
 
+    /**
+     * @return the booster's data in easily exportable format
+     */
+    @Override
+    public Map<String, Object> getExportableData() {
+        Map<String, Object> exp = new HashMap<>(super.getExportableData());
+        if (mission != null) exp.put("mission", mission.getId());
+        if (runtime != null) exp.put("runtime", runtime.getId());
+        if (version != null) exp.put("version", version.getId());
+        return exp;
+    }
+
     @Override
     protected RhoarBooster newBooster() {
         return new RhoarBooster(getBoosterFetcher());
@@ -89,6 +102,11 @@ public class RhoarBooster extends Booster {
             if (rb.version != null) version = rb.version;
         }
         return this;
+    }
+
+    @Override
+    public RhoarBooster forEnvironment(String environmentName) {
+        return (RhoarBooster)super.forEnvironment(environmentName);
     }
 
     public boolean runsOn(@Nullable String clusterType) {
