@@ -1,10 +1,10 @@
 package io.fabric8.launcher.booster.catalog.rhoar;
 
+import java.util.function.Predicate;
+
 import org.assertj.core.api.JUnitSoftAssertions;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.util.function.Predicate;
 
 import static io.fabric8.launcher.booster.catalog.rhoar.RhoarBooster.checkCategory;
 import static java.util.Arrays.asList;
@@ -71,6 +71,22 @@ public class BoosterPredicatesTest {
         Predicate<RhoarBooster> predicate = BoosterPredicates.withParameters(singletonMap("metadata.istio", singletonList("")));
         RhoarBooster booster = mock(RhoarBooster.class);
         when(booster.getMetadata()).thenReturn(singletonMap("istio", "true"));
+        assertThat(predicate.test(booster)).isTrue();
+    }
+
+    @Test
+    public void params_nested_default_vs_true_boolean() {
+        Predicate<RhoarBooster> predicate = BoosterPredicates.withParameters(singletonMap("metadata.osio.enabled", singletonList("")));
+        RhoarBooster booster = mock(RhoarBooster.class);
+        when(booster.getMetadata()).thenReturn(singletonMap("osio", singletonMap("enabled", "true")));
+        assertThat(predicate.test(booster)).isTrue();
+    }
+
+    @Test
+    public void params_nested_true_vs_true_boolean() {
+        Predicate<RhoarBooster> predicate = BoosterPredicates.withParameters(singletonMap("metadata.osio.enabled", singletonList("true")));
+        RhoarBooster booster = mock(RhoarBooster.class);
+        when(booster.getMetadata()).thenReturn(singletonMap("osio", singletonMap("enabled", "true")));
         assertThat(predicate.test(booster)).isTrue();
     }
 
