@@ -111,7 +111,7 @@ public class RhoarBooster extends Booster {
 
     public boolean runsOn(@Nullable String clusterType) {
         return clusterType == null || clusterType.isEmpty() ||
-                checkCategory(toList(getMetadata("runsOn")), clusterType);
+                checkCategory(toList(getMetadata("app/launcher/runsOn")), clusterType);
     }
 
     /**
