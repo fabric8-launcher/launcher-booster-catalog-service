@@ -12,20 +12,20 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
-import io.fabric8.launcher.booster.catalog.rhoar.RhoarBooster;
+import io.fabric8.launcher.booster.catalog.Booster;
 
 /**
  * This predicate takes a JavaScript expression and evaluates to true or false, using "booster" as the argument
  *
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
  */
-public class ScriptingRhoarBoosterPredicate implements Predicate<RhoarBooster> {
+public class BoosterScriptingPredicate implements Predicate<Booster> {
 
     private final CompiledScript script;
 
-    private static final Logger log = Logger.getLogger(ScriptingRhoarBoosterPredicate.class.getName());
+    private static final Logger log = Logger.getLogger(BoosterScriptingPredicate.class.getName());
 
-    public ScriptingRhoarBoosterPredicate(String evalScript) {
+    public BoosterScriptingPredicate(String evalScript) {
         ScriptEngineManager manager = new ScriptEngineManager(getClass().getClassLoader());
         ScriptEngine engine = manager.getEngineByExtension("js");
         try {
@@ -36,7 +36,7 @@ public class ScriptingRhoarBoosterPredicate implements Predicate<RhoarBooster> {
     }
 
     @Override
-    public boolean test(RhoarBooster rhoarBooster) {
+    public boolean test(Booster rhoarBooster) {
         ScriptContext context = new SimpleScriptContext();
         context.setAttribute("booster", rhoarBooster, ScriptContext.ENGINE_SCOPE);
         Object result = Boolean.FALSE;
