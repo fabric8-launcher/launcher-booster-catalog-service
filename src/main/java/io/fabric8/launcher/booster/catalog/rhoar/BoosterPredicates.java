@@ -72,9 +72,8 @@ public final class BoosterPredicates {
      *
      * @param script the script expression to be tested against a given {@link Booster}. Should never be null.
      * @return a {@link BoosterScriptingPredicate} instance
-     * @throws NullPointerException if script is null
      */
-    public static <T extends Booster> Predicate<T> withScriptFilter(String script) {
+    public static <T extends Booster> Predicate<T> withScriptFilter(@Nullable String script) {
         //noinspection unchecked
         return (script != null) ? (Predicate<T>) new BoosterScriptingPredicate(script) : b -> true;
     }
@@ -89,5 +88,17 @@ public final class BoosterPredicates {
     public static <T extends Booster> Predicate<T> withParameters(Map<String, List<String>> parameters) {
         //noinspection unchecked
         return (Predicate<T>) new BoosterParameterPredicate(parameters);
+    }
+
+    /**
+     * Returns a {@link Predicate} for a {@link Booster} testing if the given application argument
+     * matches a property in the metadata section named "app.$application.enabled". The booster will
+     * be filtered out if the property evaluated to "false".
+     *
+     * @param application The name of the application
+     * @return a {@link Predicate} testing if ttthe given application is enabled
+     */
+    public static Predicate<RhoarBooster> withAppEnabled(@Nullable String application) {
+        return (RhoarBooster b) -> application == null || b.getMetadata("app/" + application + "/enabled", true);
     }
 }
