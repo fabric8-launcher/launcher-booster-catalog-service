@@ -76,7 +76,7 @@ public final class BoosterPredicates {
      */
     public static <T extends Booster> Predicate<T> withScriptFilter(String script) {
         //noinspection unchecked
-        return (Predicate<T>) new BoosterScriptingPredicate(script);
+        return (script != null) ? (Predicate<T>) new BoosterScriptingPredicate(script) : b -> true;
     }
 
     /**
