@@ -70,7 +70,7 @@ public final class BoosterPredicates {
     /**
      * Returns a {@link Predicate} for a {@link Booster} testing if against a script expression that must be evaluated
      *
-     * @param script the script expression to be tested against a given {@link Booster}. Should never be null.
+     * @param script the script expression to be tested against a given {@link Booster}.
      * @return a {@link BoosterScriptingPredicate} instance
      */
     public static <T extends Booster> Predicate<T> withScriptFilter(@Nullable String script) {
