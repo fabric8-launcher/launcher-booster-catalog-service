@@ -7,7 +7,7 @@
   </parent>
   <groupId>io.fabric8.launcher</groupId>
   <artifactId>booster-catalog-service</artifactId>
-  <version>38-SNAPSHOT</version>
+  <version>38</version>
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
@@ -103,6 +103,6 @@
     <connection>scm:git:git://github.com/fabric8-launcher/launcher-booster-catalog-service.git</connection>
     <developerConnection>scm:git:git@github.com:fabric8-launcher/launcher-booster-catalog-service.git</developerConnection>
     <url>http://github.com/fabric8-launcher/launcher-booster-catalog-service</url>
-    <tag>HEAD</tag>
+    <tag>v38</tag>
   </scm>
 </project>
