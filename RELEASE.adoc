@@ -2,7 +2,8 @@
 
 === Done manually on local development machines until we have this on a parameterized CI build
 
-Let Maven do component upgrades and version bumping.  Replace the `tag`, `developmentVersion`, and `releaseVersion` parameters as necessary.  Please keep tags to form `vX` where `v` is always a `v` and `X` is the release number.
+Let Maven do component upgrades and version bumping. Assuming that `X` is the released version, after the command below is executed, you should have a `vX` tag and the pom.xml will be `X+1-SNAPSHOT`
+
 ```
-mvn release:prepare release:perform -DdevelopmentVersion=2-SNAPSHOT -DreleaseVersion=1 -Dtag=v1
+mvn release:prepare release:perform -B
 ```
