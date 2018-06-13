@@ -7,15 +7,17 @@
 
 package io.fabric8.launcher.booster.catalog.spi;
 
-import io.fabric8.launcher.booster.catalog.Booster;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+
+import io.fabric8.launcher.booster.catalog.Booster;
 
 /**
  * Default implementation for {@link BoosterCatalogPathProvider}
@@ -50,7 +52,7 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
         Path catalogPath = rootDir;
         if (catalogPath == null) {
             catalogPath = Files.createTempDirectory("booster-catalog");
-            logger.info("Created " + catalogPath);
+            logger.log(Level.INFO, "Created {0}", catalogPath);
         }
         return cloneRepository(catalogRepositoryURI, catalogRef, catalogPath);
     }
@@ -60,31 +62,33 @@ public class NativeGitBoosterCatalogPathProvider implements BoosterCatalogPathPr
         String gitRepo = booster.getGitRepo();
         String gitRef = booster.getGitRef();
         Path targetPath = booster.getContentPath();
-        assert(gitRepo != null);
-        assert(gitRef != null);
-        assert(targetPath != null);
+        Objects.requireNonNull(gitRepo, "Booster.getGitRepo should not be null");
+        Objects.requireNonNull(gitRef, "Booster.getGitRef should not be null");
+        Objects.requireNonNull(targetPath, "Booster.getContentPath should not be null");
         return cloneRepository(gitRepo, gitRef, targetPath);
     }
 
     private Path cloneRepository(String repo, String ref, Path targetPath) throws IOException {
-        assert(targetPath != null);
+        assert (targetPath != null);
         int exitCode;
         try {
             ProcessBuilder builder = new ProcessBuilder()
                     .command("git", "clone", repo,
-                            "--branch", ref,
-                            "--recursive",
-                            "--depth=1",
-                            "--quiet",
-                            "-c", "advice.detachedHead=false",
-                            targetPath.toString())
+                             "--branch", ref,
+                             "--recursive",
+                             "--depth=1",
+                             "--quiet",
+                             "-c", "advice.detachedHead=false",
+                             targetPath.toString())
                     .inheritIO();
-            logger.info("Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
+            logger.info(() -> "Executing: " + builder.command().stream().collect(Collectors.joining(" ")));
             exitCode = builder.start().waitFor();
             if (exitCode != 0) {
                 throw new IllegalStateException("Process returned exit code: " + exitCode);
             }
         } catch (InterruptedException e) {
+            // Restore interrupted state
+            Thread.currentThread().interrupt();
             logger.log(Level.WARNING, "Interrupted cloning process");
             throw new IOException("Interrupted", e);
         }
