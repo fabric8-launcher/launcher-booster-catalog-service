@@ -8,11 +8,11 @@ import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
 import io.fabric8.launcher.booster.catalog.Booster;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 /**
  * This predicate takes a JavaScript expression and evaluates to true or false, using "booster" as the argument
@@ -26,8 +26,8 @@ public class BoosterScriptingPredicate implements Predicate<Booster> {
     private static final Logger log = Logger.getLogger(BoosterScriptingPredicate.class.getName());
 
     public BoosterScriptingPredicate(String evalScript) {
-        ScriptEngineManager manager = new ScriptEngineManager(getClass().getClassLoader());
-        ScriptEngine engine = manager.getEngineByExtension("js");
+        NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
+        ScriptEngine engine = factory.getScriptEngine();
         try {
             this.script = ((Compilable) engine).compile(evalScript);
         } catch (ScriptException e) {
