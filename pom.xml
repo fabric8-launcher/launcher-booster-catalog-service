@@ -52,7 +52,7 @@
     <version.jsr305>3.0.2</version.jsr305>
     <version.snakeyaml>1.21</version.snakeyaml>
     <version.beanutils>1.9.3</version.beanutils>
-    <version.mockito>2.18.3</version.mockito>
+    <version.mockito>2.19.0</version.mockito>
 
     <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
   </properties>
