@@ -2,6 +2,7 @@ package io.fabric8.launcher.booster.catalog;
 
 import java.util.Optional;
 
+import io.fabric8.launcher.booster.catalog.rhoar.BoosterPredicates;
 import io.fabric8.launcher.booster.catalog.rhoar.Mission;
 import io.fabric8.launcher.booster.catalog.rhoar.RhoarBooster;
 import io.fabric8.launcher.booster.catalog.rhoar.RhoarBoosterCatalogService;
@@ -38,9 +39,9 @@ public class NullPointerExceptionBoosterTest {
         service.index().get();
         //  spring-boot/current-redhat/health-check
         Optional<RhoarBooster> booster = service.getBooster(
-                withMission(new Mission("health-check"))
-                        .and(withRuntime(new Runtime("spring-boot")))
-                        .and(withVersion(new Version("current-redhat")))
+                BoosterPredicates.withMission(new Mission("health-check"))
+                        .and(BoosterPredicates.withRuntime(new Runtime("spring-boot")))
+                        .and(BoosterPredicates.withVersion(new Version("current-redhat")))
         );
         assertThat(booster).hasValueSatisfying(b -> {
             assertThatCode(() -> b.getMetadata()).doesNotThrowAnyException();

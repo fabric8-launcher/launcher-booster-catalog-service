@@ -23,6 +23,7 @@ import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -275,7 +276,7 @@ public class BoosterCatalogServiceTest {
     }
 
     private static String getPath(Booster b, int index) {
-        List<String> path = b.getDescriptor().path;
+        List<String> path = b.getDescriptor().getPath();
         assert (index >= 0 && index < path.size());
         return path.get(index);
     }
@@ -297,13 +298,13 @@ public class BoosterCatalogServiceTest {
         }
 
         @Override
-        public Map<String, Object> transform(Map<String, Object> data) {
+        public Map<String, Object> transform(Map<String, ?> data) {
             String gitRepo = Booster.getDataValue(data, "source/git/url", null);
             if (gitRepo != null) {
                 gitRepo = gitRepo.replace("https://github.com", fixedUrl);
-                Booster.setDataValue(data, "source/git/url", gitRepo);
+                Booster.setDataValue((Map<String, Object>)data, "source/git/url", gitRepo);
             }
-            return data;
+            return (Map<String, Object>)data;
         }
     }
 
