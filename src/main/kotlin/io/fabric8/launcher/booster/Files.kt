@@ -79,7 +79,10 @@ object Files {
     fun unzip(zipFile: Path, targetDir: Path) {
         ZipFile(zipFile.toFile()).use { zf ->
             zf.stream().forEach( { ze ->
-                val newEntry = Paths.get(targetDir.toString(), ze.name)
+                val newEntry = targetDir.resolve(ze.name).normalize()
+                if (!newEntry.startsWith(targetDir)) {
+                    throw IOException("Illegal Zip entry name: ${ze.name}")
+                }
                 if (ze.isDirectory) {
                     java.nio.file.Files.createDirectories(newEntry)
                 } else {

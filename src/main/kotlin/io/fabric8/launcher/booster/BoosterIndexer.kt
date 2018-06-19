@@ -9,7 +9,6 @@ package io.fabric8.launcher.booster
 
 import io.fabric8.launcher.booster.catalog.AbstractBoosterCatalogService
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 
 import io.fabric8.launcher.booster.catalog.BoosterCatalogService
