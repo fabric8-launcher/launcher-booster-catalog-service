@@ -1,6 +1,5 @@
 package io.fabric8.launcher.booster.catalog
 
-import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogListener
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider
 
 import java.nio.file.Path
@@ -18,8 +17,8 @@ class BoosterCatalogService protected constructor(config: Builder) : AbstractBoo
         override fun catalogRepository(catalogRepositoryURI: String) = super.catalogRepository(catalogRepositoryURI) as Builder
         override fun pathProvider(pathProvider: BoosterCatalogPathProvider) = super.pathProvider(pathProvider) as Builder
         override fun filter(filter: Predicate<Booster>) = super.filter(filter) as Builder
-        override fun listener(listener: BoosterCatalogListener) = super.listener(listener) as Builder
-        override fun transformer(transformer: BoosterDataTransformer) = super.transformer(transformer) as Builder
+        override fun listener(listener: (booster: Booster) -> Any) = super.listener(listener) as Builder
+        override fun transformer(transformer: (data: MutableMap<String, Any?>) -> MutableMap<String, Any?>) = super.transformer(transformer) as Builder
         override fun environment(environment: String) = super.environment(environment) as Builder
         override fun executor(executor: ExecutorService) = super.executor(executor) as Builder
         override fun rootDir(root: Path) = super.rootDir(root) as Builder

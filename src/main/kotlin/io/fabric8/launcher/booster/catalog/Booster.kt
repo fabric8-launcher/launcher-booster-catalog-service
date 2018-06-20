@@ -105,9 +105,7 @@ open class Booster protected constructor(val boosterFetcher: BoosterFetcher) {
     }
 
     class Descriptor(val name: String, val path: List<String>) {
-        override fun toString(): String {
-            return "Descriptor(path=$path, name=$name)"
-        }
+        override fun toString() = "Descriptor(path=$path, name=$name)"
     }
 
     fun setDescriptorFromPath(relativeBoosterPath: Path) {
@@ -115,15 +113,14 @@ open class Booster protected constructor(val boosterFetcher: BoosterFetcher) {
         descriptor = Descriptor(relativeBoosterPath.fileName.toString(), getPathList(boosterDir))
     }
 
-    private fun getPathList(path: Path?): List<String> {
-        return if (path != null) {
-            StreamSupport.stream(path.spliterator(), false)
-                    .map<String>({ Objects.toString(it) })
-                    .collect(Collectors.toList())
-        } else {
-            emptyList()
-        }
-    }
+    private fun getPathList(path: Path?) =
+            if (path != null) {
+                StreamSupport.stream(path.spliterator(), false)
+                        .map<String>({ Objects.toString(it) })
+                        .collect(Collectors.toList())
+            } else {
+                emptyList<String>()
+            }
 
     /**
      * This method returns a version of this Booster configured specifically
@@ -158,9 +155,7 @@ open class Booster protected constructor(val boosterFetcher: BoosterFetcher) {
      * of a path where keys are separated by "/" to identify sub items
      * @return specific meta _data key value or `null` if the key wasn't found
      */
-    fun <T> getMetadata(key: String): T? {
-        return getDataValue<T>(metadata, key, null)
-    }
+    fun <T> getMetadata(key: String): T? = getDataValue<T>(metadata, key, null)
 
     /**
      * @param key          the key to look up in the booster's meta _data section. Can take the form
@@ -168,9 +163,7 @@ open class Booster protected constructor(val boosterFetcher: BoosterFetcher) {
      * @param defaultValue the value to return if the key isn't found
      * @return specific meta _data key value or `defaultValue` if the key wasn't found
      */
-    fun <T> getMetadata(key: String, defaultValue: T): T {
-        return getDataValue(metadata, key, defaultValue)!!
-    }
+    fun <T> getMetadata(key: String, defaultValue: T): T = getDataValue(metadata, key, defaultValue)!!
 
     /**
      * Clones a Booster repo and provides the path where to find it as a result.
@@ -187,14 +180,9 @@ open class Booster protected constructor(val boosterFetcher: BoosterFetcher) {
         return cr
     }
 
-    fun merged(otherBooster: Booster): Booster {
-        val mergedBooster = newBooster()
-        return mergedBooster.merge(this).merge(otherBooster)
-    }
+    fun merged(otherBooster: Booster) = newBooster().merge(this).merge(otherBooster)
 
-    protected open fun newBooster(): Booster {
-        return Booster(boosterFetcher)
-    }
+    protected open fun newBooster() = Booster(boosterFetcher)
 
     protected open fun merge(booster: Booster): Booster {
         mergeMaps(_data, booster._data)
@@ -234,7 +222,7 @@ open class Booster protected constructor(val boosterFetcher: BoosterFetcher) {
     companion object {
         val EMPTY_DESCRIPTOR = Descriptor("", emptyList())
 
-        private val KEY_METADATA = "metadata"
+        private const val KEY_METADATA = "metadata"
 
         @JvmStatic
         fun <T> getDataValue(data: Map<String, Any?>, key: String, defaultValue: T?): T? {

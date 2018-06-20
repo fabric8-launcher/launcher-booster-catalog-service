@@ -17,28 +17,21 @@ object LauncherConfiguration {
     }
 
     @JvmStatic
-    fun ignoreLocalZip(): Boolean {
-        return java.lang.Boolean.getBoolean(PropertyName.LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL) || java.lang.Boolean.parseBoolean(System.getenv(PropertyName.LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL))
-    }
+    fun ignoreLocalZip() =
+            java.lang.Boolean.getBoolean(PropertyName.LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL)
+                    || java.lang.Boolean.parseBoolean(System.getenv(PropertyName.LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL))
 
     @JvmStatic
-    fun boosterCatalogRepositoryURI(): String {
-        return LAUNCHER_BOOSTER_CATALOG_REPOSITORY
-    }
+    fun boosterCatalogRepositoryURI() = LAUNCHER_BOOSTER_CATALOG_REPOSITORY
 
     @JvmStatic
-    fun boosterCatalogRepositoryRef(): String {
-        return LAUNCHER_BOOSTER_CATALOG_REF
-    }
+    fun boosterCatalogRepositoryRef() = LAUNCHER_BOOSTER_CATALOG_REF
 
     private fun getEnvVarOrSysProp(name: String, defaultValue: String): String {
         var value: String? = System.getProperty(name)
-        if (value == null || value.isEmpty()) {
+        if (value.isNullOrBlank()) {
             value = System.getenv(name)
         }
-        if (value != null && value.isEmpty()) {
-            value = null
-        }
-        return if (value != null) value else defaultValue
+        return if (value != null && value.isNotBlank()) value else defaultValue
     }
 }

@@ -20,13 +20,14 @@ class Runtime @JvmOverloads constructor(id: String,
                                         description: String? = null,
                                         metadata: Map<String, Any?> = emptyMap(),
                                         val icon: String? = null,
-                                        val versions: Map<String, Version> = emptyMap()) : AbstractCategory(id, name, description, metadata) {
+                                        val versions: Map<String, Version> = emptyMap())
+    : AbstractCategory(id, name, description, metadata) {
 
     val pipelinePlatform: String
         get() = Objects.toString(metadata.getOrDefault(KEY_PIPELINE_PLATFORM, DEFAULT_PIPELINE_PLATFORM))
 
     companion object {
-        val KEY_PIPELINE_PLATFORM = "pipelinePlatform"
-        val DEFAULT_PIPELINE_PLATFORM = "maven"
+        const val KEY_PIPELINE_PLATFORM = "pipelinePlatform"
+        const val DEFAULT_PIPELINE_PLATFORM = "maven"
     }
 }

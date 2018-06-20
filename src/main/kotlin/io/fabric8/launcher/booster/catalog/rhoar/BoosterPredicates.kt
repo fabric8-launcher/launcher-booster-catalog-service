@@ -25,8 +25,8 @@ class BoosterPredicates private constructor() {
          * @return a [Predicate] testing against the given [Runtime]
          */
         @JvmStatic
-        fun withRuntime(runtime: Runtime?): Predicate<RhoarBooster> {
-            return Predicate<RhoarBooster> { b: RhoarBooster -> runtime == null || runtime == b.runtime }
+        fun withRuntime(runtime: Runtime?) = Predicate<RhoarBooster> { b: RhoarBooster ->
+            runtime == null || runtime == b.runtime
         }
 
         /**
@@ -38,8 +38,8 @@ class BoosterPredicates private constructor() {
          * @return a [Predicate] testing against the given [Mission]
          */
         @JvmStatic
-        fun withMission(mission: Mission?): Predicate<RhoarBooster> {
-            return Predicate<RhoarBooster> { b: RhoarBooster -> mission == null || mission == b.mission }
+        fun withMission(mission: Mission?) = Predicate<RhoarBooster> { b: RhoarBooster ->
+            mission == null || mission == b.mission
         }
 
         /**
@@ -51,8 +51,8 @@ class BoosterPredicates private constructor() {
          * @return a [Predicate] testing against the given [Version]
          */
         @JvmStatic
-        fun withVersion(version: Version?): Predicate<RhoarBooster> {
-            return Predicate<RhoarBooster> { b: RhoarBooster -> version == null || version == b.version }
+        fun withVersion(version: Version?) = Predicate<RhoarBooster> { b: RhoarBooster ->
+            version == null || version == b.version
         }
 
         /**
@@ -65,9 +65,7 @@ class BoosterPredicates private constructor() {
          * @see RhoarBooster.checkCategory
          */
         @JvmStatic
-        fun withRunsOn(clusterType: String?): Predicate<RhoarBooster> {
-            return Predicate<RhoarBooster> { b: RhoarBooster -> b.runsOn(clusterType) }
-        }
+        fun withRunsOn(clusterType: String?) = Predicate<RhoarBooster> { b: RhoarBooster -> b.runsOn(clusterType) }
 
         /**
          * Returns a [Predicate] for a [Booster] testing if against a script expression that must be evaluated
@@ -76,9 +74,11 @@ class BoosterPredicates private constructor() {
          * @return a [BoosterScriptingPredicate] instance
          */
         @JvmStatic
-        fun <T : Booster> withScriptFilter(script: String?): Predicate<T> {
-            return if (script != null) BoosterScriptingPredicate(script) as Predicate<T> else Predicate<T> { b -> true }
-        }
+        fun <T : Booster> withScriptFilter(script: String?) =
+                if (script != null)
+                    BoosterScriptingPredicate(script) as Predicate<T>
+                else
+                    Predicate<T> { b -> true }
 
         /**
          * Returns a [Predicate] for a [Booster] testing if the given parameters match.
@@ -88,9 +88,8 @@ class BoosterPredicates private constructor() {
          * @throws NullPointerException if parameters is null
          */
         @JvmStatic
-        fun <T : Booster> withParameters(parameters: Map<String, List<String>>): Predicate<T> {
-            return BoosterParameterPredicate(parameters) as Predicate<T>
-        }
+        fun <T : Booster> withParameters(parameters: Map<String, List<String>>) =
+                BoosterParameterPredicate(parameters) as Predicate<T>
 
         /**
          * Returns a [Predicate] for a [Booster] testing if the given application argument
@@ -101,8 +100,8 @@ class BoosterPredicates private constructor() {
          * @return a [Predicate] testing if ttthe given application is enabled
          */
         @JvmStatic
-        fun withAppEnabled(application: String?): Predicate<RhoarBooster> {
-            return Predicate<RhoarBooster> { b: RhoarBooster -> application == null || b.getMetadata("app/$application/enabled", true) }
+        fun withAppEnabled(application: String?) = Predicate<RhoarBooster> { b: RhoarBooster ->
+            application == null || b.getMetadata("app/$application/enabled", true)
         }
     }
 }

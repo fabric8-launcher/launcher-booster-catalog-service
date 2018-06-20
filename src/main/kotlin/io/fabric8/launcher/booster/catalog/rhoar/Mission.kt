@@ -14,4 +14,8 @@ import java.util.Collections
  * where a mission is a certain feature or idea that the
  * booster tries to explain or teach
  */
-class Mission @JvmOverloads constructor(id: String, name: String = id, description: String? = null, metadata: Map<String, Any?> = emptyMap()) : AbstractCategory(id, name, description, metadata)
+class Mission @JvmOverloads constructor(id: String,
+                                        name: String = id,
+                                        description: String? = null,
+                                        metadata: Map<String, Any?> = emptyMap())
+    : AbstractCategory(id, name, description, metadata)

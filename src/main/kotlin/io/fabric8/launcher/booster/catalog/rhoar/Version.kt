@@ -15,4 +15,8 @@ import java.util.Collections
  * A version determines which specific implementation of a runtime
  * should be used for the booster
  */
-class Version @JvmOverloads constructor(id: String, name: String = id, description: String? = null, metadata: Map<String, Any?> = emptyMap()) : AbstractCategory(id, name, description, metadata)
+class Version @JvmOverloads constructor(id: String,
+                                        name: String = id,
+                                        description: String? = null,
+                                        metadata: Map<String, Any?> = emptyMap())
+    : AbstractCategory(id, name, description, metadata)

@@ -241,7 +241,7 @@ public class BoosterCatalogServiceTest {
     public void testBoosterFetchRecovery() throws Exception {
         UnreliablePathProvider unreliableProvider = new UnreliablePathProvider();
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .transformer(new TestRepoUrlFixer("http://localhost:8765"))
+                .transformer((new TestRepoUrlFixer("http://localhost:8765"))::transform)
                 .pathProvider(unreliableProvider)
                 .build();
         service.index().get();
@@ -284,21 +284,20 @@ public class BoosterCatalogServiceTest {
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
             defaultService = new Builder()
-                    .transformer(new TestRepoUrlFixer("http://localhost:8765"))
+                    .transformer((new TestRepoUrlFixer("http://localhost:8765"))::transform)
                     .build();
         }
         return defaultService;
     }
 
-    private class TestRepoUrlFixer implements BoosterDataTransformer {
+    private class TestRepoUrlFixer {
         private final String fixedUrl;
 
         public TestRepoUrlFixer(String fixedUrl) {
             this.fixedUrl = fixedUrl;
         }
 
-        @Override
-        public Map<String, Object> transform(Map<String, ?> data) {
+        public Map<String, Object> transform(Map<String, Object> data) {
             String gitRepo = Booster.getDataValue(data, "source/git/url", null);
             if (gitRepo != null) {
                 gitRepo = gitRepo.replace("https://github.com", fixedUrl);

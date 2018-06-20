@@ -7,16 +7,12 @@
 
 package io.fabric8.launcher.booster.catalog
 
-import java.io.BufferedReader
 import java.io.IOException
 import java.io.UncheckedIOException
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Arrays
 import java.util.Collections
-import java.util.Comparator
-import java.util.Objects
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentSkipListSet
@@ -24,19 +20,18 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ForkJoinPool
 import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.logging.Level
 import java.util.logging.Logger
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
 import io.fabric8.launcher.booster.CopyFileVisitor
-import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogListener
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider
 import io.fabric8.launcher.booster.catalog.spi.ZipBoosterCatalogPathProvider
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.representer.Representer
-import java.util.function.Supplier
 
 /**
  * This service reads from the Booster catalog Github repository in https://github.com/openshiftio/booster-catalog and
@@ -54,9 +49,9 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
 
     private val indexFilter: Predicate<BOOSTER>
 
-    private val listener: BoosterCatalogListener?
+    private val listener: ((booster: Booster) -> Any)
 
-    private val transformer: BoosterDataTransformer?
+    private val transformer: (data: MutableMap<String, Any?>) -> MutableMap<String, Any?>
 
     private val environment: String?
 
@@ -74,7 +69,6 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
         get() = boosters.stream().filter(indexFilter).filter(ignored(false))
 
     init {
-        val executor = config.executor ?: ForkJoinPool.commonPool()
         this.provider = config.pathProvider ?: config.discoverCatalogProvider()
         this.indexFilter = config.filter
         this.listener = config.listener
@@ -194,7 +188,7 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
         try {
             val modulePath = booster.content().get()
             return Files.walkFileTree(modulePath,
-                    CopyFileVisitor(projectRoot, Predicate<Path> { p -> !EXCLUDED_PROJECT_FILES.contains(p.toFile().name.toLowerCase()) }))
+                    CopyFileVisitor(projectRoot, Predicate { p -> !EXCLUDED_PROJECT_FILES.contains(p.toFile().name.toLowerCase()) }))
         } catch (ex: InterruptedException) {
             throw IOException("Unable to copy Booster", ex)
         } catch (ex: ExecutionException) {
@@ -203,24 +197,16 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
 
     }
 
-    override fun getBooster(filter: Predicate<BOOSTER>): Optional<BOOSTER> {
-        return prefilteredBoosters
+    override fun getBooster(filter: Predicate<BOOSTER>): Optional<BOOSTER> =
+            prefilteredBoosters
                 .filter(filter)
                 .findAny()
-    }
 
-    override fun getBoosters(): Collection<BOOSTER> {
-        return toBoosters(prefilteredBoosters)
-    }
+    override fun getBoosters(): Set<BOOSTER> = toBoosters(prefilteredBoosters)
 
-    override fun getBoosters(filter: Predicate<BOOSTER>): Collection<BOOSTER> {
-        return toBoosters(prefilteredBoosters.filter(filter))
-    }
+    override fun getBoosters(filter: Predicate<BOOSTER>) = toBoosters(prefilteredBoosters.filter(filter))
 
-    private fun toBoosters(bs: Stream<BOOSTER>): Collection<BOOSTER> {
-        return bs
-                .collect(Collectors.toSet())
-    }
+    private fun toBoosters(bs: Stream<BOOSTER>): Set<BOOSTER> = bs.collect(Collectors.toSet())
 
     @Throws(IOException::class)
     private fun doIndex(boosters: MutableSet<BOOSTER>) {
@@ -241,9 +227,7 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
 
         // Notify the listener of all the boosters that were added
         // (this excludes ignored boosters and those filtered by the global indexFilter)
-        if (listener != null) {
-            prefilteredBoosters.forEach({ listener.boosterAdded(it) })
-        }
+        prefilteredBoosters.forEach({ listener(it) })
     }
 
     private fun indexPath(catalogPath: Path, path: Path, commonBooster: BOOSTER, boosters: MutableSet<BOOSTER>) {
@@ -262,16 +246,15 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
                 // we merge it's data with the `commonBooster` before passing
                 // that on to `indexPath()`
                 val common = path.resolve(COMMON_YAML_FILE)
-                val activeCommonBooster: BOOSTER
-                if (Files.isRegularFile(common)) {
+                val activeCommonBooster: BOOSTER = if (Files.isRegularFile(common)) {
                     val localCommonBooster = readBooster(common)
                     if (localCommonBooster != null) {
-                        activeCommonBooster = commonBooster.merged(localCommonBooster) as BOOSTER
+                        commonBooster.merged(localCommonBooster) as BOOSTER
                     } else {
-                        activeCommonBooster = commonBooster
+                        commonBooster
                     }
                 } else {
-                    activeCommonBooster = commonBooster
+                    commonBooster
                 }
 
                 Files.list(path).forEach { subpath -> indexPath(catalogPath, subpath, activeCommonBooster, boosters) }
@@ -280,7 +263,6 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
                 if (fileName.endsWith("booster.yaml") || fileName.endsWith("booster.yml")) {
                     var b = indexBooster(commonBooster, catalogPath, path)
                     if (b != null) {
-                        val c = b;
                         // Check if we should get a specific environment
                         if (environment != null && !environment.isEmpty()) {
                             val envs = environment.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -313,7 +295,7 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
      * @param file A YAML file from the booster-catalog repository
      * @return a [Booster] or null if the booster could not be read
      */
-    protected fun indexBooster(common: BOOSTER, catalogPath: Path, file: Path): BOOSTER? {
+    private fun indexBooster(common: BOOSTER, catalogPath: Path, file: Path): BOOSTER? {
         logger.info { "Indexing $file ..." }
         var booster = readBooster(file)
         if (booster != null) {
@@ -336,9 +318,9 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
         val yaml = Yaml(YamlConstructor(), rep)
         try {
             Files.newBufferedReader(file).use { reader ->
-                var boosterData = yaml.loadAs(reader, Map::class.java) as Map<String, Any?>
+                var boosterData = yaml.loadAs(reader, Map::class.java) as MutableMap<String, Any?>
                 if (transformer != null) {
-                    boosterData = transformer.transform(boosterData)
+                    boosterData = transformer(boosterData)
                 }
                 return newBooster(boosterData, this)
             }
@@ -364,11 +346,11 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
 
         var pathProvider: BoosterCatalogPathProvider? = null
 
-        var filter: Predicate<BOOSTER> = Predicate<BOOSTER> { true }
+        var filter: Predicate<BOOSTER> = Predicate { true }
 
-        var listener: BoosterCatalogListener? = null
+        var listener: (booster: Booster) -> Any = {}
 
-        var transformer: BoosterDataTransformer? = null
+        var transformer: (data: MutableMap<String, Any?>) -> MutableMap<String, Any?> = { it }
 
         var environment: String? = null
 
@@ -394,12 +376,12 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
             return this
         }
 
-        open fun listener(listener: BoosterCatalogListener): AbstractBuilder<BOOSTER, CATALOG> {
+        open fun listener(listener: (booster: Booster) -> Any): AbstractBuilder<BOOSTER, CATALOG> {
             this.listener = listener
             return this
         }
 
-        open fun transformer(transformer: BoosterDataTransformer): AbstractBuilder<BOOSTER, CATALOG> {
+        open fun transformer(transformer: (data: MutableMap<String, Any?>) -> MutableMap<String, Any?>): AbstractBuilder<BOOSTER, CATALOG> {
             this.transformer = transformer
             return this
         }
@@ -421,41 +403,36 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
 
         abstract fun build(): CATALOG
 
-        internal fun discoverCatalogProvider(): BoosterCatalogPathProvider {
-            val provider: BoosterCatalogPathProvider
-            if (LauncherConfiguration.ignoreLocalZip()) {
-                provider = NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir)
-            } else {
-                val resource = javaClass.classLoader
-                        .getResource(String.format("/booster-catalog-%s.zip", catalogRef))
-                if (resource != null) {
-                    provider = ZipBoosterCatalogPathProvider(resource)
+        internal fun discoverCatalogProvider(): BoosterCatalogPathProvider =
+                if (LauncherConfiguration.ignoreLocalZip()) {
+                    NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir)
                 } else {
-                    // Resource not found, fallback to original Git resolution
-                    provider = NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir)
+                    val resource = javaClass.classLoader
+                            .getResource(String.format("/booster-catalog-%s.zip", catalogRef))
+                    if (resource != null) {
+                        ZipBoosterCatalogPathProvider(resource)
+                    } else {
+                        // Resource not found, fallback to original Git resolution
+                        NativeGitBoosterCatalogPathProvider(catalogRepositoryURI, catalogRef, rootDir)
+                    }
                 }
-            }
-            return provider
-        }
     }
 
     companion object {
         /**
          * Files to be excluded from project creation
          */
-        val EXCLUDED_PROJECT_FILES = Collections
+        val EXCLUDED_PROJECT_FILES: List<String> = Collections
                 .unmodifiableList(Arrays.asList(".git", ".travis", ".travis.yml",
                         ".ds_store",
                         ".obsidian", ".gitmodules"))
 
-        private val CLONED_BOOSTERS_DIR = ".boosters"
+        private const val CLONED_BOOSTERS_DIR = ".boosters"
 
-        private val COMMON_YAML_FILE = "common.yaml"
+        private const val COMMON_YAML_FILE = "common.yaml"
 
         private val logger = Logger.getLogger(AbstractBoosterCatalogService::class.java.name)
 
-        fun ignored(ignored: Boolean): Predicate<Booster> {
-            return Predicate<Booster> { b: Booster -> b.isIgnore == ignored }
-        }
+        fun ignored(ignored: Boolean) = Predicate { b: Booster -> b.isIgnore == ignored }
     }
 }

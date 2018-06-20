@@ -27,11 +27,9 @@ abstract class AbstractCategory (
         get() = id
 
     val isSuggested: Boolean
-        get() =metadata.getOrDefault(KEY_SUGGESTED, false) as Boolean
+        get() = metadata.getOrDefault(KEY_SUGGESTED, false) as Boolean
 
-    override fun compareTo(o: AbstractCategory): Int {
-        return name.compareTo(o.name)
-    }
+    override fun compareTo(o: AbstractCategory) = name.compareTo(o.name)
 
     override fun hashCode(): Int {
         val prime = 31
@@ -56,6 +54,6 @@ abstract class AbstractCategory (
     }
 
     companion object {
-        val KEY_SUGGESTED = "suggested"
+        const val KEY_SUGGESTED = "suggested"
     }
 }

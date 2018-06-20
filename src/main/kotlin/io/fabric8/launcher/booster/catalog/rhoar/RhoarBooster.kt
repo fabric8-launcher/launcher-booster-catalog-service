@@ -29,9 +29,7 @@ class RhoarBooster : Booster {
             return exp
         }
 
-    override fun newBooster(): RhoarBooster {
-        return RhoarBooster(boosterFetcher)
-    }
+    override fun newBooster() = RhoarBooster(boosterFetcher)
 
     override fun merge(booster: Booster): RhoarBooster {
         super.merge(booster)

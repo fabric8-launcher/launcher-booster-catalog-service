@@ -7,16 +7,13 @@
 
 package io.fabric8.launcher.booster
 
-import io.fabric8.launcher.booster.catalog.BoosterDataTransformer
 import io.fabric8.launcher.booster.catalog.LauncherConfiguration
-import io.fabric8.launcher.booster.catalog.rhoar.RhoarBooster
 import io.fabric8.launcher.booster.catalog.rhoar.RhoarBoosterCatalogService
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider
 import org.yaml.snakeyaml.Yaml
 
 import java.io.OutputStreamWriter
 import java.util.ArrayList
-import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -34,10 +31,7 @@ internal object BoosterCat {
         val env = if (args.size > 2 && !args[2].isEmpty()) args[2] else "development"
 
         // Silence all INFO logging
-        val handlers = Logger.getLogger("").handlers
-        for (index in handlers.indices) {
-            handlers[index].level = Level.WARNING
-        }
+        Logger.getLogger("").handlers.forEach { it.level = Level.WARNING }
 
         val build = RhoarBoosterCatalogService.Builder()
                 .pathProvider(NativeGitBoosterCatalogPathProvider(catalogRepository, catalogRef, null))

@@ -1,12 +1,10 @@
 package io.fabric8.launcher.booster.catalog.rhoar
 
-import java.io.BufferedReader
+import io.fabric8.launcher.booster.catalog.*
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Collections
 import java.util.HashMap
-import java.util.Optional
 import java.util.TreeSet
 import java.util.concurrent.ExecutorService
 import java.util.function.Predicate
@@ -15,11 +13,6 @@ import java.util.logging.Logger
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-import io.fabric8.launcher.booster.catalog.AbstractBoosterCatalogService
-import io.fabric8.launcher.booster.catalog.BoosterDataTransformer
-import io.fabric8.launcher.booster.catalog.BoosterFetcher
-import io.fabric8.launcher.booster.catalog.YamlConstructor
-import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogListener
 import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.representer.Representer
@@ -176,29 +169,20 @@ class RhoarBoosterCatalogService protected constructor(config: Builder) : Abstra
 
     class Builder : AbstractBoosterCatalogService.AbstractBuilder<RhoarBooster, RhoarBoosterCatalogService>() {
         override fun catalogRef(catalogRef: String) = super.catalogRef(catalogRef) as Builder
-
         override fun catalogRepository(catalogRepositoryURI: String) = super.catalogRepository(catalogRepositoryURI) as Builder
-
         override fun pathProvider(pathProvider: BoosterCatalogPathProvider) = super.pathProvider(pathProvider) as Builder
-
         override fun filter(filter: Predicate<RhoarBooster>) = super.filter(filter) as Builder
-
-        override fun listener(listener: BoosterCatalogListener) = super.listener(listener) as Builder
-
-        override fun transformer(transformer: BoosterDataTransformer) = super.transformer(transformer) as Builder
-
+        override fun listener(listener: (booster: Booster) -> Any) = super.listener(listener) as Builder
+        override fun transformer(transformer: (data: MutableMap<String, Any?>) -> MutableMap<String, Any?>) = super.transformer(transformer) as Builder
         override fun environment(environment: String) = super.environment(environment) as Builder
-
         override fun executor(executor: ExecutorService) = super.executor(executor) as Builder
-
         override fun rootDir(root: Path) = super.rootDir(root) as Builder
-
         override fun build() = RhoarBoosterCatalogService(this)
     }
 
     companion object {
 
-        private val METADATA_FILE = "metadata.yaml"
+        private const val METADATA_FILE = "metadata.yaml"
 
         private val logger = Logger.getLogger(RhoarBoosterCatalogService::class.java.name)
     }
