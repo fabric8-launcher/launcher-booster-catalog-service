@@ -26,7 +26,7 @@
     <version.mockito>2.20.1</version.mockito>
 
     <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
-    <kotlin.version>1.2.50</kotlin.version>
+    <kotlin.version>1.2.51</kotlin.version>
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
   </properties>
   <dependencies>
