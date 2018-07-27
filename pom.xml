@@ -28,6 +28,7 @@
 
     <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
     <kotlin.version>1.2.51</kotlin.version>
+    <dokka.version>0.9.17</dokka.version>
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
   </properties>
   <dependencies>
@@ -198,10 +199,38 @@
       </plugin>
     </plugins>
   </build>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>spring-releases</id>
+      <url>http://repo.spring.io/plugins-release/</url>
+    </pluginRepository>
+  </pluginRepositories>
   <scm>
     <connection>scm:git:git://github.com/fabric8-launcher/launcher-booster-catalog-service.git</connection>
     <developerConnection>scm:git:git@github.com:fabric8-launcher/launcher-booster-catalog-service.git</developerConnection>
     <url>http://github.com/fabric8-launcher/launcher-booster-catalog-service</url>
     <tag>HEAD</tag>
   </scm>
+  <profiles>
+    <profile>
+      <id>jboss-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jetbrains.dokka</groupId>
+            <artifactId>dokka-maven-plugin</artifactId>
+            <version>${dokka.version}</version>
+            <executions>
+              <execution>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>javadocJar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
