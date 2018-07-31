@@ -7,8 +7,6 @@
 
 package io.fabric8.launcher.booster.catalog.rhoar
 
-import java.util.Collections
-
 /**
  * This type is used to group boosters into "Missions",
  * where a mission is a certain feature or idea that the

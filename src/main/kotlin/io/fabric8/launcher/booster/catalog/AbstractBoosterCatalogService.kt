@@ -338,11 +338,11 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
      */
     abstract class AbstractBuilder<BOOSTER : Booster, CATALOG : AbstractBoosterCatalogService<BOOSTER>> {
 
-        protected var catalogRepositoryURI = LauncherConfiguration.boosterCatalogRepositoryURI()
+        var catalogRepositoryURI = LauncherConfiguration.boosterCatalogRepositoryURI()
 
-        protected var catalogRef = LauncherConfiguration.boosterCatalogRepositoryRef()
+        var catalogRef = LauncherConfiguration.boosterCatalogRepositoryRef()
 
-        protected var rootDir: Path? = null
+        var rootDir: Path? = null
 
         var pathProvider: BoosterCatalogPathProvider? = null
 
