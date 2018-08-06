@@ -318,10 +318,7 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
         val yaml = Yaml(YamlConstructor(), rep)
         try {
             Files.newBufferedReader(file).use { reader ->
-                var boosterData = yaml.loadAs(reader, Map::class.java) as MutableMap<String, Any?>
-                if (transformer != null) {
-                    boosterData = transformer(boosterData)
-                }
+                val boosterData = transformer(yaml.loadAs(reader, Map::class.java) as MutableMap<String, Any?>)
                 return newBooster(boosterData, this)
             }
         } catch (e: Exception) {

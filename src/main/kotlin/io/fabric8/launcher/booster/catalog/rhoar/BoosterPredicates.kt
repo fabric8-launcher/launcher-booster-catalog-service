@@ -78,7 +78,7 @@ class BoosterPredicates private constructor() {
                 if (script != null)
                     BoosterScriptingPredicate(script) as Predicate<T>
                 else
-                    Predicate<T> { b -> true }
+                    Predicate<T> { _ -> true }
 
         /**
          * Returns a [Predicate] for a [Booster] testing if the given parameters match.

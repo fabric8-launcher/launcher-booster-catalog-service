@@ -7,8 +7,6 @@
 
 package io.fabric8.launcher.booster.catalog.rhoar
 
-import java.util.Collections
-
 /**
  * This class is the base class for the types that we use to
  * divide the boosters into the categories: Missions, Runtimes
@@ -29,7 +27,7 @@ abstract class AbstractCategory (
     val isSuggested: Boolean
         get() = metadata.getOrDefault(KEY_SUGGESTED, false) as Boolean
 
-    override fun compareTo(o: AbstractCategory) = name.compareTo(o.name)
+    override fun compareTo(other: AbstractCategory) = name.compareTo(other.name)
 
     override fun hashCode(): Int {
         val prime = 31
@@ -38,15 +36,15 @@ abstract class AbstractCategory (
         return result
     }
 
-    override fun equals(obj: Any?): Boolean {
-        if (this === obj)
+    override fun equals(other: Any?): Boolean {
+        if (this === other)
             return true
-        if (obj == null)
+        if (other == null)
             return false
-        if (javaClass != obj.javaClass)
+        if (javaClass != other.javaClass)
             return false
-        val other = obj as AbstractCategory?
-        return id == other!!.id
+        val obj = other as AbstractCategory?
+        return id == obj!!.id
     }
 
     override fun toString(): String {
