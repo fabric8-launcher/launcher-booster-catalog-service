@@ -11,15 +11,13 @@ import java.util.function.Predicate
 class BoosterParameterPredicate(private val parameters: Map<String, List<String>>) : Predicate<Booster> {
 
     override fun test(booster: Booster): Boolean {
-        for ((path, values) in parameters) {
+        return parameters.all { (path, values) ->
             val actualValue = getValueByPath(booster, path)
-            val notFound = values.map { v -> if (!v.isEmpty()) v else "true" }
-                    .find { v -> v.equals(actualValue, true) }.orEmpty().isEmpty()
-            if (notFound) {
-                return false
-            }
+            val found = values
+                    .map { v -> if (!v.isEmpty()) v else "true" }
+                    .any { v -> v.equals(actualValue, ignoreCase = true) }
+            found
         }
-        return true
     }
 
     private fun getValueByPath(b: Booster, path: String): String? {
