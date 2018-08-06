@@ -7,6 +7,14 @@
 
 package io.fabric8.launcher.booster.catalog.rhoar;
 
+import org.arquillian.smart.testing.rules.git.server.GitServer;
+import org.assertj.core.api.JUnitSoftAssertions;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
+
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -14,34 +22,33 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
-import io.fabric8.launcher.booster.catalog.LauncherConfiguration;
-import org.arquillian.smart.testing.rules.git.server.GitServer;
-import org.assertj.core.api.JUnitSoftAssertions;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF;
+import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY;
 
 public class RhoarBoosterCatalogServiceTest {
 
+    private static final String HOST = "http://localhost";
+
+    private static final int PORT = 8765;
+
+    private static final String REPO_NAME = "gastaldi-booster-catalog";
+
     @ClassRule
-    public static GitServer gitServer = GitServer
-            .fromBundle("gastaldi-booster-catalog", "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
-            .usingPort(8765)
+    public static final GitServer gitServer = GitServer
+            .fromBundle(REPO_NAME, "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
+            .usingPort(PORT)
             .create();
+
+    @Rule
+    public final EnvironmentVariables environmentVariables = new EnvironmentVariables()
+            .set(LAUNCHER_BOOSTER_CATALOG_REPOSITORY, HOST + ":" + PORT + "/" + REPO_NAME)
+            .set(LAUNCHER_BOOSTER_CATALOG_REF, "master");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
 
     @Nullable
     private static RhoarBoosterCatalogService defaultService;
-
-    @BeforeClass
-    public static void setSystemProperties() {
-        System.setProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
-    }
 
     @Test
     public void testProcessMetadata() throws Exception {
@@ -129,7 +136,7 @@ public class RhoarBoosterCatalogServiceTest {
     @Test
     public void testFilter() throws Exception {
         RhoarBoosterCatalogService service = new RhoarBoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("vertx_two_versions")
+                .catalogRepository(System.getenv(LAUNCHER_BOOSTER_CATALOG_REPOSITORY)).catalogRef("vertx_two_versions")
                 .filter(b -> {
                     Runtime r = b.getRuntime();
                     return r != null && r.getId().equals("vert.x");
@@ -143,7 +150,7 @@ public class RhoarBoosterCatalogServiceTest {
     private RhoarBoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
             defaultService = new RhoarBoosterCatalogService.Builder()
-                    .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("vertx_two_versions")
+                    .catalogRepository(HOST + ":" + PORT + "/" + REPO_NAME).catalogRef("vertx_two_versions")
                     .build();
         }
         return defaultService;

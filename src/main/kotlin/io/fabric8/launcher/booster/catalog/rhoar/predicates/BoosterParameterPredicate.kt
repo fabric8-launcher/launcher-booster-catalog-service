@@ -1,10 +1,9 @@
 package io.fabric8.launcher.booster.catalog.rhoar.predicates
 
-import java.util.Objects
-import java.util.function.Predicate
-
 import io.fabric8.launcher.booster.catalog.Booster
 import org.apache.commons.beanutils.PropertyUtils
+import java.util.Objects
+import java.util.function.Predicate
 
 /**
  * @author [George Gastaldi](mailto:ggastald@redhat.com)
@@ -12,15 +11,15 @@ import org.apache.commons.beanutils.PropertyUtils
 class BoosterParameterPredicate(private val parameters: Map<String, List<String>>) : Predicate<Booster> {
 
     override fun test(booster: Booster): Boolean {
-        var result = true
         for ((path, values) in parameters) {
-            val expectedValue = if (!values[0].isEmpty()) values[0] else "true"
-            if (!expectedValue.equals(getValueByPath(booster, path)!!, ignoreCase = true)) {
-                result = false
-                break
+            val actualValue = getValueByPath(booster, path)
+            val notFound = values.map { v -> if (!v.isEmpty()) v else "true" }
+                    .find { v -> v.equals(actualValue, true) }.orEmpty().isEmpty()
+            if (notFound) {
+                return false
             }
         }
-        return result
+        return true
     }
 
     private fun getValueByPath(b: Booster, path: String): String? {

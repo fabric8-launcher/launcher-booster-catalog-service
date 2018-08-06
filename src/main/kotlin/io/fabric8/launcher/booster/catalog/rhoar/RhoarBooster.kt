@@ -1,6 +1,5 @@
 package io.fabric8.launcher.booster.catalog.rhoar
 
-import java.util.Collections
 import java.util.HashMap
 import java.util.Objects
 import java.util.stream.Collectors

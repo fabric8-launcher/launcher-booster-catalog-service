@@ -23,34 +23,43 @@ import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
-import org.jetbrains.annotations.NotNull;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
+import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF;
+import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BoosterCatalogServiceTest {
 
+    private static final String HOST = "http://localhost";
+
+    private static final int PORT = 8765;
+
+    private static final String CUSTOM_REPO = "gastaldi-booster-catalog";
+
+    private static final String CUSTOM_BOOSTER_CATALOG = HOST + ":" + PORT + "/" + CUSTOM_REPO;
+
     @ClassRule
-    public static GitServer gitServer = GitServer.bundlesFromDirectory("repos/boosters")
-            .fromBundle("gastaldi-booster-catalog", "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
-            .usingPort(8765)
+    public static final GitServer gitServer = GitServer
+            .bundlesFromDirectory("repos/boosters")
+            .fromBundle(CUSTOM_REPO, "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
+            .usingPort(PORT)
             .create();
+
+    @Rule
+    public final EnvironmentVariables environmentVariables = new EnvironmentVariables()
+            .set(LAUNCHER_BOOSTER_CATALOG_REPOSITORY, HOST + ":" + PORT + "/booster-catalog")
+            .set(LAUNCHER_BOOSTER_CATALOG_REF, "master");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
 
     @Nullable
     private static BoosterCatalogService defaultService;
-
-    @BeforeClass
-    public static void setUpSystemProperties() {
-        System.setProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY, "http://localhost:8765/booster-catalog/");
-        System.setProperty(LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF, "master");
-    }
 
     @Test
     public void testIndex() throws Exception {
@@ -90,7 +99,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testCommonFiles() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("common_test")
+                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("common_test")
                 .build();
         service.index().get();
 
@@ -107,7 +116,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testMetadata() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("common_test")
+                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("common_test")
                 .build();
         service.index().get();
 
@@ -125,7 +134,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testIgnore() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("ignore_test")
+                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("ignore_test")
                 .build();
         service.index().get();
 
@@ -137,7 +146,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testManualEnvironment() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("environments_test")
+                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("environments_test")
                 .build();
         service.index().get();
 
@@ -159,7 +168,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testCatalogEnvironment() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("environments_test")
+                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("environments_test")
                 .environment("production")
                 .build();
         service.index().get();
@@ -175,7 +184,7 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testCatalogCompoundEnvironment() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository("http://localhost:8765/gastaldi-booster-catalog").catalogRef("environments_test")
+                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("environments_test")
                 .environment("production,extra")
                 .build();
         service.index().get();
@@ -284,7 +293,7 @@ public class BoosterCatalogServiceTest {
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
             defaultService = new Builder()
-                    .transformer((new TestRepoUrlFixer("http://localhost:8765"))::transform)
+                    .transformer((new TestRepoUrlFixer(HOST + ":" + PORT))::transform)
                     .build();
         }
         return defaultService;
@@ -301,9 +310,9 @@ public class BoosterCatalogServiceTest {
             String gitRepo = Booster.getDataValue(data, "source/git/url", null);
             if (gitRepo != null) {
                 gitRepo = gitRepo.replace("https://github.com", fixedUrl);
-                Booster.setDataValue((Map<String, Object>)data, "source/git/url", gitRepo);
+                Booster.setDataValue(data, "source/git/url", gitRepo);
             }
-            return (Map<String, Object>)data;
+            return data;
         }
     }
 

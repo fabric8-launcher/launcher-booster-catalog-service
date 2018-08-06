@@ -19,6 +19,7 @@
   <properties>
     <version.junit>4.12</version.junit>
     <version.assertj>3.10.0</version.assertj>
+    <version.system.rules>1.18.0</version.system.rules>
     <version.git.rules>0.0.10</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
     <version.snakeyaml>1.21</version.snakeyaml>
@@ -65,6 +66,12 @@
       <groupId>org.arquillian.smart.testing</groupId>
       <artifactId>git-rules</artifactId>
       <version>${version.git.rules}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>system-rules</artifactId>
+      <version>${version.system.rules}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
