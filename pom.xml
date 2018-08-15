@@ -18,7 +18,7 @@
   </licenses>
   <properties>
     <version.junit>4.12</version.junit>
-    <version.assertj>3.10.0</version.assertj>
+    <version.assertj>3.11.0</version.assertj>
     <version.system.rules>1.18.0</version.system.rules>
     <version.git.rules>0.0.10</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
