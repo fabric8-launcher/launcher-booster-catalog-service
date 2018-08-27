@@ -22,7 +22,7 @@
     <version.system.rules>1.18.0</version.system.rules>
     <version.git.rules>0.0.10</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
-    <version.snakeyaml>1.21</version.snakeyaml>
+    <version.snakeyaml>1.22</version.snakeyaml>
     <version.beanutils>1.9.3</version.beanutils>
     <version.mockito>2.21.0</version.mockito>
 
