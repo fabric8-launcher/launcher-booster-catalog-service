@@ -24,7 +24,7 @@
     <version.jsr305>3.0.2</version.jsr305>
     <version.snakeyaml>1.23</version.snakeyaml>
     <version.beanutils>1.9.3</version.beanutils>
-    <version.mockito>2.21.0</version.mockito>
+    <version.mockito>2.22.0</version.mockito>
 
     <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
     <kotlin.version>1.2.61</kotlin.version>
