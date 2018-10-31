@@ -101,7 +101,7 @@ class BoosterPredicates private constructor() {
          */
         @JvmStatic
         fun withAppEnabled(application: String?) = Predicate<RhoarBooster> { b: RhoarBooster ->
-            application == null || b.getMetadata("app/$application/enabled", true)
+            application == null || b.getMetadata("app/${application.toLowerCase()}/enabled", true)
         }
     }
 }
