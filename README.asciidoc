@@ -1,6 +1,6 @@
 = Booster Catalog Service
 
-image:https://semaphoreci.com/api/v1/fabric8-launcher/launcher-booster-catalog-service/branches/master/badge.svg["Build Status", link="https://semaphoreci.com/fabric8-launcher/launcher-booster-catalog-service"]
+image:https://travis-ci.org/fabric8-launcher/launcher-booster-catalog-service.svg?branch=master["Build Status", link="https://travis-ci.org/fabric8-launcher/launcher-booster-catalog-service"]
 image:http://img.shields.io/:License-Apache%202.0-blue.svg["License", link="https://www.apache.org/licenses/LICENSE-2.0"]
 
 This project contains the service classes for the booster-catalog repository
