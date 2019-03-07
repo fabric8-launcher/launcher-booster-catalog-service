@@ -1,18 +1,16 @@
 package io.fabric8.launcher.booster.catalog.rhoar.predicates
 
+import io.fabric8.launcher.booster.catalog.Booster
 import java.util.function.Predicate
 import java.util.logging.Level
 import java.util.logging.Logger
-
 import javax.script.Compilable
 import javax.script.CompiledScript
 import javax.script.ScriptContext
-import javax.script.ScriptEngine
+import javax.script.ScriptEngineManager
 import javax.script.ScriptException
 import javax.script.SimpleScriptContext
 
-import io.fabric8.launcher.booster.catalog.Booster
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory
 
 /**
  * This predicate takes a JavaScript expression and evaluates to true or false, using "booster" as the argument
@@ -24,8 +22,8 @@ class BoosterScriptingPredicate(evalScript: String) : Predicate<Booster> {
     private val script: CompiledScript
 
     init {
-        val factory = NashornScriptEngineFactory()
-        val engine = factory.scriptEngine
+        val manager = ScriptEngineManager()
+        val engine = manager.getEngineByName("js")
         try {
             this.script = (engine as Compilable).compile(evalScript)
         } catch (e: ScriptException) {
