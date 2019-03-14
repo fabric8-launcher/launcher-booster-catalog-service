@@ -213,6 +213,7 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
         try {
             val catalogPath = provider.createCatalogPath()
             indexBoosters(catalogPath, boosters)
+            postIndex(catalogPath, boosters)
             logger.info { "Finished content indexing" }
         } catch (e: IOException) {
             logger.log(Level.SEVERE, "Error while indexing", e)
@@ -224,7 +225,9 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
     @Throws(IOException::class)
     protected open fun indexBoosters(catalogPath: Path, boosters: MutableSet<BOOSTER>) {
         indexPath(catalogPath, catalogPath, newBooster(null, this), boosters)
+    }
 
+    protected open fun postIndex(catalogPath: Path, boosters: MutableSet<BOOSTER>) {
         // Notify the listener of all the boosters that were added
         // (this excludes ignored boosters and those filtered by the global indexFilter)
         prefilteredBoosters.forEach({ listener(it) })

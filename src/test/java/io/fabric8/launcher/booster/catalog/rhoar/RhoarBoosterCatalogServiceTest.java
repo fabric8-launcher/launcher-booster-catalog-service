@@ -7,6 +7,8 @@
 
 package io.fabric8.launcher.booster.catalog.rhoar;
 
+import io.fabric8.launcher.booster.catalog.BoosterCatalogService;
+import io.fabric8.launcher.booster.catalog.LauncherConfiguration;
 import org.arquillian.smart.testing.rules.git.server.GitServer;
 import org.assertj.core.api.JUnitSoftAssertions;
 import org.junit.ClassRule;
@@ -145,6 +147,20 @@ public class RhoarBoosterCatalogServiceTest {
         service.index().get();
 
         softly.assertThat(service.getRuntimes()).containsOnly(new Runtime("vert.x"));
+    }
+
+    @Test
+    public void testFilterDataAvailable() throws Exception {
+        RhoarBoosterCatalogService service = new RhoarBoosterCatalogService.Builder()
+                .catalogRepository(System.getenv(LAUNCHER_BOOSTER_CATALOG_REPOSITORY)).catalogRef("vertx_two_versions")
+                .filter(b -> {
+                    softly.assertThat(b.getMission()).isNotNull();
+                    softly.assertThat(b.getRuntime()).isNotNull();
+                    softly.assertThat(b.getVersion()).isNotNull();
+                    return true;
+                }).build();
+
+        service.index().get();
     }
 
     private RhoarBoosterCatalogService buildDefaultCatalogService() {
