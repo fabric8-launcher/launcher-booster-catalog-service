@@ -15,5 +15,9 @@ import org.yaml.snakeyaml.constructor.Constructor
 class YamlConstructor : Constructor() {
     @Throws(ClassNotFoundException::class)
     override fun getClassForName(name: String): Class<*> =
-            Class.forName(name, true, javaClass.classLoader)
+            if ("java.util.Map" == name) {
+                java.util.HashMap::class.java
+            } else {
+                Class.forName(name, true, javaClass.classLoader)
+            }
 }
