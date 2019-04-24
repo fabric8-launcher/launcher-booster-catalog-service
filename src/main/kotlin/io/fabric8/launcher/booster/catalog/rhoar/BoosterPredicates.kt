@@ -5,6 +5,7 @@ import java.util.function.Predicate
 import io.fabric8.launcher.booster.catalog.Booster
 import io.fabric8.launcher.booster.catalog.rhoar.predicates.BoosterParameterPredicate
 import io.fabric8.launcher.booster.catalog.rhoar.predicates.BoosterScriptingPredicate
+import java.util.regex.Pattern
 
 /**
  * Utility class to provide [Predicate] instances for [Booster] instances and its subtypes
@@ -27,6 +28,19 @@ class BoosterPredicates private constructor() {
         @JvmStatic
         fun withRuntime(runtime: Runtime?) = Predicate<RhoarBooster> { b: RhoarBooster ->
             runtime == null || runtime == b.runtime
+        }
+
+        /**
+         * Returns a [Predicate] for a [RhoarBooster] testing if the provided [Pattern]
+         * matches the booster's [Runtime.id]
+         *
+         * @param version the [Pattern] to be compared against a given [RhoarBooster] version.
+         * If null, always returns true;
+         * @return a [Predicate] testing against the given [Version]
+         */
+        @JvmStatic
+        fun withRuntimeMatches(runtime: Pattern?) = Predicate<RhoarBooster> { b: RhoarBooster ->
+            runtime == null || b.runtime == null || runtime.matcher(b.runtime?.id).matches()
         }
 
         /**
@@ -53,6 +67,19 @@ class BoosterPredicates private constructor() {
         @JvmStatic
         fun withVersion(version: Version?) = Predicate<RhoarBooster> { b: RhoarBooster ->
             version == null || version == b.version
+        }
+
+        /**
+         * Returns a [Predicate] for a [RhoarBooster] testing if its [Pattern]
+         * matches the booster's [Version.id]
+         *
+         * @param version the [Pattern] to be compared against a given [RhoarBooster] version.
+         * If null, always returns true;
+         * @return a [Predicate] testing against the given [Version]
+         */
+        @JvmStatic
+        fun withVersionMatches(version: Pattern?) = Predicate<RhoarBooster> { b: RhoarBooster ->
+            version == null || b.version == null || version.matcher(b.version?.id).matches()
         }
 
         /**

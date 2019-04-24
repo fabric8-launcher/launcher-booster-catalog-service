@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import static io.fabric8.launcher.booster.catalog.rhoar.RhoarBooster.checkCategory;
 import static java.util.Arrays.asList;
@@ -126,6 +127,25 @@ public class BoosterPredicatesTest {
 
         // then
         assertThat(filteredBoosters).containsOnly(noviceBooster, advancedBooster);
+    }
+
+    @Test
+    public void should_filter_matched_versions() {
+        RhoarBooster booster = mock(RhoarBooster.class);
+        when(booster.getVersion()).thenReturn(new Version("community-current"));
+        assertThat(BoosterPredicates.withVersionMatches(Pattern.compile("community-.*"))).accepts(booster);
+        when(booster.getVersion()).thenReturn(new Version("redhat-current"));
+        assertThat(BoosterPredicates.withVersionMatches(Pattern.compile("community-.*"))).rejects(booster);
+
+    }
+
+    @Test
+    public void should_filter_matched_runtimes() {
+        RhoarBooster booster = mock(RhoarBooster.class);
+        when(booster.getRuntime()).thenReturn(new Runtime("spring-boot"));
+        assertThat(BoosterPredicates.withRuntimeMatches(Pattern.compile("spring-boot.*"))).accepts(booster);
+        when(booster.getRuntime()).thenReturn(new Runtime("thorntail"));
+        assertThat(BoosterPredicates.withRuntimeMatches(Pattern.compile("spring-boot.*"))).rejects(booster);
     }
 
     @Test
