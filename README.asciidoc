@@ -1,6 +1,6 @@
 = Booster Catalog Service
 
-image:https://travis-ci.org/fabric8-launcher/launcher-booster-catalog-service.svg?branch=master["Build Status", link="https://travis-ci.org/fabric8-launcher/launcher-booster-catalog-service"]
+image:https://circleci.com/gh/fabric8-launcher/launcher-booster-catalog-service.svg?style=svg["CircleCI", link="https://circleci.com/gh/fabric8-launcher/launcher-booster-catalog-service"]
 image:http://img.shields.io/:License-Apache%202.0-blue.svg["License", link="https://www.apache.org/licenses/LICENSE-2.0"]
 image:https://maven-badges.herokuapp.com/maven-central/io.fabric8.launcher/booster-catalog-service/badge.svg["Maven Central", link="https://maven-badges.herokuapp.com/maven-central/io.fabric8.launcher/booster-catalog-service"] 
 
