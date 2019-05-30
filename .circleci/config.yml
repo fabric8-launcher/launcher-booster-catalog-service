@@ -7,6 +7,7 @@ jobs: # a collection of steps
 
     steps: # a collection of executable commands
 
+      - run: apt-get -qq update; apt-get -y install git
       - checkout # check out source code to working directory
 
       - restore_cache: # restore the saved cache after the first run or if `pom.xml` has changed
