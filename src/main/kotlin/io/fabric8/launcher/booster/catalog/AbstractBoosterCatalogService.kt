@@ -230,7 +230,7 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
     protected open fun postIndex(catalogPath: Path, boosters: MutableSet<BOOSTER>) {
         // Notify the listener of all the boosters that were added
         // (this excludes ignored boosters and those filtered by the global indexFilter)
-        prefilteredBoosters.forEach({ listener(it) })
+        prefilteredBoosters.forEach { listener(it) }
     }
 
     private fun indexPath(catalogPath: Path, path: Path, commonBooster: BOOSTER, boosters: MutableSet<BOOSTER>) {
