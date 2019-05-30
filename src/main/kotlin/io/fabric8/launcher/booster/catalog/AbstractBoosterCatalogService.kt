@@ -260,7 +260,9 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
                     commonBooster
                 }
 
-                Files.list(path).forEach { subpath -> indexPath(catalogPath, subpath, activeCommonBooster, boosters) }
+                Files.list(path).use { stream ->
+                    stream.forEach { subpath -> indexPath(catalogPath, subpath, activeCommonBooster, boosters) }
+                }
             } else {
                 val fileName = path.fileName.toString().toLowerCase()
                 if (fileName.endsWith("booster.yaml") || fileName.endsWith("booster.yml")) {
