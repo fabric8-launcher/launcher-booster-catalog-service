@@ -9,8 +9,8 @@ jobs: # a collection of steps
       - run:
           name: Set up Git configuration
           command: |
-            git config --system user.name redhat-developers-launcher
-            git config --system user.email 45641108+redhat-developers-launcher@users.noreply.github.com
+            git config --global user.name redhat-developers-launcher
+            git config --global user.email 45641108+redhat-developers-launcher@users.noreply.github.com
           when: always
 
       - checkout # check out source code to working directory
