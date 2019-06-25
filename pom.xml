@@ -247,6 +247,12 @@
           </plugin>
         </plugins>
       </build>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>spring</id>
+          <url>https://repo.spring.io/plugins-release/</url>
+        </pluginRepository>
+      </pluginRepositories>
     </profile>
   </profiles>
 </project>
