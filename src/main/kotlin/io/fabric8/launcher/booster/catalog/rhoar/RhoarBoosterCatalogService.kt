@@ -79,21 +79,21 @@ class RhoarBoosterCatalogService protected constructor(config: Builder) : Abstra
                 var r: Runtime? = runtimes[path[0]]
                 if (r == null) {
                     r = Runtime(path[0])
-                    logger.log(Level.WARNING, "Runtime '{0}' not found in metadata", r.id)
+                    logger.log(Level.WARNING, "Runtime ''{0}'' not found in metadata", r.id)
                 }
                 booster.runtime = r
 
                 var v: Version? = r.versions[path[1]]
                 if (v == null) {
                     v = Version(path[1])
-                    logger.log(Level.WARNING, "Version '{0}' not found in Runtime '{1}' metadata", arrayOf<Any>(v.id, r.id))
+                    logger.log(Level.WARNING, "Version ''{0}'' not found in Runtime ''{1}'' metadata", arrayOf<Any>(v.id, r.id))
                 }
                 booster.version = v
 
                 var m: Mission? = missions[path[2]]
                 if (m == null) {
                     m = Mission(path[2])
-                    logger.log(Level.WARNING, "Mission '{0}' not found in metadata", m.id)
+                    logger.log(Level.WARNING, "Mission ''{0}'' not found in metadata", m.id)
                 }
                 booster.mission = m
             }
