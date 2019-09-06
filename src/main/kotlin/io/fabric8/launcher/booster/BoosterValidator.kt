@@ -10,6 +10,8 @@ package io.fabric8.launcher.booster
 import io.fabric8.launcher.booster.catalog.Booster
 import io.fabric8.launcher.booster.catalog.BoosterCatalogService
 import io.fabric8.launcher.booster.catalog.LauncherConfiguration
+import io.fabric8.launcher.booster.catalog.rhoar.RhoarBooster
+import io.fabric8.launcher.booster.catalog.rhoar.RhoarBoosterCatalogService
 import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider
 import org.yaml.snakeyaml.Yaml
 
@@ -42,7 +44,7 @@ internal object BoosterValidator {
             handlers[index].level = Level.WARNING
         }
 
-        val build = BoosterCatalogService.Builder()
+        val build = RhoarBoosterCatalogService.Builder()
                 .pathProvider(NativeGitBoosterCatalogPathProvider(catalogRepository, catalogRef, null))
                 .build()
 
@@ -66,7 +68,10 @@ internal object BoosterValidator {
                         if (!validateBoosterData(b, path, b.data)) {
                             errcnt.incrementAndGet()
                         }
-                        if (!validOpenshiftYamlFiles(b, path)) {
+                        if (!validateOpenshiftYamlFiles(b, path)) {
+                            errcnt.incrementAndGet()
+                        }
+                        if (!validateBooster(b, path)) {
                             errcnt.incrementAndGet()
                         }
                         System.out.flush()
@@ -89,7 +94,7 @@ internal object BoosterValidator {
         }
     }
 
-    private fun validOpenshiftYamlFiles(booster: Booster, path: Path): Boolean {
+    private fun validateOpenshiftYamlFiles(booster: RhoarBooster, path: Path): Boolean {
         val yaml = Yaml()
         val valid = AtomicBoolean(true)
         try {
@@ -113,7 +118,7 @@ internal object BoosterValidator {
         return valid.get()
     }
 
-    private fun validateBoosterData(booster: Booster, path: Path, data: Map<*, *>): Boolean {
+    private fun validateBoosterData(booster: RhoarBooster, path: Path, data: Map<*, *>): Boolean {
         var valid = true
         val entries = data.entries
         for ((key1, value) in entries) {
@@ -131,7 +136,7 @@ internal object BoosterValidator {
         return valid
     }
 
-    private fun validateBoosterData(booster: Booster, path: Path, data: Iterable<*>): Boolean {
+    private fun validateBoosterData(booster: RhoarBooster, path: Path, data: Iterable<*>): Boolean {
         var valid = true
         for (value in data) {
             if (value is Map<*, *>) {
@@ -139,6 +144,23 @@ internal object BoosterValidator {
             } else if (value is Iterable<*>) {
                 valid = valid && validateBoosterData(booster, path, value)
             }
+        }
+        return valid
+    }
+
+    private fun validateBooster(booster: RhoarBooster, path: Path): Boolean {
+        var valid = true
+        if (booster.runtime?.name == booster.runtime?.id && booster.runtime?.description == null) {
+            System.err.println("    ERROR: Content error in ${booster.id} - ${path.relativize(path)}: Runtime '${booster.runtime?.id}' not found in metadata")
+            valid = false
+        }
+        if (booster.version?.name == booster.version?.id && booster.version?.description == null) {
+            System.err.println("    ERROR: Content error in ${booster.id} - ${path.relativize(path)}: Version '${booster.version?.id}' not found in metadata")
+            valid = false
+        }
+        if (booster.mission?.name == booster.mission?.id && booster.mission?.description == null) {
+            System.err.println("    ERROR: Content error in ${booster.id} - ${path.relativize(path)}: Mission '${booster.mission?.id}' not found in metadata")
+            valid = false
         }
         return valid
     }
