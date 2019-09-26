@@ -15,19 +15,13 @@ import io.fabric8.launcher.booster.catalog.BoosterCatalogService
 
 /**
  * A SPI interface used in [BoosterCatalogService]
- *
- * @author [George Gastaldi](mailto:ggastald@redhat.com)
  */
-interface BoosterCatalogPathProvider {
+interface BoosterCatalogSourceProviderx {
     /**
-     * Returns the path where the booster catalog is (for indexing)
+     * Fetches the content for a given booster and returns the target [Path]
      */
     @Throws(IOException::class)
-    fun createCatalogPath(): Path
-
-    /**
-     * Creates the content for a given booster and returns the target [Path]
-     */
-    @Throws(IOException::class)
-    fun createBoosterContentPath(booster: Booster): Path
+    fun fetchSource(booster: Booster): Path
 }
+
+typealias BoosterCatalogSourceProvider = (Booster) -> Path

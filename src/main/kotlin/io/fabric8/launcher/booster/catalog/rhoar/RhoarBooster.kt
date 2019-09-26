@@ -1,20 +1,26 @@
 package io.fabric8.launcher.booster.catalog.rhoar
 
-import java.util.HashMap
-import java.util.Objects
 import java.util.stream.Collectors
 
 import io.fabric8.launcher.booster.catalog.Booster
 import io.fabric8.launcher.booster.catalog.BoosterFetcher
+import java.util.*
 
-class RhoarBooster : Booster {
+class RhoarBooster(data: Map<String, Any?>, boosterFetcher: BoosterFetcher): Booster(data , boosterFetcher) {
     var mission: Mission? = null
     var runtime: Runtime? = null
     var version: Version? = null
 
-    protected constructor(boosterFetcher: BoosterFetcher) : super(boosterFetcher) {}
-
-    constructor(data: Map<String, Any?>?, boosterFetcher: BoosterFetcher) : super(data, boosterFetcher) {}
+    override val id: String by lazy {
+        val m = getMetadata<String>("mission")
+        val r = getMetadata<String>("runtime")
+        val v = getMetadata<String>("version")
+        if (m != null && r != null && v != null) {
+            "$m-$r-$v"
+        } else {
+            super.id
+        }
+    }
 
     /**
      * @return the booster's data in easily exportable format
@@ -28,24 +34,11 @@ class RhoarBooster : Booster {
             return exp
         }
 
-    override fun newBooster() = RhoarBooster(boosterFetcher)
-
-    override fun merge(booster: Booster): RhoarBooster {
-        super.merge(booster)
-        if (booster is RhoarBooster) {
-            if (booster.mission != null) mission = booster.mission
-            if (booster.runtime != null) runtime = booster.runtime
-            if (booster.version != null) version = booster.version
-        }
-        return this
-    }
-
-    override fun forEnvironment(environmentName: String): RhoarBooster =
-            super.forEnvironment(environmentName) as RhoarBooster
+    override fun newBooster(data: Map<String, Any?>) = RhoarBooster(data, boosterFetcher)
 
     fun runsOn(clusterType: String?): Boolean =
             clusterType == null || clusterType.isEmpty() ||
-                checkCategory(toList(getMetadata<Any>("app/launcher/runsOn")), clusterType)
+                checkCategory(toList(getMetadata<Any>("runsOn")), clusterType)
 
     companion object {
 

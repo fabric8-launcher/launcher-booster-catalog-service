@@ -1,26 +1,31 @@
 package io.fabric8.launcher.booster.catalog.rhoar
 
-import io.fabric8.launcher.booster.catalog.*
+import io.fabric8.launcher.booster.catalog.AbstractBoosterCatalogService
+import io.fabric8.launcher.booster.catalog.Booster
+import io.fabric8.launcher.booster.catalog.BoosterFetcher
+import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogProvider
+import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogSourceProvider
+import io.fabric8.launcher.booster.catalog.spi.BoosterMetadataProvider
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.util.HashMap
-import java.util.TreeSet
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.logging.Level
 import java.util.logging.Logger
 import java.util.stream.Collectors
 import java.util.stream.Stream
-
-import io.fabric8.launcher.booster.catalog.spi.BoosterCatalogPathProvider
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.representer.Representer
-import java.util.function.Supplier
+import kotlin.collections.HashMap
 
 class RhoarBoosterCatalogService protected constructor(config: Builder) : AbstractBoosterCatalogService<RhoarBooster>(config), RhoarBoosterCatalog {
+    var metadataProvider: BoosterMetadataProvider? = null
 
-    override fun newBooster(data: Map<String, Any?>?, boosterFetcher: BoosterFetcher) = RhoarBooster(data, boosterFetcher)
+    init {
+        this.metadataProvider = config.metadataProvider ?: config.discoverMetadataProvider()
+    }
+
+    override fun newBooster(data: Map<String, Any?>, boosterFetcher: BoosterFetcher) = RhoarBooster(data, boosterFetcher)
 
     override fun getMissions() = toMissions(prefilteredBoosters)
 
@@ -60,43 +65,43 @@ class RhoarBoosterCatalogService protected constructor(config: Builder) : Abstra
                 .collect(Collectors.toCollection(Supplier<TreeSet<Version>> { TreeSet() }))
 
     @Throws(IOException::class)
-    override fun indexBoosters(catalogPath: Path, boosters: MutableSet<RhoarBooster>) {
-        super.indexBoosters(catalogPath, boosters)
+    override fun indexBoosters(boosters: MutableSet<RhoarBooster>) {
+        super.indexBoosters(boosters)
 
         // Update the boosters with the proper info for missions, runtimes and versions
         val missions = HashMap<String, Mission>()
         val runtimes = HashMap<String, Runtime>()
 
         // Read the metadata for missions and runtimes
-        val metadataFile = catalogPath.resolve(METADATA_FILE)
-        if (Files.exists(metadataFile)) {
-            processMetadata(metadataFile, missions, runtimes)
+        val metadata = metadataProvider?.invoke()
+        if (metadata != null) {
+            processMetadata(metadata, missions, runtimes)
         }
 
         for (booster in boosters) {
-            val path = booster.descriptor.path
-            if (path.size >= 3) {
-                var r: Runtime? = runtimes[path[0]]
-                if (r == null) {
-                    r = Runtime(path[0])
-                    logger.log(Level.WARNING, "Runtime ''{0}'' not found in metadata", r.id)
-                }
-                booster.runtime = r
-
-                var v: Version? = r.versions[path[1]]
-                if (v == null) {
-                    v = Version(path[1])
-                    logger.log(Level.WARNING, "Version ''{0}'' not found in Runtime ''{1}'' metadata", arrayOf<Any>(v.id, r.id))
-                }
-                booster.version = v
-
-                var m: Mission? = missions[path[2]]
-                if (m == null) {
-                    m = Mission(path[2])
-                    logger.log(Level.WARNING, "Mission ''{0}'' not found in metadata", m.id)
-                }
-                booster.mission = m
+            var rname = Objects.toString(booster.metadata["runtime"])
+            var r: Runtime? = runtimes[rname]
+            if (r == null) {
+                r = Runtime(rname ?: "<<missing>>")
+                logger.log(Level.WARNING, "Runtime ''{0}'' not found in metadata", r.id)
             }
+            booster.runtime = r
+
+            var vname = Objects.toString(booster.metadata["version"])
+            var v: Version? = r.versions[vname]
+            if (v == null) {
+                v = Version(vname ?: "<<missing>>")
+                logger.log(Level.WARNING, "Version ''{0}'' not found in Runtime ''{1}'' metadata", arrayOf<Any>(v.id, r.id))
+            }
+            booster.version = v
+
+            var mname = Objects.toString(booster.metadata["mission"])
+            var m: Mission? = missions[mname]
+            if (m == null) {
+                m = Mission(mname ?: "<<missing>>")
+                logger.log(Level.WARNING, "Mission ''{0}'' not found in metadata", m.id)
+            }
+            booster.mission = m
         }
     }
 
@@ -104,46 +109,37 @@ class RhoarBoosterCatalogService protected constructor(config: Builder) : Abstra
      * Process the metadataFile and adds to the specified missions and runtimes
      * maps
      */
-    fun processMetadata(metadataFile: Path, missions: MutableMap<String, Mission>, runtimes: MutableMap<String, Runtime>) {
-        logger.info { "Reading metadata at $metadataFile ..." }
-
-        val rep = Representer()
-        rep.propertyUtils.isSkipMissingProperties = true
-        val yaml = Yaml(YamlConstructor(), rep)
+    fun processMetadata(metadata: Map<String, Any?>, missions: MutableMap<String, Mission>, runtimes: MutableMap<String, Runtime>) {
         try {
-            Files.newBufferedReader(metadataFile).use { reader ->
-                val metadata = yaml.loadAs(reader, Map::class.java)
+            if (metadata["missions"] is List<*>) {
+                val ms = metadata["missions"] as List<Map<String, Any?>>
+                ms.stream()
+                        .map { e ->
+                            Mission(
+                                    Objects.toString(e["id"]),
+                                    Objects.toString(e["name"]),
+                                    Objects.toString(e["description"]),
+                                    e.getOrDefault("metadata", emptyMap<Any, Any>()) as Map<String, Any?>)
+                        }
+                        .forEach { m -> missions[m.id] = m }
+            }
 
-                if (metadata["missions"] is List<*>) {
-                    val ms = metadata["missions"] as List<Map<String, Any?>>
-                    ms.stream()
-                            .map { e ->
-                                Mission(
-                                        e["id"] as String,
-                                        e["name"] as String,
-                                        e["description"] as String?,
-                                        e.getOrDefault("metadata", emptyMap<Any, Any>()) as Map<String, Any?>)
-                            }
-                            .forEach { m -> missions[m.id] = m }
-                }
-
-                if (metadata["runtimes"] is List<*>) {
-                    val rs = metadata["runtimes"] as List<Map<String, Any?>>
-                    rs.stream()
-                            .map { e ->
-                                Runtime(
-                                        e["id"] as String,
-                                        e["name"] as String,
-                                        e["description"] as String?,
-                                        e.getOrDefault("metadata", emptyMap<String, Any?>()) as Map<String, Any?>,
-                                        e["icon"] as String?,
-                                        getMetadataVersions(e["versions"]))
-                            }
-                            .forEach { r -> runtimes[r.id] = r }
-                }
+            if (metadata["runtimes"] is List<*>) {
+                val rs = metadata["runtimes"] as List<Map<String, Any?>>
+                rs.stream()
+                        .map { e ->
+                            Runtime(
+                                    Objects.toString(e["id"]),
+                                    Objects.toString(e["name"]),
+                                    Objects.toString(e["description"]),
+                                    e.getOrDefault("metadata", emptyMap<String, Any?>()) as Map<String, Any?>,
+                                    Objects.toString(e["icon"]),
+                                    getMetadataVersions(e["versions"]))
+                        }
+                        .forEach { r -> runtimes[r.id] = r }
             }
         } catch (e: Exception) {
-            logger.log(Level.SEVERE, "Error while processing metadata $metadataFile", e)
+            logger.log(Level.SEVERE, "Error while processing metadata", e)
         }
 
     }
@@ -155,9 +151,9 @@ class RhoarBoosterCatalogService protected constructor(config: Builder) : Abstra
             vs.stream()
                     .map { e ->
                         Version(
-                                e["id"] as String,
-                                e["name"] as String,
-                                e["description"] as String?,
+                                Objects.toString(e["id"]),
+                                Objects.toString(e["name"]),
+                                Objects.toString(e["description"]),
                                 e.getOrDefault("metadata", emptyMap<Any, Any>()) as Map<String, Any?>)
                     }
                     .forEach { v -> versions[v.id] = v }
@@ -168,21 +164,31 @@ class RhoarBoosterCatalogService protected constructor(config: Builder) : Abstra
     }
 
     class Builder : AbstractBoosterCatalogService.AbstractBuilder<RhoarBooster, RhoarBoosterCatalogService>() {
+        var metadataProvider: BoosterMetadataProvider? = null
+
+        open fun metadataProvider(metadataProvider: BoosterMetadataProvider): Builder {
+            this.metadataProvider = metadataProvider
+            return this
+        }
+
         override fun catalogRef(catalogRef: String) = super.catalogRef(catalogRef) as Builder
         override fun catalogRepository(catalogRepositoryURI: String) = super.catalogRepository(catalogRepositoryURI) as Builder
-        override fun pathProvider(pathProvider: BoosterCatalogPathProvider) = super.pathProvider(pathProvider) as Builder
+        override fun catalogProvider(catalogProvider: BoosterCatalogProvider) = super.catalogProvider(catalogProvider) as Builder
+        override fun sourceProvider(sourceProvider: BoosterCatalogSourceProvider) = super.sourceProvider(sourceProvider) as Builder
         override fun filter(filter: Predicate<RhoarBooster>) = super.filter(filter) as Builder
         override fun listener(listener: (booster: Booster) -> Any) = super.listener(listener) as Builder
-        override fun transformer(transformer: (data: MutableMap<String, Any?>) -> MutableMap<String, Any?>) = super.transformer(transformer) as Builder
-        override fun environment(environment: String) = super.environment(environment) as Builder
+        override fun transformer(transformer: (data: Map<String, Any?>) -> Map<String, Any?>) = super.transformer(transformer) as Builder
         override fun executor(executor: ExecutorService) = super.executor(executor) as Builder
         override fun rootDir(root: Path) = super.rootDir(root) as Builder
         override fun build() = RhoarBoosterCatalogService(this)
+
+        internal fun discoverMetadataProvider(): BoosterMetadataProvider =
+                discoverCatalogProvider() as BoosterMetadataProvider
     }
 
     companion object {
 
-        private const val METADATA_FILE = "metadata.yaml"
+        private const val METADATA_FILE = "metadata.json"
 
         private val logger = Logger.getLogger(RhoarBoosterCatalogService::class.java.name)
     }

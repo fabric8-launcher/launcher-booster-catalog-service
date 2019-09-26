@@ -22,6 +22,7 @@
     <version.system.rules>1.19.0</version.system.rules>
     <version.git.rules>0.0.10</version.git.rules>
     <version.jsr305>3.0.2</version.jsr305>
+    <version.json.simple>1.1.1</version.json.simple>
     <version.snakeyaml>1.24</version.snakeyaml>
     <version.beanutils>1.9.3</version.beanutils>
     <version.mockito>2.28.2</version.mockito>
@@ -35,6 +36,11 @@
   </properties>
   <dependencies>
     <!-- Compile-time dependency -->
+    <dependency>
+      <groupId>com.googlecode.json-simple</groupId>
+      <artifactId>json-simple</artifactId>
+      <version>${version.json.simple}</version>
+    </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>

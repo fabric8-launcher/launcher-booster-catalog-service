@@ -7,14 +7,10 @@
 
 package io.fabric8.launcher.booster.catalog.rhoar;
 
-import io.fabric8.launcher.booster.catalog.BoosterCatalogService;
-import io.fabric8.launcher.booster.catalog.LauncherConfiguration;
-import org.arquillian.smart.testing.rules.git.server.GitServer;
+import io.fabric8.launcher.booster.catalog.utils.JsonKt;
 import org.assertj.core.api.JUnitSoftAssertions;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -24,27 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF;
 import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY;
 
 public class RhoarBoosterCatalogServiceTest {
-
-    private static final String HOST = "http://localhost";
-
-    private static final int PORT = 8765;
-
-    private static final String REPO_NAME = "gastaldi-booster-catalog";
-
-    @ClassRule
-    public static final GitServer gitServer = GitServer
-            .fromBundle(REPO_NAME, "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
-            .usingPort(PORT)
-            .create();
-
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables()
-            .set(LAUNCHER_BOOSTER_CATALOG_REPOSITORY, HOST + ":" + PORT + "/" + REPO_NAME)
-            .set(LAUNCHER_BOOSTER_CATALOG_REF, "master");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
@@ -55,11 +33,12 @@ public class RhoarBoosterCatalogServiceTest {
     @Test
     public void testProcessMetadata() throws Exception {
         RhoarBoosterCatalogService service = buildDefaultCatalogService();
-        Path metadataFile = Paths.get(getClass().getResource("metadata.yaml").toURI());
+        Path metadataFile = Paths.get(getClass().getResource("metadata.json").toURI());
         Map<String, Mission> missions = new HashMap<>();
         Map<String, Runtime> runtimes = new HashMap<>();
 
-        service.processMetadata(metadataFile, missions, runtimes);
+        Map<String, Object> metadata = JsonKt.readMetadata(metadataFile);
+        service.processMetadata(metadata, missions, runtimes);
 
         softly.assertThat(missions).hasSize(6);
         softly.assertThat(runtimes).hasSize(5);
@@ -137,8 +116,7 @@ public class RhoarBoosterCatalogServiceTest {
 
     @Test
     public void testFilter() throws Exception {
-        RhoarBoosterCatalogService service = new RhoarBoosterCatalogService.Builder()
-                .catalogRepository(System.getenv(LAUNCHER_BOOSTER_CATALOG_REPOSITORY)).catalogRef("vertx_two_versions")
+        RhoarBoosterCatalogService service = defaultCatalogBuilder()
                 .filter(b -> {
                     Runtime r = b.getRuntime();
                     return r != null && r.getId().equals("vert.x");
@@ -151,8 +129,7 @@ public class RhoarBoosterCatalogServiceTest {
 
     @Test
     public void testFilterDataAvailable() throws Exception {
-        RhoarBoosterCatalogService service = new RhoarBoosterCatalogService.Builder()
-                .catalogRepository(System.getenv(LAUNCHER_BOOSTER_CATALOG_REPOSITORY)).catalogRef("vertx_two_versions")
+        RhoarBoosterCatalogService service = defaultCatalogBuilder()
                 .filter(b -> {
                     softly.assertThat(b.getMission()).isNotNull();
                     softly.assertThat(b.getRuntime()).isNotNull();
@@ -163,11 +140,15 @@ public class RhoarBoosterCatalogServiceTest {
         service.index().get();
     }
 
+    private RhoarBoosterCatalogService.Builder defaultCatalogBuilder() {
+        return new RhoarBoosterCatalogService.Builder()
+                .catalogProvider(() -> JsonKt.readCatalog(Paths.get("src/test/resources/custom-catalogs/test-catalog.json")))
+                .metadataProvider(() -> JsonKt.readMetadata(Paths.get("src/test/resources/custom-catalogs/test-metadata.json")));
+    }
+
     private RhoarBoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
-            defaultService = new RhoarBoosterCatalogService.Builder()
-                    .catalogRepository(HOST + ":" + PORT + "/" + REPO_NAME).catalogRef("vertx_two_versions")
-                    .build();
+            defaultService = defaultCatalogBuilder().build();
         }
         return defaultService;
     }

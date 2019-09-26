@@ -10,50 +10,28 @@ package io.fabric8.launcher.booster.catalog;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
 import io.fabric8.launcher.booster.catalog.BoosterCatalogService.Builder;
-import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider;
-import org.arquillian.smart.testing.rules.git.server.GitServer;
+import io.fabric8.launcher.booster.catalog.spi.NativeGitCatalogSourceProvider;
+import io.fabric8.launcher.booster.catalog.utils.JsonKt;
+import kotlin.jvm.functions.Function1;
 import org.assertj.core.api.JUnitSoftAssertions;
-import org.junit.ClassRule;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
-import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REF;
-import static io.fabric8.launcher.booster.catalog.LauncherConfiguration.PropertyName.LAUNCHER_BOOSTER_CATALOG_REPOSITORY;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BoosterCatalogServiceTest {
-
-    private static final String HOST = "http://localhost";
-
-    private static final int PORT = 8765;
-
-    private static final String CUSTOM_REPO = "gastaldi-booster-catalog";
-
-    private static final String CUSTOM_BOOSTER_CATALOG = HOST + ":" + PORT + "/" + CUSTOM_REPO;
-
-    @ClassRule
-    public static final GitServer gitServer = GitServer
-            .bundlesFromDirectory("repos/boosters")
-            .fromBundle(CUSTOM_REPO, "repos/custom-catalogs/gastaldi-booster-catalog.bundle")
-            .usingPort(PORT)
-            .create();
-
-    @Rule
-    public final EnvironmentVariables environmentVariables = new EnvironmentVariables()
-            .set(LAUNCHER_BOOSTER_CATALOG_REPOSITORY, HOST + ":" + PORT + "/booster-catalog")
-            .set(LAUNCHER_BOOSTER_CATALOG_REF, "master");
 
     @Rule
     public final JUnitSoftAssertions softly = new JUnitSoftAssertions();
@@ -63,7 +41,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testIndex() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef()).build();
+        BoosterCatalogService service = defaultCatalogBuilder().build();
         softly.assertThat(service.getBoosters()).isEmpty();
 
         service.index().get();
@@ -73,7 +51,7 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testReindex() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef()).build();
+        BoosterCatalogService service = defaultCatalogBuilder().build();
         softly.assertThat(service.getBoosters()).isEmpty();
 
         service.index().get();
@@ -97,105 +75,15 @@ public class BoosterCatalogServiceTest {
     }
 
     @Test
-    public void testCommonFiles() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("common_test")
-                .build();
-        service.index().get();
-
-        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-
-        softly.assertThat(booster).hasValueSatisfying(b -> {
-            softly.assertThat(b.<Boolean>getMetadata("root")).isEqualTo(true);
-            softly.assertThat(b.<String>getMetadata("mymission")).isEqualTo("rest-http");
-            softly.assertThat(b.<String>getMetadata("myruntime")).isEqualTo("vertx");
-            softly.assertThat(b.<String>getMetadata("myversion")).isEqualTo("community");
-        });
-    }
-
-    @Test
-    public void testMetadata() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("common_test")
-                .build();
-        service.index().get();
-
-        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-
-        softly.assertThat(booster).hasValueSatisfying(b -> {
-            softly.assertThat(b.<Integer>getMetadata("sub/foo")).isEqualTo(3);
-            softly.assertThat(b.<Integer>getMetadata("sub/bar")).isEqualTo(5);
-            softly.assertThat(b.<Integer>getMetadata("sub/baz")).isEqualTo(4);
-            softly.assertThat(b.<Integer>getMetadata("sub/bam")).isEqualTo(7);
-            softly.assertThat(b.<Integer>getMetadata("sub/fox")).isEqualTo(8);
-        });
-    }
-
-    @Test
     public void testIgnore() throws Exception {
         BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("ignore_test")
+                .catalogProvider(() -> JsonKt.readCatalog(Paths.get("src/test/resources/custom-catalogs/test-catalog-ignore.json")))
                 .build();
         service.index().get();
 
         Collection<Booster> boosters = service.getBoosters(missions("rest-http").and(runtimes("vert.x")));
 
         softly.assertThat(boosters).hasSize(1);
-    }
-
-    @Test
-    public void testManualEnvironment() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("environments_test")
-                .build();
-        service.index().get();
-
-        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-
-        softly.assertThat(booster.isPresent()).isTrue();
-
-        softly.assertThat(booster).hasValueSatisfying(b -> {
-            softly.assertThat(b.getName()).isEqualTo("default-name");
-            softly.assertThat(b.getGitRef()).isEqualTo("master");
-
-            Booster envBooster = b.forEnvironment("production");
-            softly.assertThat(envBooster.getName()).isEqualTo("prod-name");
-            softly.assertThat(envBooster.getGitRef()).isEqualTo("v13");
-            softly.assertThat(envBooster.<Integer>getMetadata("foo")).isEqualTo(3);
-        });
-    }
-
-    @Test
-    public void testCatalogEnvironment() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("environments_test")
-                .environment("production")
-                .build();
-        service.index().get();
-
-        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-        softly.assertThat(booster).hasValueSatisfying(b -> {
-            softly.assertThat(b.getName()).isEqualTo("prod-name");
-            softly.assertThat(b.getGitRef()).isEqualTo("v13");
-            softly.assertThat(b.<Integer>getMetadata("foo")).isEqualTo(3);
-        });
-    }
-
-    @Test
-    public void testCatalogCompoundEnvironment() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .catalogRepository(CUSTOM_BOOSTER_CATALOG).catalogRef("environments_test")
-                .environment("production,extra")
-                .build();
-        service.index().get();
-
-        Optional<Booster> booster = service.getBooster(missions("rest-http").and(runtimes("vert.x")).and(versions("community")));
-        softly.assertThat(booster).hasValueSatisfying(b -> {
-            softly.assertThat(b.getName()).isEqualTo("prod-name");
-            softly.assertThat(b.getGitRef()).isEqualTo("v13");
-            softly.assertThat(b.<Integer>getMetadata("foo")).isEqualTo(4);
-            softly.assertThat(b.<Boolean>getMetadata("bar")).isTrue();
-        });
     }
 
     @Test
@@ -210,19 +98,19 @@ public class BoosterCatalogServiceTest {
 
     @Test
     public void testFilter() throws Exception {
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef())
-                .filter(b -> getPath(b, 0).equals("spring-boot")).build();
+        BoosterCatalogService service = defaultCatalogBuilder()
+                .filter(b -> "spring-boot".equals(b.getMetadata("runtime"))).build();
 
         service.index().get();
 
         softly.assertThat(service.getBoosters().size()).isGreaterThan(0);
-        softly.assertThat(service.getBoosters().stream().map(b -> getPath(b, 0))).containsOnly("spring-boot");
+        softly.assertThat(service.getBoosters().stream().map(b -> b.getMetadata("runtime"))).containsOnly("spring-boot");
     }
 
     @Test
     public void testListener() throws Exception {
         List<Booster> boosters = new ArrayList<>();
-        BoosterCatalogService service = new BoosterCatalogService.Builder().catalogRef(LauncherConfiguration.boosterCatalogRepositoryRef())
+        BoosterCatalogService service = defaultCatalogBuilder()
                 .listener(boosters::add).filter(b -> boosters.size() == 1).build();
 
         service.index().get();
@@ -249,9 +137,8 @@ public class BoosterCatalogServiceTest {
     @Test
     public void testBoosterFetchRecovery() throws Exception {
         UnreliablePathProvider unreliableProvider = new UnreliablePathProvider();
-        BoosterCatalogService service = new BoosterCatalogService.Builder()
-                .transformer((new TestRepoUrlFixer("http://localhost:8765"))::transform)
-                .pathProvider(unreliableProvider)
+        BoosterCatalogService service = defaultCatalogBuilder()
+                .sourceProvider((Booster b) -> unreliableProvider.getFetchSource().invoke(b))
                 .build();
         service.index().get();
 
@@ -272,63 +159,46 @@ public class BoosterCatalogServiceTest {
         });
     }
 
-    public static Predicate<Booster> missions(@Nullable String mission) {
-        return (Booster b) -> mission == null || mission.equals(getPath(b, 2));
+    private static Predicate<Booster> missions(@Nullable String mission) {
+        return (Booster b) -> mission == null || mission.equals(b.getMetadata("mission"));
     }
 
-    public static Predicate<Booster> runtimes(@Nullable String runtime) {
-        return (Booster b) -> runtime == null || runtime.equals(getPath(b, 0));
+    private static Predicate<Booster> runtimes(@Nullable String runtime) {
+        return (Booster b) -> runtime == null || runtime.equals(b.getMetadata("runtime"));
     }
 
-    public static Predicate<Booster> versions(@Nullable String version) {
-        return (Booster b) -> version == null || version.equals(getPath(b, 1));
+    private static Predicate<Booster> versions(@Nullable String version) {
+        return (Booster b) -> version == null || version.equals(b.getMetadata("version"));
     }
 
-    private static String getPath(Booster b, int index) {
-        List<String> path = b.getDescriptor().getPath();
-        assert (index >= 0 && index < path.size());
-        return path.get(index);
+    private AbstractBoosterCatalogService.AbstractBuilder<Booster, BoosterCatalogService> defaultCatalogBuilder() {
+        return new Builder()
+                    .catalogProvider(() -> JsonKt.readCatalog(Paths.get("src/test/resources/custom-catalogs/test-catalog.json")));
     }
 
     private BoosterCatalogService buildDefaultCatalogService() {
         if (defaultService == null) {
-            defaultService = new Builder()
-                    .transformer((new TestRepoUrlFixer(HOST + ":" + PORT))::transform)
-                    .build();
+            defaultService = defaultCatalogBuilder().build();
         }
         return defaultService;
     }
 
-    private class TestRepoUrlFixer {
-        private final String fixedUrl;
-
-        public TestRepoUrlFixer(String fixedUrl) {
-            this.fixedUrl = fixedUrl;
-        }
-
-        public Map<String, Object> transform(Map<String, Object> data) {
-            String gitRepo = Booster.getDataValue(data, "source/git/url", null);
-            if (gitRepo != null) {
-                gitRepo = gitRepo.replace("https://github.com", fixedUrl);
-                Booster.setDataValue(data, "source/git/url", gitRepo);
-            }
-            return data;
-        }
-    }
-
-    private static class UnreliablePathProvider extends NativeGitBoosterCatalogPathProvider {
+    private static class UnreliablePathProvider extends NativeGitCatalogSourceProvider {
         public boolean fail = true;
 
         public UnreliablePathProvider() {
-            super(LauncherConfiguration.boosterCatalogRepositoryURI(), LauncherConfiguration.boosterCatalogRepositoryRef(), null);
+            super(null);
         }
 
+        @NotNull
         @Override
-        public Path createBoosterContentPath(Booster booster) throws IOException {
-            if (fail) {
-                throw new IOException("Fail flag is true");
-            }
-            return super.createBoosterContentPath(booster);
+        public Function1<Booster, Path> getFetchSource() {
+            return (Booster b) -> {
+                if (fail) {
+                    throw new RuntimeException("Fail flag is true");
+                }
+                return super.getFetchSource().invoke(b);
+            };
         }
     }
 }

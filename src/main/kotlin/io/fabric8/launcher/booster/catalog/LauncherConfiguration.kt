@@ -12,14 +12,8 @@ object LauncherConfiguration {
         companion object {
             const val LAUNCHER_BOOSTER_CATALOG_REPOSITORY = "LAUNCHER_BOOSTER_CATALOG_REPOSITORY"
             const val LAUNCHER_BOOSTER_CATALOG_REF = "LAUNCHER_BOOSTER_CATALOG_REF"
-            const val LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL = "LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL"
         }
     }
-
-    @JvmStatic
-    fun ignoreLocalZip() =
-            java.lang.Boolean.getBoolean(PropertyName.LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL)
-                    || java.lang.Boolean.parseBoolean(System.getenv(PropertyName.LAUNCHER_BOOSTER_CATALOG_IGNORE_LOCAL))
 
     @JvmStatic
     fun boosterCatalogRepositoryURI() = LAUNCHER_BOOSTER_CATALOG_REPOSITORY

@@ -117,18 +117,5 @@ class BoosterPredicates private constructor() {
         @JvmStatic
         fun <T : Booster> withParameters(parameters: Map<String, List<String>>) =
                 BoosterParameterPredicate(parameters) as Predicate<T>
-
-        /**
-         * Returns a [Predicate] for a [Booster] testing if the given application argument
-         * matches a property in the metadata section named "app.$application.enabled". The booster will
-         * be filtered out if the property evaluated to "false".
-         *
-         * @param application The name of the application
-         * @return a [Predicate] testing if ttthe given application is enabled
-         */
-        @JvmStatic
-        fun withAppEnabled(application: String?) = Predicate<RhoarBooster> { b: RhoarBooster ->
-            application == null || b.getMetadata("app/${application.toLowerCase()}/enabled", true)
-        }
     }
 }

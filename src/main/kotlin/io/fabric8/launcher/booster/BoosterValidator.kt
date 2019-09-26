@@ -7,17 +7,17 @@
 
 package io.fabric8.launcher.booster
 
-import io.fabric8.launcher.booster.catalog.Booster
-import io.fabric8.launcher.booster.catalog.BoosterCatalogService
-import io.fabric8.launcher.booster.catalog.LauncherConfiguration
 import io.fabric8.launcher.booster.catalog.rhoar.RhoarBooster
 import io.fabric8.launcher.booster.catalog.rhoar.RhoarBoosterCatalogService
-import io.fabric8.launcher.booster.catalog.spi.NativeGitBoosterCatalogPathProvider
+import io.fabric8.launcher.booster.catalog.spi.NativeGitCatalogSourceProvider
+import io.fabric8.launcher.booster.catalog.utils.readCatalog
+import io.fabric8.launcher.booster.catalog.utils.readMetadata
 import org.yaml.snakeyaml.Yaml
 
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.ArrayList
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.system.exitProcess
 
 /**
  * Indexes a Booster catalog and logs any problems it finds to the console
@@ -35,8 +36,8 @@ internal object BoosterValidator {
     @Throws(Exception::class)
     @JvmStatic
     fun main(args: Array<String>) {
-        val catalogRepository = if (args.size > 0) args[0] else LauncherConfiguration.boosterCatalogRepositoryURI()
-        val catalogRef = if (args.size > 1) args[1] else LauncherConfiguration.boosterCatalogRepositoryRef()
+        val catalog = if (args.size > 0) args[0] else "catalog.json"
+        val metadata = if (args.size > 1) args[1] else "metadata.json"
 
         // Silence all INFO logging
         val handlers = Logger.getLogger("").handlers
@@ -45,10 +46,12 @@ internal object BoosterValidator {
         }
 
         val build = RhoarBoosterCatalogService.Builder()
-                .pathProvider(NativeGitBoosterCatalogPathProvider(catalogRepository, catalogRef, null))
+                .catalogProvider({ readCatalog(Paths.get(catalog)) })
+                .metadataProvider({ readMetadata(Paths.get(metadata)) })
+                .sourceProvider(NativeGitCatalogSourceProvider().fetchSource)
                 .build()
 
-        println("Validating Booster Catalog $catalogRepository#$catalogRef")
+        println("Validating Booster Catalog $catalog")
         println("Fetching index...")
         val boosters = build.index().get()
         println("Done.")
@@ -56,29 +59,26 @@ internal object BoosterValidator {
         println("Fetching boosters...")
         val errcnt = AtomicInteger(0)
         val futures = ArrayList<CompletableFuture<Path>>()
-        for (metab in boosters) {
-            for (env in metab.environments.keys) {
-                val b = metab.forEnvironment(env)
-                futures.add(b.content().whenComplete { path, throwable ->
-                    if (throwable != null) {
-                        System.err.println("ERROR: Couldn't fetch Booster " + b.id!!)
+        for (b in boosters) {
+            futures.add(b.content().whenComplete { path, throwable ->
+                if (throwable != null) {
+                    System.err.println("ERROR: Couldn't fetch Booster " + b.id)
+                    errcnt.incrementAndGet()
+                } else {
+                    println("Fetched " + b.id + " (" + b.name + ")")
+                    if (!validateBoosterData(b, path, b.data)) {
                         errcnt.incrementAndGet()
-                    } else {
-                        println("Fetched " + b.id + " (" + b.name + " for " + env + ")")
-                        if (!validateBoosterData(b, path, b.data)) {
-                            errcnt.incrementAndGet()
-                        }
-                        if (!validateOpenshiftYamlFiles(b, path)) {
-                            errcnt.incrementAndGet()
-                        }
-                        if (!validateBooster(b, path)) {
-                            errcnt.incrementAndGet()
-                        }
-                        System.out.flush()
-                        System.err.flush()
                     }
-                })
-            }
+                    if (!validateOpenshiftYamlFiles(b, path)) {
+                        errcnt.incrementAndGet()
+                    }
+                    if (!validateBooster(b, path)) {
+                        errcnt.incrementAndGet()
+                    }
+                    System.out.flush()
+                    System.err.flush()
+                }
+            })
         }
 
         try {
@@ -90,7 +90,7 @@ internal object BoosterValidator {
             println("Done. No problems found.")
         } else {
             println("Done. " + errcnt.get() + " errors were encountered.")
-            System.exit(1)
+            exitProcess(1)
         }
     }
 
