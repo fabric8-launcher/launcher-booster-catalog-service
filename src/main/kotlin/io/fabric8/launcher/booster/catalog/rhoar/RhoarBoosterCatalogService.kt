@@ -183,7 +183,7 @@ class RhoarBoosterCatalogService protected constructor(config: Builder) : Abstra
         override fun build() = RhoarBoosterCatalogService(this)
 
         internal fun discoverMetadataProvider(): BoosterMetadataProvider =
-                discoverCatalogProvider() as BoosterMetadataProvider
+                provider.fetchMetadata
     }
 
     companion object {

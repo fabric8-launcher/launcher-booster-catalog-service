@@ -301,7 +301,7 @@ abstract class AbstractBoosterCatalogService<BOOSTER : Booster> protected constr
 
         abstract fun build(): CATALOG
 
-        private val provider by lazy { NativeGitCatalogProvider(catalogRepositoryURI, catalogRef, rootDir) }
+        internal val provider by lazy { NativeGitCatalogProvider(catalogRepositoryURI, catalogRef, rootDir) }
 
         internal fun discoverCatalogProvider(): BoosterCatalogProvider = provider.fetchCatalog
 
