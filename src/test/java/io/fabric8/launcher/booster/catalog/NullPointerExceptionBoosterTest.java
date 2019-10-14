@@ -24,6 +24,7 @@ public class NullPointerExceptionBoosterTest {
     public void should_not_throw_null_pointer_exception() throws Exception {
         RhoarBoosterCatalogService service = new RhoarBoosterCatalogService.Builder()
                 .catalogProvider(() -> JsonKt.readCatalog(Paths.get("src/test/resources/custom-catalogs/test-catalog.json")))
+                .metadataProvider(() -> JsonKt.readMetadata(Paths.get("src/test/resources/custom-catalogs/test-metadata.json")))
                 .build();
         // Wait for index to complete
         service.index().get();
